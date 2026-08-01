@@ -128,6 +128,9 @@
     <Compile Include="Patch_HospitalityInteractions.cs" />
     <Compile Include="Patch_HarbingerTreeSpawnDeterminism.cs" />
     <Compile Include="Patch_DisableHarbingerTreeSpawn.cs" />
+    <Compile Include="Patch_RitualObligationDateDeterminism.cs" />
+    <Compile Include="Patch_GoodwillRecalcMultifactionDeterminism.cs" />
+    <Compile Include="Patch_TraderStockDeterminism.cs" />
     <Compile Include="Patch_RWBeheadingRandIsolation.cs" />
     <Compile Include="Patch_BloodAnimationsMp.cs" />
     <Compile Include="Patch_CaravanFloatMenuDiagnostic.cs" />

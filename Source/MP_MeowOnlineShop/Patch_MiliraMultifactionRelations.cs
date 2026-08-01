@@ -179,7 +179,7 @@ namespace MP_MeowOnlineShop
                 miliraDef.permanentEnemyToEveryoneExcept.Add(playerDef);
         }
 
-        private static bool NormalizeBuggedHostility(Faction milira, Faction playerFaction)
+        internal static bool NormalizeBuggedHostility(Faction milira, Faction playerFaction)
         {
             if (milira == null || playerFaction == null || milira == playerFaction)
                 return false;
@@ -202,12 +202,12 @@ namespace MP_MeowOnlineShop
             return true;
         }
 
-        private static bool IsMiliraFaction(Faction faction)
+        internal static bool IsMiliraFaction(Faction faction)
         {
             return string.Equals(faction?.def?.defName, MiliraFactionDefName, StringComparison.Ordinal);
         }
 
-        private static bool IsEligiblePlayerFaction(Faction faction)
+        internal static bool IsEligiblePlayerFaction(Faction faction)
         {
             FactionDef def = faction?.def;
             if (def == null || !faction.IsPlayer)
@@ -226,9 +226,11 @@ namespace MP_MeowOnlineShop
     public sealed class MiliraMultifactionRelationMigrationComponent : GameComponent
     {
         private const int CurrentMigrationVersion = 1;
+        private const int PeriodicRecheckIntervalTicks = 1000;
 
         private int appliedMigrationVersion;
         private bool sessionAllowlistsPrepared;
+        private int lastPeriodicRecheckTick = -1;
 
         public MiliraMultifactionRelationMigrationComponent(Game game)
         {
@@ -255,10 +257,41 @@ namespace MP_MeowOnlineShop
             }
 
             if (appliedMigrationVersion >= CurrentMigrationVersion)
+            {
+                // The one-time migration already ran on a previous load. Keep
+                // the correction stable anyway: if a goodwill recalculation or a
+                // newly created multiplayer faction re-introduces the asymmetric
+                // permanent-enemy relation, re-normalize it deterministically.
+            }
+            else if (Patch_MiliraMultifactionRelations.PrepareSessionAndMigrateExistingSave())
+            {
+                appliedMigrationVersion = CurrentMigrationVersion;
+            }
+
+            if (Find.TickManager == null)
                 return;
 
-            if (Patch_MiliraMultifactionRelations.PrepareSessionAndMigrateExistingSave())
-                appliedMigrationVersion = CurrentMigrationVersion;
+            int ticksGame = Find.TickManager.TicksGame;
+            if (lastPeriodicRecheckTick >= 0 &&
+                ticksGame - lastPeriodicRecheckTick < PeriodicRecheckIntervalTicks)
+            {
+                return;
+            }
+            lastPeriodicRecheckTick = ticksGame;
+
+            Faction milira = Find.FactionManager?
+                .AllFactionsListForReading?
+                .FirstOrDefault(Patch_MiliraMultifactionRelations.IsMiliraFaction);
+            if (milira == null)
+                return;
+
+            foreach (Faction playerFaction in Find.FactionManager.AllFactionsListForReading
+                         .Where(Patch_MiliraMultifactionRelations.IsEligiblePlayerFaction)
+                         .OrderBy(faction => faction.loadID))
+            {
+                Patch_MiliraMultifactionRelations.NormalizeBuggedHostility(
+                    milira, playerFaction);
+            }
         }
     }
 }

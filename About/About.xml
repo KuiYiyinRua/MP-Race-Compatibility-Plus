@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.92</modVersion>
+  <modVersion>3.0.96</modVersion>
   <name>[MP] Mod compatibility for MP</name>
   <supportedVersions>
     <li>1.6</li>
@@ -226,6 +226,28 @@ skipping GameComponent_Anomaly.TrySpawnHarbingerTrees and
 IncidentWorker_HarbingerTreeSpawn.CanFireNowSub/TryExecuteWorker, per user
 request. The event can no longer be queued, selected, or executed, and its
 eligibility probing can no longer advance synchronized Rand.
+Version 3.0.93 isolates the remaining Blood Animations combat visual Rand
+callbacks in multiplayer (Pawn_Kill death spray,
+GenLeaving_DropFilthDueToDamage damage flecks,
+DamageWorker_AddInjury_ApplyToPawn injury spray, Bullet_Impact impact splashes)
+and makes Ideology date-triggered ritual obligations ("festivals")
+deterministic by ticking RitualObligationTrigger_Date under the owning ideo's
+faction context (Desync-162, Desync-163).
+Version 3.0.94 makes settlement trader stock regeneration deterministic from a
+stable per-settlement seed, runs GoodwillSituationManager.RecalculateAll under
+the shared spectator faction context so hostility-change letters and relations
+stay identical on both peers, and re-checks Milira-player faction relations
+every 1000 ticks so the "incorrectly hostile Milira" correction stays stable
+(Desync-166, Desync-167).
+Version 3.0.95 runs the canonical spawned-pawn inspiration check inside a
+deterministic per-pawn Rand scope so ritual ceremonies and other pawn-tick-order
+differences can no longer consume the synchronized map Rand on one peer only
+(Desync-168).
+Version 3.0.96 extends the existing stable pawn-ID/game-tick Rand boundary to
+async-time and multi-map multiplayer. Pawn TickInterval no longer bypasses that
+boundary when map TickLists execute in a different order after rejoin, preventing
+mental-break, interaction, health, and job-selection branches from advancing a
+later pawn's shared map Rand stream (Desync-176 through Desync-180).
 ]]></description>
   <modDependencies>
     <li>

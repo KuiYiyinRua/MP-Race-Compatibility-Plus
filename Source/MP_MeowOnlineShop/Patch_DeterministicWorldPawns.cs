@@ -33,7 +33,6 @@ namespace MP_MeowOnlineShop
             nameof(AddRangeStable));
 
         private static int _replacementCount;
-        private static bool _loggedComplexMapPawnScopeBypass;
 
         internal static void Apply(Harmony harmony)
         {
@@ -125,18 +124,16 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || __instance == null)
                 return;
 
-            if (MpRuntimeInfo.RequiresVanillaPerMapPipelines(out string reason))
-            {
-                if (!_loggedComplexMapPawnScopeBypass)
-                {
-                    _loggedComplexMapPawnScopeBypass = true;
-                    Log.Message(
-                        "[MP-MeowOnlineShop] Per-pawn Rand scope bypassed: " +
-                        $"Multiplayer vanilla per-map Rand context retained ({reason}).");
-                }
-                return;
-            }
-
+            // Async-time changes the order in which otherwise equivalent pawn
+            // TickInterval calls reach a map stream.  A role-change ritual can
+            // make that visible immediately: its attendees receive different
+            // jobs, then mental, interaction, health, and path branches draw a
+            // different number of values before the next pawn is processed.
+            // Scope every pawn tick, including the async/multi-map path, so a
+            // pawn's optional random branch cannot advance another pawn's live
+            // map Rand state.  Rand.PushState/PopState preserves Multiplayer's
+            // surrounding per-map context and the stable seed preserves the
+            // same result for this pawn and simulation tick on every peer.
             int seed = Gen.HashCombineInt(
                 __instance.thingIDNumber,
                 Find.TickManager?.TicksGame ?? 0);

@@ -19,6 +19,7 @@ namespace MP_MeowOnlineShop
     internal static class Patch_InspirationScheduleMp
     {
         private const int InspirationInterval = 100;
+        private const int InspirationSeedOffset = 0x494E5350; // "INSP"
         private static MethodInfo _checkStartRandomInspiration;
 
         [ThreadStatic]
@@ -89,8 +90,11 @@ namespace MP_MeowOnlineShop
             }
 
             _executingCanonicalCheck = true;
+            bool pushed = false;
             try
             {
+                Rand.PushState(CanonicalInspirationSeed(pawn));
+                pushed = true;
                 _checkStartRandomInspiration.Invoke(handler, null);
             }
             catch (TargetInvocationException exception)
@@ -99,8 +103,33 @@ namespace MP_MeowOnlineShop
             }
             finally
             {
+                if (pushed)
+                {
+                    try
+                    {
+                        Rand.PopState();
+                    }
+                    catch
+                    {
+                        // Fail open; the live stream may have advanced once.
+                    }
+                }
                 _executingCanonicalCheck = false;
             }
+        }
+
+        private static int CanonicalInspirationSeed(Pawn pawn)
+        {
+            int seed = Gen.HashCombineInt(
+                InspirationSeedOffset,
+                pawn?.thingIDNumber ?? 0);
+            seed = Gen.HashCombineInt(
+                seed,
+                pawn?.Map?.uniqueID ?? 0);
+            seed = Gen.HashCombineInt(
+                seed,
+                Find.TickManager?.TicksGame ?? 0);
+            return seed;
         }
     }
 }

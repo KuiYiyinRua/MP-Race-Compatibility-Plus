@@ -160,6 +160,9 @@ namespace MP_MeowOnlineShop
                 Patch_MilianDressMp.Apply(Harmony);
                 Patch_HarbingerTreeSpawnExecutionDeterminism.Apply(Harmony);
                 Patch_DisableHarbingerTreeSpawn.Apply(Harmony);
+                Patch_RitualObligationDateDeterminism.Apply(Harmony);
+                Patch_GoodwillRecalcMultifactionDeterminism.Apply(Harmony);
+                Patch_TraderStockDeterminism.Apply(Harmony);
                 Patch_InsectGirlSpawnFactionDeterminism.Apply(Harmony);
                 Patch_RWBeheadingRandIsolation.Apply(Harmony);
                 Patch_PollutionIncidentMp.Apply();
