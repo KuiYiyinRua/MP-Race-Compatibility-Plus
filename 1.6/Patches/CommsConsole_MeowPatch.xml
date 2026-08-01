@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>EoralMilk.MeowFramework</li>
+    </mods>
+    <match Class="PatchOperationAdd">
+      <xpath>Defs/ThingDef[defName='CommsConsole']/comps</xpath>
+      <value>
+        <li Class="MP_MeowOnlineShop.CompProperties_MeowCommsConsole"/>
+      </value>
+    </match>
+  </Operation>
+</Patch>

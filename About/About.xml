@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
+  <modVersion>3.0.92</modVersion>
+  <name>[MP] Mod compatibility for MP</name>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <author>Compatibility Patch Maintainer</author>
+  <description><![CDATA[
+面向 RimWorld Multiplayer 的兼容补丁集合。
+
+RJW（rim.job.world）兼容范围包括：
+- 同步深度交谈、双人性行为、自慰和束缚装备的右键动作；
+- 仅在同步命令中传输稳定的游戏引用和 Def；
+- 稳定无序集合上的随机目标选择；
+- 为婴儿特质继承使用确定性的 System.Random 种子；
+- 在部分第三方程序集无法完整反射时保护 RJW Attraction 初始化。
+
+Multiplayer 是硬依赖。RJW、Meow Framework 和其他目标模组均按已加载类型
+条件启用；未安装可选模组时，对应补丁会安全跳过。
+
+English: Multiplayer compatibility patches with optional, runtime-resolved
+support for RimJobWorld and several mods in this collection.
+Includes synchronized UI/actions for Kiiro Story: Events Expanded and
+Ratkin Weapons+.
+Rigor Mortis 1.6 support includes mutant-ability commands resolved from
+Pawn_MutantTracker and real Custom Quest Framework option/action playback.
+Version 3.0.18 adds an opt-in MP-safe medium-priority alert UI throttle.
+It never throttles urgent alerts, forced removals, sync commands, or
+ultrafast simulation, and automatically falls back if another patch conflicts.
+Version 3.0.19 adds source-verified deterministic System.Random handling for
+Cumpilation 1.2.6 and RJW Genes 2.6.1, and synchronizes Cumpilation's seal and
+automatic-deflation gizmos while preventing UI-only state resets.
+Version 3.0.20 isolates RJW Sexperience pawn-generation randomization with a
+stable per-pawn seed during multiplayer, preserving its generated records and
+traits without advancing the surrounding synchronized map Rand stream. The
+same guard covers Sexperience's separate Nymph skill-randomization Postfix.
+It also isolates camera-local Verse.Rand use in Simple FX: Splashes 1.2.2,
+preserving rain flecks without contaminating the synchronized map Rand stream.
+RJW Core sex-part and Sized Apparel fallback initialization is likewise scoped
+during ExposeData, preventing Multiplayer timestamp diagnostics from consuming
+the live map Rand stream.
+Version 3.0.21 removes local CurrentMap fallbacks from runtime component and
+incident paths so peers viewing different colonies cannot select different maps.
+Version 3.0.22 prevents async simulation-only CurrentMap swaps from being sent
+as player VTR/view-map transitions. It also falls back to Multiplayer's vanilla
+per-map tick, Rand, and alert handling while async time is active.
+Version 3.0.23 extends those conservative fallbacks to every multiplayer session
+with more than one loaded map, including non-async newly founded colonies. This
+keeps local alert UI cadence, dynamic TickList initialization, and broad pawn Rand
+scopes from crossing Multiplayer's per-map lockstep boundary.
+Version 3.0.24 normalizes Hospitality's random social-interaction pawn list before
+its existing shuffle, so equal cross-PC map snapshots produce the same candidate
+permutation and consume the same weighted Rand path. It also normalizes RJW casual
+partner lists by stable pawn IDs before seeded attraction and partner selection.
+Version 3.0.32 rebuilds Multiplayer's runtime-only per-map TickLists from each
+map's authoritative spawned-Thing registry after a cold-join snapshot load. This
+targets Desync-44, where the host ticked Axolotl522 before Boomrat36358 while the
+joining client skipped directly to Boomrat36358 from the same map Rand state.
+Version 3.0.33 reconciles the TickList bucket about to execute against its owning
+map. It removes destroyed, unspawned, and cross-map stale members accumulated by
+a long-running host, targeting Desync-46 where only the host ticked Axolotl522
+before returning to the cold client's otherwise matching entity sequence.
+Version 3.0.34 applies config-only host mismatches before world download without
+forcing a restart. Standard ModSettings are reloaded in place with callbacks,
+HugsLib setting handles are updated, host XML is restored verbatim after those
+callbacks, and client-only configs are reset with backups. Mod-list, file, and
+Def mismatches remain protected.
+Version 3.0.47 guards Vehicle Framework's caravan send prefix when Multiplayer's
+CaravanFormingProxy has no vehicle-aware dialog state, restoring pawns and item
+tabs and preventing the client-side null reference on caravan confirmation.
+Version 3.0.48 replaces Static Quality's process-time-seeded random source with a
+seed drawn from the synchronized Verse random stream during multiplayer.
+Version 3.0.49 restores spawned pawns missing from the normal TickList's current
+bucket after cold join, preserving the authoritative map tick membership.
+Version 3.0.50 narrowly recovers Multiplayer async-time's TickManager.Paused
+Postfix null reference during Pawn.PostMapInit before the map component is
+available. Other exceptions and normal async-time behavior remain unchanged.
+Version 3.0.51 prevents playing-state callbacks outside synchronized ticks,
+command playback, and reload from consuming positive simulation IDs. It uses
+Multiplayer's existing local negative-ID path and records the first newly
+covered caller, targeting the one-ID pawn-generation offset in Desync-72.
+Version 3.0.52 keeps Multiplayer's native caravan Cancel action visible when a
+colony is empty or only Vehicle Framework vehicle pawns remain. Cancellation
+still follows CaravanFormingSession.Cancel, removing the synchronized session
+and route planner instead of merely closing the local proxy window.
+Version 3.0.25 stabilizes RJW Menstruation pheromone target iteration before
+applying Hediffs. This prevents cross-PC AllPawnsSpawned insertion order from
+changing callback order and later map Rand consumption on dual-map sessions.
+Version 3.0.26 isolates RJWPE Voice Patch replacement randomness inside its
+cosmetic animation-sound callback. Local camera, audio, or animation playback
+can no longer advance Multiplayer's synchronized map Rand stream.
+Version 3.0.28 replaces Dubs Mint Menus' interface-based growing-plant sync
+with explicit map and stable zone/thing identifiers. This prevents a second
+plant-menu action in multi-map multiplayer from resolving its target as null
+or against the wrong colony.
+Version 3.0.29 restores stable Thing-ID order inside every
+Multiplayer per-map TickList after a cold join. It also replaces Nudity
+Matters More's process-local CanSeeNaked cache/Rand branch with a shared-day
+deterministic result in multiplayer, and prevents joining with mismatched host
+configs unless Multiplayer's authoritative Fix and Restart flow is used.
+Version 3.0.30 adds Perspective Shift multiplayer support. Each player may own
+a different avatar; ownership and movement input are server-ordered sync
+commands, movement uses deterministic RimWorld jobs, and local prediction is
+restricted to rendering/camera state without writing simulated Pawn positions.
+Version 3.0.31 replaces Perspective Shift's unsafe multi-slot drag storage
+window in multiplayer with deterministic direct deposit/pickup behavior.
+Version 3.0.61 resolves the real issuing player for Perspective Shift avatar
+claim/release commands, so host and clients retain separate local views and
+WASD input. Taking control also clears stale local camera-lock state.
+Version 3.0.62 prevents Multiplayer's command-context camera restoration from
+creating a Perspective Shift camera lock, narrows MP input blocking to real
+search/modal job states, and immediately replaces the initial Wait job when
+WASD movement begins.
+Version 3.0.63 brackets Multiplayer's deferred multifaction faction-creation
+body with an authoritative simulation scope, so faction identity, map
+generation, and InitNewGame no longer run as misclassified local callbacks
+(Desync-81). It also hardens config hot sync: unchanged records are skipped,
+changed keys are logged, and startup-bound XML Extensions changes block
+automatic continuation instead of faking a successful join.
+Version 3.0.64 makes season evaluation deterministic in multifaction sessions.
+Multiplayer's DateNotifier patch evaluates each peer under its own player
+faction, so season messages and the first-summer warning letter consumed
+shared message/letter IDs at different world ticks per peer (Desync-82,
+Desync-94). The notifier now runs under Multiplayer's spectator faction
+context and the real world tick counter on every peer.
+Version 3.0.66 restores Vehicle Framework's Vehicles tab as a read-only
+display inside Multiplayer's CaravanFormingProxy. The proxy still owns the
+Pawns/Items/Travel Supplies transfer widgets, while the vehicle cards are now
+visible with their cargo capacity and the proxy keeps its synchronized
+formation flow unchanged. Vehicle checkbox/sorter input stays disabled because
+VF's CaravanFormation.formation seat state is not owned by Multiplayer.
+Version 3.0.67 lets the synchronized Odyssey gravship takeoff allocate a
+positive shared world-object ID for the traveling Gravship. The previous
+unique-ID guard classified GravshipUtility.GenerateGravship as an
+unsynchronized playing-state callback and gave the Gravship a process-local
+negative ID, which Multiplayer's PlaceGravship sync cannot resolve reliably on
+the other peer after landing on a new map. The exemption is stack-narrow and
+leaves every other non-simulation allocation guard unchanged.
+Version 3.0.68 restores the DefensivePositions multiplayer compatibility layer
+whose own API-version check aborts before registering anything: assigning and
+clearing drafted-pawn defensive positions, squad reassignment, and advanced-mode
+toggles now run through synchronized commands instead of mutating only the
+clicking peer. It also isolates Milira Tale quest storyteller Rand probing from
+the synchronized world stream and fixes Elite Raid's two-argument
+ThreadSafeRandom overload registration.
+Version 3.0.69 synchronizes drafted SearchAndDestroy toggles by pawn ID so the
+other peer no longer depends on a local store-worker lookup that can be missing
+after a cold join (Desync-118/119).
+Version 3.0.70 makes natural-goodwill drift deterministic in multifaction by
+evaluating CheckReachNaturalGoodwill under Multiplayer's shared spectator
+faction, so goodwill changes and message IDs cannot advance on only one peer
+(Desync-121/122).
+Version 3.0.71 isolates Harbinger-tree CanFireNowSub world Rand with a
+deterministic seed derived from the target, def, and world tick (Desync-104,
+Desync-123).
+Version 3.0.72 adds a bounded caravan float-menu action-type diagnostic that
+logs the concrete CaravanArrivalAction type erased by the generic replay stack
+(Desync-126/127).
+Version 3.0.73 makes CaravansBattlefield victory settlement deterministic in
+multiplayer: it sends the victory letter and sets wonBattle without the
+per-peer FreeColonists RandomElement/TaleRecorder path (Desync-128).
+Version 3.0.74 guards the synced caravan float-menu replay against a null
+caravan argument: Settlement menu generation and SettlementVisitedNow no
+longer throw during replay, and a bounded [CaravanMenuGuard] log records the
+caravan-resolution state (Desync-129).
+Version 3.0.75 synchronizes the Tale of Milira leftover-supply dialog "leave"
+option so the letter and letter ID are created on every peer inside one
+command instead of only on the clicking peer (Desync-130).
+Version 3.0.76 exempts the synchronized gravship landing MapParent from the
+local negative-ID boundary guard, so the new colony map and settlement keep a
+positive shared world-object ID on every peer (gravship landing desync).
+Version 3.0.77 makes the Harbinger/special-tree CanFireNowSub eligibility probe
+unconditionally isolated in multiplayer, independent of the local performance
+gate, so a host/client setting mismatch cannot consume the live map stream on
+one peer (Desync-132).
+Version 3.0.78 wraps the vanilla work-site quest generation
+(QuestNode_Root_WorkSite.RunInt) in a deterministic Rand scope with the
+spectator faction context, keeping the new faction/site/leader IDs and Rand
+identical on both peers (Desync-133).
+Version 3.0.79 adds a bounded diagnostic for the techprint application path
+(job creation and ResearchManager.ApplyTechprint) to compare map/pawn/thing
+state across peers on the next bundle (Desync-134).
+Version 3.0.80 makes the Oberonia Aurea Birthday Wishes event deterministic:
+CheckBirthdayWishes, CanFireNowSub and TryExecuteWorker run under a
+deterministic Rand scope and the spectator faction context so RandomPlayerHomeMap
+and FreeColonists evaluate the same set on every peer (Desync-135).
+Version 3.0.81 wraps the storyteller random-quest burst
+(NaturalRandomQuestChooser.ChooseNaturalRandomQuest) in an unconditional
+deterministic Rand scope with the spectator faction context, so the large
+one-tick quest/incident evaluation batch consumes the same Rand on both peers
+(Desync-136).
+Version 3.0.87 completes the Odyssey gravship synchronized-ID boundary and
+adds bounded takeoff/landing lifecycle diagnostics. The Unique-ID guard now
+exempts the full gravship executor chain (InitiateTakeoff, RemoveGravshipFromMap,
+TakeoffEnded, AbandonMap, TravelTo, PlaceGravship, InitiateLanding, LandingEnded,
+BeginLanding, OnGravshipCaptureComplete, ArriveNewMap/ArriveExistingMap) and the
+caravan ambush attack-map MapParent path, so those long-event WorldObject
+allocations keep positive shared IDs instead of process-local negative IDs
+(Desync-146/147, wrong random state after landing). GRAVSHIP_TAKEOFF/TRAVEL/
+ARRIVE_NEW_MAP/LANDING_ENDED logs are emitted at most three times each so the
+next bundle can pinpoint the stage where map/world Rand diverges.
+Version 3.0.88 pins the Insect Girls auto-spawn component tick
+(Kzi.GameComponent_InsectGirl.GameComponentTick) to Multiplayer's spectator
+faction context, so Find.RandomPlayerHomeMap and the spawned "kuoer" pawn
+register in the same map on every peer (Desync-151).
+Version 3.0.89 isolates RW Beheading's head-capture render
+(HeadCaptureUtility.TryCaptureHead) in a deterministic nested Rand scope, so
+the Unity Camera.Render / AlienRace / wound-overlay Rand drawn during damage
+or death ticks can no longer advance the live synchronized stream
+(Desync-150).
+Version 3.0.90 wraps the whole Storyteller.StorytellerTick interval burst in a
+deterministic Rand scope seeded from the world tick and current faction, so a
+one-tick refresh of many events consumes the same world Rand sequence on every
+peer even when the comp iteration differs (Desync-152, wrong random state for
+the world).
+Version 3.0.91 pins CaravanArrivalAction_Enter.Arrived to the caravan's
+player-faction context so colony arrivals make identical
+drop/draft/letter/enter decisions on every peer (Desync-153/154/155/156), and
+replaces StorageGroupUtility's link/unlink gizmo actions with primitive
+thing-ID MP commands to bypass the fragile official tuple/list serialization
+that failed during rejoin replay (Desync-157, IStorageGroupMember Sync Error).
+Version 3.0.92 disables the "厄兆噬树萌芽" (Harbinger tree sprout) event by
+skipping GameComponent_Anomaly.TrySpawnHarbingerTrees and
+IncidentWorker_HarbingerTreeSpawn.CanFireNowSub/TryExecuteWorker, per user
+request. The event can no longer be queued, selected, or executed, and its
+eligibility probing can no longer advance synchronized Rand.
+]]></description>
+  <modDependencies>
+    <li>
+      <packageId>rwmt.Multiplayer</packageId>
+      <displayName>Multiplayer</displayName>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>rwmt.Multiplayer</li>
+    <li>HaiLuan.CustomQuestFramework</li>
+    <li>HenTaiLoliTeam.Axolotl</li>
+    <li>fxz.moelotlzombie.update</li>
+    <li>Ancot.KiiroStoryEventsExpanded</li>
+    <li>bbb.ratkinweapon.morefailure</li>
+    <li>rim.job.world</li>
+    <li>rjw.menstruation</li>
+    <li>rjw.sexperience</li>
+    <li>Owlchemist.SimpleFX.Splashes</li>
+    <li>vegapnk.cumpilation</li>
+    <li>Vegapnk.rjw.genes</li>
+    <li>EoralMilk.MeowFramework</li>
+    <li>EoralMilk.OnlineShop</li>
+    <li>Ogliss.MeowOnlineShop</li>
+    <li>meow.onlineshop</li>
+    <li>Dubwise.DubsMintMenus</li>
+    <li>dord.nuditymattersmore</li>
+    <li>ferny.PerspectiveShift</li>
+  </loadAfter>
+</ModMetaData>

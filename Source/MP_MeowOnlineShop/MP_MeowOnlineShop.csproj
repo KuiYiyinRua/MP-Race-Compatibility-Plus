@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7604F916-3272-4262-A347-1D8A920A7FF6}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MP_MeowOnlineShop</RootNamespace>
+    <AssemblyName>MP_MeowOnlineShop</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
+    <RuntimeIdentifiers>win;win-x64;win-x86</RuntimeIdentifiers>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\1.6\Assemblies\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\1.6\Assemblies\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <!-- 0Harmony 路径：优先本地 Libs，其次 RimWorld/Workshop，本地 NuGet 仅做最后兜底 -->
+  <PropertyGroup>
+    <HarmonyDllPath Condition="Exists('$(MSBuildProjectDirectory)\Libs\0Harmony.dll')">$(MSBuildProjectDirectory)\Libs\0Harmony.dll</HarmonyDllPath>
+    <HarmonyDllPath Condition="'$(HarmonyDllPath)' == '' and Exists('$(MSBuildProjectDirectory)\..\..\..\Harmony\Current\Assemblies\0Harmony.dll')">$(MSBuildProjectDirectory)\..\..\..\Harmony\Current\Assemblies\0Harmony.dll</HarmonyDllPath>
+    <HarmonyDllPath Condition="'$(HarmonyDllPath)' == '' and Exists('$(MSBuildProjectDirectory)\..\..\..\..\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll')">$(MSBuildProjectDirectory)\..\..\..\..\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll</HarmonyDllPath>
+    <HarmonyDllPath Condition="'$(HarmonyDllPath)' == '' and Exists('$(NuGetPackageRoot)lib.harmony\2.4.2\lib\net472\0Harmony.dll')">$(NuGetPackageRoot)lib.harmony\2.4.2\lib\net472\0Harmony.dll</HarmonyDllPath>
+    <HarmonyDllPath Condition="'$(HarmonyDllPath)' == '' and Exists('$(UserProfile)\.nuget\packages\lib.harmony\2.4.2\lib\net472\0Harmony.dll')">$(UserProfile)\.nuget\packages\lib.harmony\2.4.2\lib\net472\0Harmony.dll</HarmonyDllPath>
+  </PropertyGroup>
+  <Target Name="EnsureHarmonyLib" BeforeTargets="ResolveAssemblyReferences">
+    <PropertyGroup>
+      <_HarmonyLibsDir>$(MSBuildProjectDirectory)\Libs</_HarmonyLibsDir>
+    </PropertyGroup>
+    <MakeDir Condition="!Exists('$(_HarmonyLibsDir)')" Directories="$(_HarmonyLibsDir)" />
+    <Copy Condition="!Exists('$(MSBuildProjectDirectory)\Libs\0Harmony.dll') and '$(HarmonyDllPath)' != '' and Exists('$(HarmonyDllPath)') and '$(HarmonyDllPath)' != '$(MSBuildProjectDirectory)\Libs\0Harmony.dll'" SourceFiles="$(HarmonyDllPath)" DestinationFiles="$(MSBuildProjectDirectory)\Libs\0Harmony.dll" SkipUnchangedFiles="true" />
+    <Error Condition="!Exists('$(MSBuildProjectDirectory)\Libs\0Harmony.dll') and ('$(HarmonyDllPath)' == '' or !Exists('$(HarmonyDllPath)'))" Text="未找到 0Harmony.dll。请确认 Harmony 已安装（推荐 workshop 2009463077）或将 DLL 放到 Source\\MP_MeowOnlineShop\\Libs\\0Harmony.dll。" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>Libs\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Multiplayer API -->
+    <Reference Include="0MultiplayerAPI">
+      <HintPath>..\..\..\Multiplayer\Assemblies\0MultiplayerAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- RimWorld 核心 -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Unity Engine -->
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="MpRuntimeInfo.cs" />
+    <Compile Include="Mod_MpMeowOnlineShopSettings.cs" />
+    <Compile Include="OptimizationRuntime.cs" />
+    <Compile Include="DeterministicRandScope.cs" />
+    <Compile Include="MapEventWakeRegistry.cs" />
+    <Compile Include="CompMeowCommsConsole.cs" />
+    <Compile Include="Patch_CommsConsole.cs" />
+    <Compile Include="Patch_DefensivePositionsMp.cs" />
+    <Compile Include="Patch_MpConfigHotSync.cs" />
+    <Compile Include="Patch_MpDesyncTraceBudget.cs" />
+    <Compile Include="Patch_AsyncRandStateDiagnostic.cs" />
+    <Compile Include="Patch_PerformanceOptimizerMp.cs" />
+    <Compile Include="Patch_SlowerPawnTickRateMp.cs" />
+    <Compile Include="Patch_MpSafeAlertThrottling.cs" />
+    <Compile Include="Patch_NaturalGoodwillMultifactionDeterminism.cs" />
+    <Compile Include="Patch_DubsMintMenusPlant.cs" />
+    <Compile Include="Patch_MiliraActiveDropPod.cs" />
+    <Compile Include="Patch_MiliraFallenAngelQuest.cs" />
+    <Compile Include="Patch_MiliraTaleStorytellerDeterminism.cs" />
+    <Compile Include="Patch_MiliraSupplyMp.cs" />
+    <Compile Include="Patch_MiliraMultifactionRelations.cs" />
+    <Compile Include="Patch_AudioRandIsolation.cs" />
+    <Compile Include="Patch_RjwPeVoiceRandIsolation.cs" />
+    <Compile Include="Patch_BallzAutoOrganRandIsolation.cs" />
+    <Compile Include="Patch_KemomimiHouseAutoSpawnRand.cs" />
+    <Compile Include="Patch_NiceBillTabLoad.cs" />
+    <Compile Include="Patch_UniqueIdSimulationBoundary.cs" />
+    <Compile Include="Patch_MutantAbilityCacheMp.cs" />
+    <Compile Include="Patch_InsectGirlPermanentWoundMp.cs" />
+    <Compile Include="Patch_DeterministicTickList.cs" />
+    <Compile Include="Patch_AsyncTimeMapLoadSafety.cs" />
+    <Compile Include="Patch_NudityMattersMoreMp.cs" />
+    <Compile Include="Patch_DeterministicWorldPawns.cs" />
+    <Compile Include="Patch_DateNotifierMultifactionDeterminism.cs" />
+    <Compile Include="Patch_HospitalityInteractions.cs" />
+    <Compile Include="Patch_HarbingerTreeSpawnDeterminism.cs" />
+    <Compile Include="Patch_DisableHarbingerTreeSpawn.cs" />
+    <Compile Include="Patch_RWBeheadingRandIsolation.cs" />
+    <Compile Include="Patch_BloodAnimationsMp.cs" />
+    <Compile Include="Patch_CaravanFloatMenuDiagnostic.cs" />
+    <Compile Include="Patch_CaravanFloatMenuNullGuard.cs" />
+    <Compile Include="Patch_CaravansBattlefieldVictoryDeterminism.cs" />
+    <Compile Include="Patch_RpgDialogMp.cs" />
+    <Compile Include="Patch_FishShadowRandIsolation.cs" />
+    <Compile Include="Patch_SimpleFxSplashesRandIsolation.cs" />
+    <Compile Include="Patch_StaticQualityDeterminism.cs" />
+    <Compile Include="Patch_InspirationScheduleMp.cs" />
+    <Compile Include="Patch_ChildcareRandMp.cs" />
+    <Compile Include="Patch_RitualVisualEffectRandIsolation.cs" />
+    <Compile Include="Patch_EliteRaidDeterminism.cs" />
+    <Compile Include="Patch_KiiroStoryEventsMp.cs" />
+    <Compile Include="Patch_RatkinWeaponsMp.cs" />
+    <Compile Include="Patch_MultifactionTpsOptimize.cs" />
+    <Compile Include="Patch_MiliraWeaponMode.cs" />
+    <Compile Include="Patch_AncotCommandMode.cs" />
+    <Compile Include="Patch_MiliraShieldMode.cs" />
+    <Compile Include="Patch_MiliraFlightMode.cs" />
+    <Compile Include="Patch_MiliraFly.cs" />
+    <Compile Include="Patch_RigorMortis.cs" />
+    <Compile Include="Patch_RigorMortisStoryDialogs.cs" />
+    <Compile Include="Patch_RigorMortisUtilityWindows.cs" />
+    <Compile Include="RigorMortisStoryRuntimeMap.cs" />
+    <Compile Include="RigorMortisStorySession.cs" />
+    <Compile Include="Dialog_MpRigorStory.cs" />
+    <Compile Include="Patch_RigorMortisComms.cs" />
+    <Compile Include="Dialog_MpRigorTrader.cs" />
+    <Compile Include="Patch_AxolotlComms.cs" />
+    <Compile Include="Patch_AxolotlWeaponMode.cs" />
+    <Compile Include="Patch_AxolotlCultivationRead.cs" />
+    <Compile Include="Patch_AxolotlCombatStability.cs" />
+    <Compile Include="Patch_AxolotlJumpLanding.cs" />
+    <Compile Include="Patch_AxolotlFlyerCarrySaveFix.cs" />
+    <Compile Include="Patch_AxolotlVerbSaveFix.cs" />
+    <Compile Include="Dialog_MpAxolotlTrader.cs" />
+    <Compile Include="Patch_MeowPurchase.cs" />
+    <Compile Include="Patch_RpgInventoryDrop.cs" />
+    <Compile Include="Patch_SearchAndDestroyMp.cs" />
+    <Compile Include="Patch_SellSlingshot.cs" />
+    <Compile Include="Patch_QuestAndIdeologyMp.cs" />
+    <Compile Include="Patch_MiningDiscoveryMp.cs" />
+    <Compile Include="Patch_WorkSiteQuestDeterminism.cs" />
+    <Compile Include="Patch_TechprintMpDiagnostic.cs" />
+    <Compile Include="Patch_OberoniaBirthdayMp.cs" />
+    <Compile Include="Patch_StorytellerRandomQuestDeterminism.cs" />
+    <Compile Include="Patch_StorytellerIntervalDeterminism.cs" />
+    <Compile Include="Patch_MilianDressMp.cs" />
+    <Compile Include="Patch_CaravanVisitSiteFactionDeterminism.cs" />
+    <Compile Include="Patch_CaravanEnterFactionDeterminism.cs" />
+    <Compile Include="Patch_StorageGroupSync.cs" />
+    <Compile Include="Patch_PollutionIncidentMp.cs" />
+    <Compile Include="Patch_DesignatorShapesMpCompat.cs" />
+    <Compile Include="Patch_BattleReferenceSaveFix.cs" />
+    <Compile Include="Patch_WorldRandStabilizer.cs" />
+    <Compile Include="Patch_VoiceroidAsAnimal.cs" />
+    <Compile Include="Patch_RimJobWorld.cs" />
+    <Compile Include="Patch_RjwAddons.cs" />
+    <Compile Include="Patch_RjwSerializationRandIsolation.cs" />
+    <Compile Include="Patch_RjwMenstruation.cs" />
+    <Compile Include="Patch_SecretaryNexusMp.cs" />
+    <Compile Include="Patch_FacialAnimationMp.cs" />
+    <Compile Include="Patch_ThirdPartyPerformanceMp.cs" />
+    <Compile Include="Patch_MultiplayerVtrContextGuard.cs" />
+    <Compile Include="Patch_StoragePriorityAndAsyncQuest.cs" />
+    <Compile Include="Patch_AcceptJoinerWorldCommand.cs" />
+    <Compile Include="Patch_AncientAmorphousThreatMp.cs" />
+    <Compile Include="Patch_GravshipAbandonQueue.cs" />
+    <Compile Include="PerspectiveShiftMpState.cs" />
+    <Compile Include="Patch_PerspectiveShiftMp.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

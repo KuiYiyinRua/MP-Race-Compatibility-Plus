@@ -1,0 +1,38 @@
+# Visual Studio / build output
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+[Bb]uild[Ll]og.*
+*.binlog
+*.log
+*.tmp
+*.bak
+
+# Compiled mod output and local Harmony copy
+/1.6/Assemblies/
+/Source/MP_MeowOnlineShop/Libs/*
+!/Source/MP_MeowOnlineShop/Libs/README.txt
+
+# Local validation workspace: build candidates, decompiled sources, desync evidence
+/BuildValidation/
+
+# RimWorld config captured in the repo root by local test runs
+/System.Management.Automation.Internal.Host.InternalHost/
+
+# A/B build candidates inside the source project
+_candidate_*/
+
+# Workshop / desync archives
+*.zip
+*.rar
+
+# Machine-specific editor and AI tool state
+*.code-workspace
+.cursor/
+.kimi/
+
+# OS noise
+Thumbs.db
+Desktop.ini
