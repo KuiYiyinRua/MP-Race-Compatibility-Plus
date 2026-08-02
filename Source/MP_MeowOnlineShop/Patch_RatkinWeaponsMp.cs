@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using Multiplayer.API;
 using Verse;
+using Verse.AI;
 
 namespace MP_MeowOnlineShop
 {
@@ -15,10 +18,12 @@ namespace MP_MeowOnlineShop
     {
         private const string BayonetCompTypeName = "RatkinWeapons.CompBayonet";
         private const string AntiTankTrapTypeName = "RatkinWeapons.Building_ATtrap";
+        private const string BayonetJobGiverTypeName = "RatkinWeapons.JobGiver_TryUseBayonet";
+        private const int BayonetRandomSalt = 0x4241594E; // "BAYN"
 
         private static bool _applied;
 
-        internal static void Apply()
+        internal static void Apply(Harmony harmony)
         {
             if (_applied)
                 return;
@@ -27,6 +32,7 @@ namespace MP_MeowOnlineShop
 
             Type bayonetType = AccessTools.TypeByName(BayonetCompTypeName);
             Type trapType = AccessTools.TypeByName(AntiTankTrapTypeName);
+            Type bayonetJobGiverType = AccessTools.TypeByName(BayonetJobGiverTypeName);
             if (bayonetType == null && trapType == null)
             {
                 Log.Message("[MP-MeowOnlineShop] Ratkin Weapons+ MP: target assembly not active; patch skipped.");
@@ -35,6 +41,8 @@ namespace MP_MeowOnlineShop
 
             int resolved = 0;
             const int expected = 2;
+
+            TryPatchDeterministicBayonetRandom(harmony, bayonetJobGiverType, bayonetType);
 
             try
             {
@@ -81,6 +89,105 @@ namespace MP_MeowOnlineShop
             }
 
             Log.Message($"[MP-MeowOnlineShop] Ratkin Weapons+ MP targets resolved={resolved}/{expected}.");
+        }
+
+        private static void TryPatchDeterministicBayonetRandom(
+            Harmony harmony,
+            Type jobGiverType,
+            Type compType)
+        {
+            if (harmony == null)
+                return;
+
+            MethodInfo transpiler = AccessTools.Method(
+                typeof(Patch_RatkinWeaponsMp),
+                nameof(SystemRandomTranspiler));
+            if (transpiler == null)
+                return;
+
+            int patched = 0;
+            MethodInfo bayonetJob = jobGiverType?.GetMethod(
+                "BayonetJob",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            if (bayonetJob != null)
+            {
+                harmony.Patch(
+                    bayonetJob,
+                    transpiler: new HarmonyMethod(transpiler));
+                patched++;
+            }
+
+            MethodInfo bayonetAct = compType?.GetMethod(
+                "BayonetAct",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                null,
+                new[] { typeof(LocalTargetInfo) },
+                null);
+            if (bayonetAct != null)
+            {
+                harmony.Patch(
+                    bayonetAct,
+                    transpiler: new HarmonyMethod(transpiler));
+                patched++;
+            }
+
+            if (patched > 0)
+            {
+                Log.Message(
+                    "[MP-MeowOnlineShop] Ratkin Weapons+ MP: bayonet System.Random " +
+                    "is deterministic: patched=" + patched + ".");
+            }
+        }
+
+        private static IEnumerable<CodeInstruction> SystemRandomTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            ConstructorInfo randomCtor = AccessTools.Constructor(
+                typeof(System.Random),
+                Type.EmptyTypes);
+            MethodInfo factory = AccessTools.Method(
+                typeof(Patch_RatkinWeaponsMp),
+                nameof(CreateDeterministicBayonetRandom));
+
+            foreach (CodeInstruction instruction in instructions)
+            {
+                if (instruction.opcode == OpCodes.Newobj &&
+                    instruction.operand is ConstructorInfo ctor &&
+                    ctor == randomCtor)
+                {
+                    yield return new CodeInstruction(OpCodes.Call, factory);
+                    continue;
+                }
+
+                yield return instruction;
+            }
+        }
+
+        private static System.Random CreateDeterministicBayonetRandom()
+        {
+            int seed = Gen.HashCombineInt(
+                BayonetRandomSalt,
+                Find.TickManager?.TicksGame ?? 0);
+            Thing current = GetCurrentThing();
+            if (current != null)
+                seed = Gen.HashCombineInt(seed, current.thingIDNumber);
+            return new System.Random(seed);
+        }
+
+        private static Thing GetCurrentThing()
+        {
+            try
+            {
+                Type contextType =
+                    AccessTools.TypeByName("Multiplayer.Client.Patches.ThingContext");
+                PropertyInfo current =
+                    AccessTools.Property(contextType, "Current");
+                return current?.GetValue(null, null) as Thing;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static MethodInfo FindGeneratedToggleMethod(Type type, string parentMethod)

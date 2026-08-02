@@ -90,6 +90,18 @@ namespace MP_MeowOnlineShop
 
             try
             {
+                // A joining client re-runs Game.FinalizeInit/Notify_GameStarted
+                // while Scribe is still loading the snapshot. Those allocations
+                // must consume the deserialized positive counters so the client
+                // matches the host's load-time IDs. Intercepting them here is
+                // what made each rejoin drift the client's unique-ID counter by
+                // one (Desync-193 through Desync-198). Scribe.mode is already
+                // Inactive by FinalizeInit, so also treat any running LongEvent
+                // as a load/generation boundary.
+                if (Scribe.mode != LoadSaveMode.Inactive ||
+                    IsLongEventActive())
+                    return;
+
                 // The Odyssey takeoff/landing and the caravan ambush map are
                 // deterministic synchronized flows whose WorldObject/MapParent
                 // creation runs inside a LongEvent queued by the synchronized
@@ -301,6 +313,26 @@ namespace MP_MeowOnlineShop
         private static bool ReadBool(PropertyInfo property)
         {
             return (bool)property.GetValue(null, null);
+        }
+
+        private static bool IsLongEventActive()
+        {
+            try
+            {
+                PropertyInfo property =
+                    AccessTools.Property(typeof(LongEventHandler), "currentEvent") ??
+                    AccessTools.Property(typeof(LongEventHandler), "CurrentEvent");
+                if (property != null)
+                    return property.GetValue(null, null) != null;
+
+                FieldInfo field =
+                    AccessTools.Field(typeof(LongEventHandler), "currentEvent");
+                return field != null && field.GetValue(null) != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static bool TryPatchFactionCreatorDeferredSimulation(Harmony harmony)

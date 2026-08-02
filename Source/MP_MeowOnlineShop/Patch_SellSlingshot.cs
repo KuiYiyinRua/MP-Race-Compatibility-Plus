@@ -125,9 +125,13 @@ namespace MP_MeowOnlineShop
                 Patch_MutantAbilityCacheMp.Apply(Harmony);
                 Patch_InsectGirlPermanentWoundMp.Apply(Harmony);
                 Patch_DeterministicTickList.Apply(Harmony);
+                Patch_MapStateOrderNormalizer.Apply(Harmony);
+                Patch_CommandOrderDeterminism.Apply(Harmony);
                 Patch_AsyncTimeMapLoadSafety.Apply(Harmony);
                 Patch_NudityMattersMoreMp.Apply(Harmony);
                 Patch_DeterministicWorldPawns.Apply(Harmony);
+                Patch_PawnFilthRandIsolation.Apply(Harmony);
+                Patch_MpIgnoredRandIsolation.Apply(Harmony);
                 Patch_HospitalityInteractions.Apply(Harmony);
                 Patch_HarbingerTreeSpawnDeterminism.Apply(Harmony);
                 Patch_BloodAnimationsMp.Apply(Harmony);
@@ -145,7 +149,7 @@ namespace MP_MeowOnlineShop
                 Patch_KiiroStoryEventsMp.Apply(Harmony);
                 Patch_SearchAndDestroyMp.Apply(Harmony);
                 Patch_DefensivePositionsMp.Apply(Harmony);
-                Patch_RatkinWeaponsMp.Apply();
+                Patch_RatkinWeaponsMp.Apply(Harmony);
                 ApplyMpConfigHotSyncPatch();
                 Patch_QuestAndIdeologyMp.Apply();
                 Patch_MiningDiscoveryMp.Apply();
@@ -188,6 +192,7 @@ namespace MP_MeowOnlineShop
                 ApplyAxolotlFlyerCarrySaveFixPatches();
                 ApplyAxolotlVerbSaveFixPatches();
                 ApplyAxolotlCommsPatches();
+                Patch_AxolotlAlchemyStoveMp.Apply();
 
                 if (!ModsConfig.IsActive(MeowFrameworkPackageId))
                 {

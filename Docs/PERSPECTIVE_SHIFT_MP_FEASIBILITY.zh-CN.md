@@ -689,3 +689,42 @@ WASD 采样不再直接使用包含 Multiplayer 常驻 UI 焦点的 `State.Contr
 同时修正地图命令执行器的运行时类型名为 `Multiplayer.Client.AsyncTimeComp`，使地图和世界两类
 同步命令都能解析真实发起者。Release 编译为 0 error、0 warning，DLL SHA-256 为
 `DE03DD65FADDD434A99F7458E737E7C4C5BDD41BDC0F96E18E67FE638E8FB839`。本轮未启动自动双端测试。
+
+## 13. 3.0.97 Perspective Shift 事件输入与镜头跟随修复
+
+2026-08-02 的本地运行日志显示，客户端已正确完成本地 Avatar 绑定（owner、Pawn 与地图均可解析），
+但整段会话没有出现一次“local movement input accepted”。同时鼠标右键下达的原生移动 Job 可以正常执行，
+因此故障边界位于 Perspective Shift 的本地键盘采样，而不是 owner 归属或同步移动执行器。
+
+3.0.97 在 `PerspectiveShift.State.OnGUI` 的前缀中直接捕获 Perspective Shift 自身绑定的
+KeyDown/KeyUp 事件，维护本机的前进、后退、左右移动、冲刺与步行按键状态。物理更新继续通过既有的
+有序同步移动命令派发意图，并保留 `KeyBindingDef.IsDown` 作为兼容回退；失去窗口焦点、解除认领或切换
+本地 Avatar 时会清空按键状态，避免粘键。
+
+镜头方面，只要本地 Avatar 存在移动输入或其原生 `Pawn_PathFollower` 正在移动，就清除
+`State.CameraLockPosition`。这同时覆盖 WASD 移动和鼠标右键移动，使 Perspective Shift 按其原有
+`physicsPosition/Pawn.Position` 路径持续跟随角色，而不修改共享 Pawn 坐标或远端模拟状态。
+
+正式 DLL 已部署到 `1.6/Assemblies`，文件版本为 `3.0.97.0`，产品版本为
+`3.0.97-perspective-shift-event-input-camera-follow`，SHA-256 为
+`1333086988C8D65D5C63BD86D8B8B522819488EAFA0D84CEF78BAE7F58FA4AD3`。
+按发布要求，本轮终止游戏后未重新启动，也未执行自动或双端运行测试；WASD、镜头跟随及主机/客户端
+分别认领仍需使用同一正式包进行一次手工联机复核。
+
+## 14. 3.0.98 本地 Avatar 视图恢复候选
+
+2026-08-02 03:25 开始的双进程手工会话实际加载了 3.0.97。当前 `Player.log` 证明
+`Player2075 -> Pawn 500` 已进入共享认领表，而且 `(1,0)` 与 `(0,-1)` 两次键盘输入均被接受；日志中
+没有对应的共享释放、同步错误或 desync。结合“本地立即退回导演视角、其他端仍提示已被控制”的现象，
+故障边界确定为进程本地 `PerspectiveShift.State.Avatar` 指针丢失，而共享 owner 记录仍然有效。
+
+3.0.98 候选在 `State.Update`、`State.Tick` 与 `State.OnGUI` 进入前检查本机用户名对应的共享认领；
+若共享 owner 仍存在但静态 Avatar 为空或指向错误对象，就重新绑定同一 `runtimeAvatar`、清除镜头锁点并
+使 `State.IsActive` 帧缓存失效。同步地图点击、受控 Avatar Tick 和 Job 回调使用临时 Avatar 上下文后，
+也以本机共享 owner 为恢复依据。只有共享 Release 真正移除 owner 后，本地视图才允许保持为空。
+
+候选编译版本为 `3.0.98.0 / 3.0.98-perspective-shift-local-avatar-recovery`，中间产物 SHA-256 为
+`391061902D20D4C32825C8F687F8C080EF3C99A7F59FC642205480C8355F28DB`。分析时两个用户游戏进程仍在
+运行，正式目录继续保持 3.0.97（SHA-256
+`1333086988C8D65D5C63BD86D8B8B522819488EAFA0D84CEF78BAE7F58FA4AD3`），`About.xml` 也保持
+3.0.97，避免运行中的版本与磁盘元数据不一致。该候选尚未部署或运行验证。

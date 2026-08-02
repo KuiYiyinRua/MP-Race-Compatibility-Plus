@@ -118,12 +118,17 @@
     <Compile Include="Patch_KemomimiHouseAutoSpawnRand.cs" />
     <Compile Include="Patch_NiceBillTabLoad.cs" />
     <Compile Include="Patch_UniqueIdSimulationBoundary.cs" />
+    <Compile Include="Patch_MapStateOrderNormalizer.cs" />
+    <Compile Include="Patch_MpIgnoredRandIsolation.cs" />
+    <Compile Include="Patch_CommandOrderDeterminism.cs" />
+    <Compile Include="Patch_AxolotlAlchemyStoveMp.cs" />
     <Compile Include="Patch_MutantAbilityCacheMp.cs" />
     <Compile Include="Patch_InsectGirlPermanentWoundMp.cs" />
     <Compile Include="Patch_DeterministicTickList.cs" />
     <Compile Include="Patch_AsyncTimeMapLoadSafety.cs" />
     <Compile Include="Patch_NudityMattersMoreMp.cs" />
     <Compile Include="Patch_DeterministicWorldPawns.cs" />
+    <Compile Include="Patch_PawnFilthRandIsolation.cs" />
     <Compile Include="Patch_DateNotifierMultifactionDeterminism.cs" />
     <Compile Include="Patch_HospitalityInteractions.cs" />
     <Compile Include="Patch_HarbingerTreeSpawnDeterminism.cs" />

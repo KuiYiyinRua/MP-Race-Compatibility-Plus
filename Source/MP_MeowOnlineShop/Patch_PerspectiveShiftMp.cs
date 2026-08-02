@@ -55,7 +55,15 @@ namespace MP_MeowOnlineShop
 
         private static bool commandOwnerResolutionWarningLogged;
         private static bool localAvatarBindingLogged;
+        private static bool localAvatarRecoveryLogged;
         private static bool localMovementInputLogged;
+
+        private static bool heldMoveForward;
+        private static bool heldMoveBack;
+        private static bool heldMoveLeft;
+        private static bool heldMoveRight;
+        private static bool heldSprint;
+        private static bool heldWalk;
 
         public static bool Active { get; private set; }
 
@@ -96,12 +104,15 @@ namespace MP_MeowOnlineShop
 
             MethodInfo setAvatar = AccessTools.Method(stateType, "SetAvatar", new[] { typeof(Pawn), typeof(bool) });
             MethodInfo clearAvatar = originalClearAvatarMethod;
+            MethodInfo stateUpdate = AccessTools.Method(stateType, "Update");
             MethodInfo stateTick = AccessTools.Method(stateType, "Tick");
+            MethodInfo stateOnGui = AccessTools.Method(stateType, "OnGUI");
             MethodInfo isAvatar = AccessTools.Method(stateType, "IsAvatar", new[] { typeof(Pawn) });
             MethodInfo updatePhysics = AccessTools.Method(avatarType, "UpdatePhysics");
 
             if (stateAvatarField == null || avatarPawnConstructor == null || setAvatar == null ||
-                clearAvatar == null || stateTick == null || isAvatar == null || updatePhysics == null)
+                clearAvatar == null || stateUpdate == null || stateTick == null || stateOnGui == null ||
+                isAvatar == null || updatePhysics == null)
             {
                 Log.Warning("[MP-MeowOnlineShop] Perspective Shift API shape is unsupported; compatibility patch skipped.");
                 return;
@@ -109,7 +120,9 @@ namespace MP_MeowOnlineShop
 
             harmony.Patch(setAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(SetAvatarPrefix)));
             harmony.Patch(clearAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(ClearAvatarPrefix)));
+            harmony.Patch(stateUpdate, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateUpdatePrefix)));
             harmony.Patch(stateTick, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateTickPrefix)));
+            harmony.Patch(stateOnGui, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateOnGuiPrefix)));
             harmony.Patch(isAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(IsAvatarPrefix)));
             harmony.Patch(updatePhysics, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(UpdatePhysicsPrefix)));
 
@@ -225,6 +238,33 @@ namespace MP_MeowOnlineShop
             // Perspective Shift mistakes that internal jump for an intentional local
             // camera lock, which leaves the view pinned after taking control.
             return !MP.IsInMultiplayer || !Active || !MP.IsExecutingSyncCommand;
+        }
+
+        public static void StateOnGuiPrefix()
+        {
+            if (!MP.IsInMultiplayer || !Active)
+                return;
+
+            EnsureLocalAvatarView("OnGUI");
+            if (LocalAvatarPawn() == null)
+            {
+                ClearHeldMovementKeys();
+                return;
+            }
+
+            Event current = Event.current;
+            if (current == null ||
+                (current.type != EventType.KeyDown && current.type != EventType.KeyUp))
+                return;
+
+            bool held = current.type == EventType.KeyDown;
+            KeyCode code = current.keyCode;
+            if (BindingMatches("PS_MoveForward", code)) heldMoveForward = held;
+            if (BindingMatches("PS_MoveBack", code)) heldMoveBack = held;
+            if (BindingMatches("PS_MoveLeft", code)) heldMoveLeft = held;
+            if (BindingMatches("PS_MoveRight", code)) heldMoveRight = held;
+            if (BindingMatches("PS_Sprint", code)) heldSprint = held;
+            if (BindingMatches("PS_Walk", code)) heldWalk = held;
         }
 
         public static void ExecutingCommandOwnerPrefix(object[] __args, out string __state)
@@ -455,7 +495,7 @@ namespace MP_MeowOnlineShop
                 isAvatarLeftClickField?.SetValue(null, false);
                 forcedMouseCell = null;
                 Event.current = previousEvent;
-                stateAvatarField.SetValue(null, previousAvatar);
+                RestoreLocalAvatarContext(previousAvatar);
             }
         }
 
@@ -521,10 +561,17 @@ namespace MP_MeowOnlineShop
             return false;
         }
 
+        public static void StateUpdatePrefix()
+        {
+            EnsureLocalAvatarView("Update");
+        }
+
         public static bool StateTickPrefix()
         {
             if (!MP.IsInMultiplayer || !Active || iteratingControlledAvatars)
                 return true;
+
+            EnsureLocalAvatarView("Tick");
 
             PerspectiveShiftMpComponent component = CurrentComponent();
             if (component == null || avatarTickMethod == null)
@@ -552,7 +599,7 @@ namespace MP_MeowOnlineShop
             }
             finally
             {
-                stateAvatarField.SetValue(null, localAvatar);
+                RestoreLocalAvatarContext(localAvatar);
                 iteratingControlledAvatars = false;
             }
 
@@ -578,10 +625,13 @@ namespace MP_MeowOnlineShop
 
             int moveX = 0;
             int moveZ = 0;
-            if (KeyDown("PS_MoveLeft")) moveX--;
-            if (KeyDown("PS_MoveRight")) moveX++;
-            if (KeyDown("PS_MoveBack")) moveZ--;
-            if (KeyDown("PS_MoveForward")) moveZ++;
+            if (!Application.isFocused)
+                ClearHeldMovementKeys();
+
+            if (KeyDown("PS_MoveLeft", heldMoveLeft)) moveX--;
+            if (KeyDown("PS_MoveRight", heldMoveRight)) moveX++;
+            if (KeyDown("PS_MoveBack", heldMoveBack)) moveZ--;
+            if (KeyDown("PS_MoveForward", heldMoveForward)) moveZ++;
 
             bool hasMoveInput = moveX != 0 || moveZ != 0;
             bool hardBlocked = WorldRendererUtility.WorldSelected ||
@@ -594,10 +644,11 @@ namespace MP_MeowOnlineShop
                 hasMoveInput = false;
             }
 
-            bool sprint = hasMoveInput && KeyDown("PS_Sprint");
-            bool walk = hasMoveInput && !sprint && KeyDown("PS_Walk");
+            bool sprint = hasMoveInput && KeyDown("PS_Sprint", heldSprint);
+            bool walk = hasMoveInput && !sprint && KeyDown("PS_Walk", heldWalk);
 
-            if (hasMoveInput && cameraLockPositionField?.GetValue(null) != null)
+            if ((hasMoveInput || pawn.pather?.Moving == true) &&
+                cameraLockPositionField?.GetValue(null) != null)
                 cameraLockPositionField.SetValue(null, null);
 
             if (hasMoveInput && !localMovementInputLogged)
@@ -878,7 +929,7 @@ namespace MP_MeowOnlineShop
         public static void EndJobPostfixContextPostfix(object __state)
         {
             if (MP.IsInMultiplayer && Active && stateAvatarField != null)
-                stateAvatarField.SetValue(null, __state);
+                RestoreLocalAvatarContext(__state);
         }
 
         public static void EnsureRuntimeAvatar(PerspectiveShiftControlledAvatar state)
@@ -952,6 +1003,7 @@ namespace MP_MeowOnlineShop
                 stateAvatarField?.SetValue(null, state.runtimeAvatar);
                 sentInput = false;
                 localMovementInputLogged = false;
+                ClearHeldMovementKeys();
 
                 if (!localAvatarBindingLogged)
                 {
@@ -977,10 +1029,56 @@ namespace MP_MeowOnlineShop
                 SetLocalAvatarIfOwned(state);
         }
 
+        private static void EnsureLocalAvatarView(string source)
+        {
+            if (!MP.IsInMultiplayer || !Active || stateAvatarField == null || avatarPawnField == null)
+                return;
+
+            PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
+            if (state == null || state.pawn == null)
+                return;
+
+            EnsureRuntimeAvatar(state);
+            object current = stateAvatarField.GetValue(null);
+            if (current == state.runtimeAvatar && avatarPawnField.GetValue(current) == state.pawn)
+                return;
+
+            stateAvatarField.SetValue(null, state.runtimeAvatar);
+            cameraLockPositionField?.SetValue(null, null);
+            isActiveCacheFrameField?.SetValue(null, -999);
+            sentInput = false;
+
+            if (!localAvatarRecoveryLogged)
+            {
+                localAvatarRecoveryLogged = true;
+                Log.Warning(
+                    $"[MP-MeowOnlineShop] Perspective Shift restored a missing local avatar view " +
+                    $"from the shared owner registry: source={source}, owner={state.owner}, " +
+                    $"pawn={state.pawn.thingIDNumber}, map={state.pawn.Map?.uniqueID ?? -1}.");
+            }
+        }
+
+        private static void RestoreLocalAvatarContext(object previousAvatar)
+        {
+            PerspectiveShiftControlledAvatar localState = CurrentComponent()?.ForOwner(MP.PlayerName);
+            if (localState != null && localState.pawn != null)
+            {
+                EnsureRuntimeAvatar(localState);
+                stateAvatarField?.SetValue(null, localState.runtimeAvatar);
+                return;
+            }
+
+            // If a nested callback intentionally cleared the view, do not resurrect it.
+            // Otherwise preserve a pre-hosting single-player Avatar until migration claims it.
+            if (stateAvatarField?.GetValue(null) != null)
+                stateAvatarField.SetValue(null, previousAvatar);
+        }
+
         private static void ClearLocalViewOnly()
         {
             stateAvatarField?.SetValue(null, null);
             sentInput = false;
+            ClearHeldMovementKeys();
             Cursor.visible = true;
 
             // With Avatar already null, the target cleanup only restores its local camera/UI.
@@ -1009,10 +1107,34 @@ namespace MP_MeowOnlineShop
             return localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
         }
 
-        private static bool KeyDown(string defName)
+        private static bool KeyDown(string defName, bool eventHeld)
         {
             KeyBindingDef key = DefDatabase<KeyBindingDef>.GetNamedSilentFail(defName);
-            return key != null && key.IsDown;
+            return eventHeld || (key != null && key.IsDown);
+        }
+
+        private static bool BindingMatches(string defName, KeyCode code)
+        {
+            if (code == KeyCode.None)
+                return false;
+
+            KeyBindingDef key = DefDatabase<KeyBindingDef>.GetNamedSilentFail(defName);
+            if (key == null)
+                return false;
+
+            return code == key.MainKey ||
+                   code == key.defaultKeyCodeA ||
+                   code == key.defaultKeyCodeB;
+        }
+
+        private static void ClearHeldMovementKeys()
+        {
+            heldMoveForward = false;
+            heldMoveBack = false;
+            heldMoveLeft = false;
+            heldMoveRight = false;
+            heldSprint = false;
+            heldWalk = false;
         }
 
         private static void UpdateVisualPrediction(object avatar, Pawn pawn, int moveX, int moveZ, bool sprint, bool walk)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.96</modVersion>
+  <modVersion>3.0.102</modVersion>
   <name>[MP] Mod compatibility for MP</name>
   <supportedVersions>
     <li>1.6</li>
@@ -248,6 +248,34 @@ async-time and multi-map multiplayer. Pawn TickInterval no longer bypasses that
 boundary when map TickLists execute in a different order after rejoin, preventing
 mental-break, interaction, health, and job-selection branches from advancing a
 later pawn's shared map Rand stream (Desync-176 through Desync-180).
+Version 3.0.97 captures Perspective Shift movement bindings from its own OnGUI
+key-down/key-up stream before other UI consumes them. Held WASD input is then
+sent through the existing ordered movement command, and any stale camera lock
+is cleared while the controlled pawn is moving so the local view follows it.
+Version 3.0.99 fixes the Desync-193 through Desync-197 rejoin cascade.
+Unique-ID allocations that run while a joining client is still finalizing the
+loaded snapshot stay on the deserialized shared counters instead of becoming
+process-local negative IDs. Gravship/orphaned-map commands are fully drained
+before the old map is abandoned and any commands left behind by the teardown
+are removed deterministically on both peers. Per-map async state samples are
+also sorted by map ID before peer comparison so map iteration order can no
+longer masquerade as a map-instance mismatch.
+Version 3.0.100 covers the Desync-198 through Desync-201 follow-up. Join-load
+unique-ID allocations stay on shared counters for the whole Game.FinalizeInit
+long event, not only while Scribe is actively loading. Multiplayer's
+trace-ignored wild animal/plant, steady environment, temp terrain and steam
+sprayer Rand consumers now run on isolated deterministic streams so they cannot
+silently shift a map's synchronized Rand. Ratkin Weapons bayonet AI no longer
+uses a time-seeded System.Random; its job decision and duration use a
+deterministic per-pawn/per-tick seed.
+Version 3.0.101 sorts the live map list by uniqueID during TickPatch
+RunCmds/DoTick and restores the original order afterwards, so commands due at
+the same tick execute in the same order on every peer even when rejoin produced
+a different map list order (Desync-202).
+Version 3.0.102 synchronizes the Axolotl "通天仪" alchemy-stove UI workflow:
+the auto-add toggle gizmo and the target-pill reset/clear actions now replay on
+every peer, so a client-only "自动添加单药" switch can no longer make only one
+peer issue fill/haul jobs and desync on the next carry SplitOff (Desync-207).
 ]]></description>
   <modDependencies>
     <li>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
@@ -64,6 +65,7 @@ namespace MP_MeowOnlineShop
         private static int _deferredAtTick = -1;
         private static int _diagnosticWindowUntilTick = int.MinValue;
         private static int _orphanDiagnosticCount;
+        private static int _drainedOrphanCount;
         private static int _traceCountTakeoff;
         private static int _traceCountTravel;
         private static int _traceCountArriveNewMap;
@@ -396,20 +398,21 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                object stale = PeekPendingOrStaleCommandFor(map);
-                if (stale != null)
+                object pending = PeekPendingOrStaleCommandFor(map);
+                if (pending != null)
                 {
-                    int commandTick = ReadInt(CmdTicksField, stale);
+                    int commandTick = ReadInt(CmdTicksField, pending);
                     if (commandTick < timer)
                     {
                         // A command that is already behind the local timer can
-                        // never run (TickPatch uses strict equality). Remove it
-                        // deterministically on both peers and abandon.
-                        DequeuePendingCommand(map);
+                        // never run (TickPatch uses strict equality). Remove
+                        // every remaining command for this map deterministically
+                        // on both peers, then let the next pass abandon.
+                        int removed = RemoveAllCommandsForMap(map);
                         Log.Warning(
                             "[MP-MeowOnlineShop] Gravship drained stale old-map " +
-                            $"command map={map.uniqueID} tick={commandTick} " +
-                            $"timer={timer}.");
+                            $"commands map={map.uniqueID} tick={commandTick} " +
+                            $"timer={timer} removed={removed}.");
                     }
                     return;
                 }
@@ -420,6 +423,7 @@ namespace MP_MeowOnlineShop
                     return;
 
                 GravshipUtility.AbandonMap(map);
+                DrainOrphanedCommands(map.uniqueID);
                 Log.Message(
                     "[MP-MeowOnlineShop] Gravship deferred abandon executed: " +
                     $"map={map.uniqueID} tick={timer}.");
@@ -444,63 +448,111 @@ namespace MP_MeowOnlineShop
             if (map == null)
                 return null;
 
-            int timer = ReadTimer();
             object worldCmds = GetCmds(AsyncWorldTimeProperty?.GetValue(null, null));
-            object hit = FindDueCommand(worldCmds, map.uniqueID, timer);
+            object hit = FindAnyCommand(worldCmds, map.uniqueID);
             if (hit != null)
                 return hit;
 
             object mapAsync = GetMapAsyncTime(map);
             object mapCmds = GetCmds(mapAsync);
-            return FindDueCommand(mapCmds, map.uniqueID, timer);
+            return FindAnyCommand(mapCmds, map.uniqueID);
         }
 
-        private static object FindDueCommand(object cmds, int mapId, int timer)
+        private static object FindAnyCommand(object cmds, int mapId)
         {
             if (!(cmds is IEnumerable enumerable))
                 return null;
 
             foreach (object command in enumerable)
             {
-                if (IsCommandForMap(command, mapId, timer))
+                if (IsCommandForMap(command, mapId))
                     return command;
             }
             return null;
         }
 
-        private static bool IsCommandForMap(object command, int mapId, int timer)
+        private static bool IsCommandForMap(object command, int mapId)
         {
             return command != null &&
-                   ReadInt(CmdMapIdField, command) == mapId &&
-                   ReadInt(CmdTicksField, command) <= timer;
+                   ReadInt(CmdMapIdField, command) == mapId;
         }
 
-        private static void DequeuePendingCommand(Map map)
+        private static int RemoveAllCommandsForMap(Map map)
         {
+            if (map == null)
+                return 0;
+
+            int removed = 0;
             object worldCmds = GetCmds(AsyncWorldTimeProperty?.GetValue(null, null));
             if (worldCmds != null)
             {
-                object head = PeekHead(worldCmds);
-                if (IsCommandForMap(head, map.uniqueID, ReadTimer()))
-                {
-                    worldCmds.GetType()
-                        .GetMethod("Dequeue", Type.EmptyTypes)
-                        ?.Invoke(worldCmds, null);
-                    return;
-                }
+                removed += RemoveCommandsForQueue(worldCmds, map.uniqueID);
             }
 
             object mapAsync = GetMapAsyncTime(map);
             object mapCmds = GetCmds(mapAsync);
             if (mapCmds != null)
             {
-                object head = PeekHead(mapCmds);
-                if (IsCommandForMap(head, map.uniqueID, ReadTimer()))
+                removed += RemoveCommandsForQueue(mapCmds, map.uniqueID);
+            }
+
+            return removed;
+        }
+
+        private static void DrainOrphanedCommands(int mapId)
+        {
+            int removed = 0;
+            object worldCmds = GetCmds(AsyncWorldTimeProperty?.GetValue(null, null));
+            if (worldCmds != null)
+                removed += RemoveCommandsForQueue(worldCmds, mapId);
+
+            if (removed <= 0 || _drainedOrphanCount >= 3)
+                return;
+
+            _drainedOrphanCount++;
+            Log.Warning(
+                "[MP-MeowOnlineShop] Drained orphaned commands after map " +
+                $"abandonment: map={mapId} removed={removed}.");
+        }
+
+        private static int RemoveCommandsForQueue(object cmds, int mapId)
+        {
+            if (cmds == null)
+                return 0;
+
+            try
+            {
+                PropertyInfo count = cmds.GetType().GetProperty("Count");
+                MethodInfo dequeue = cmds.GetType()
+                    .GetMethod("Dequeue", Type.EmptyTypes);
+                MethodInfo enqueue = cmds.GetType()
+                    .GetMethod("Enqueue", new[] { cmds.GetType().GetGenericArguments()[0] });
+                if (count == null || dequeue == null || enqueue == null)
+                    return 0;
+
+                int total = (int)count.GetValue(cmds, null);
+                if (total <= 0)
+                    return 0;
+
+                var kept = new List<object>(total);
+                int removed = 0;
+                for (int i = 0; i < total; i++)
                 {
-                    mapCmds.GetType()
-                        .GetMethod("Dequeue", Type.EmptyTypes)
-                        ?.Invoke(mapCmds, null);
+                    object command = dequeue.Invoke(cmds, null);
+                    if (IsCommandForMap(command, mapId))
+                        removed++;
+                    else
+                        kept.Add(command);
                 }
+
+                for (int i = 0; i < kept.Count; i++)
+                    enqueue.Invoke(cmds, new[] { kept[i] });
+
+                return removed;
+            }
+            catch
+            {
+                return 0;
             }
         }
 
