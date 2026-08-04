@@ -997,10 +997,13 @@ namespace MP_MeowOnlineShop
                 {
                 }
 
-                Log.Message(
-                    $"[MP-MeowOnlineShop] Perspective Shift local movement input accepted: " +
-                    $"owner={MP.PlayerName}, pawn={pawn.thingIDNumber}, input=({moveX},{moveZ}), " +
-                    $"targetControlsFrozen={targetControlsFrozen}.");
+                if (ModDebug.EnablePerspectiveShiftTrace)
+                {
+                    Log.Message(
+                        $"[MP-MeowOnlineShop] Perspective Shift local movement input accepted: " +
+                        $"owner={MP.PlayerName}, pawn={pawn.thingIDNumber}, input=({moveX},{moveZ}), " +
+                        $"targetControlsFrozen={targetControlsFrozen}.");
+                }
             }
 
             float realtime = Time.realtimeSinceStartup;

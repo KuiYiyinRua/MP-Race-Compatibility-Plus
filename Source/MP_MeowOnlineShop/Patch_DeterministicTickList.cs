@@ -37,6 +37,12 @@ namespace MP_MeowOnlineShop
             new HashSet<int>();
         private static readonly HashSet<int> LoggedMissingProjectileMaps =
             new HashSet<int>();
+        private static readonly HashSet<int> LoggedMissingNormalThingMaps =
+            new HashSet<int>();
+        private static readonly Dictionary<Map, NormalTickerCandidateCache>
+            NormalTickerCandidates =
+                new Dictionary<Map, NormalTickerCandidateCache>();
+        private const int NormalTickerCacheRefreshInterval = 600;
         private static readonly HashSet<int> LoggedRuntimeOwnerMaps =
             new HashSet<int>();
         private static bool _loggedComplexMapCoverage;
@@ -564,6 +570,60 @@ namespace MP_MeowOnlineShop
                 }
             }
 
+            // Desync-235 through Desync-237 showed that Pawn and Projectile
+            // coverage is not sufficient.  A missing normal-ticker building
+            // (the Ancot/Milira plasma turret in the bundle) lets one peer
+            // advance to an unrelated projectile or pawn, after which every
+            // later Rand and UniqueID allocation diverges.  Include every
+            // spawned normal-ticker Thing from the authoritative map registry.
+            // The candidate list is cached and only rescanned on a map-count
+            // change or a bounded refresh, so this repair does not turn every
+            // normal tick into a full scan of a large map's item registry.
+            int normalThingsAdded = 0;
+            List<string> normalThingIds = null;
+            if (tickType == TickerType.Normal)
+            {
+                List<Thing> candidates = GetNormalTickerCandidates(ownerMap);
+                if (candidates != null)
+                {
+                    for (int i = 0; i < candidates.Count; i++)
+                    {
+                        Thing thing = candidates[i];
+                        if (IsInvalidForOwner(thing, ownerMap) ||
+                            !BelongsToTickList(thing, TickerType.Normal) ||
+                            StableHash(thing) % buckets.Count != bucketIndex ||
+                            !seen.Add(thing))
+                        {
+                            continue;
+                        }
+
+                        bucket.Add(thing);
+                        normalThingsAdded++;
+                        if (!LoggedMissingNormalThingMaps.Contains(ownerMap.uniqueID))
+                        {
+                            if (normalThingIds == null)
+                                normalThingIds = new List<string>();
+                            if (normalThingIds.Count < 8)
+                                normalThingIds.Add(thing.ThingID ?? "<null>");
+                        }
+                    }
+                }
+            }
+
+            if (normalThingsAdded > 0)
+            {
+                bucket.Sort(CompareStableThings);
+                if (LoggedMissingNormalThingMaps.Add(ownerMap.uniqueID))
+                {
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Restored missing spawned normal TickList " +
+                        $"members before execution: map={ownerMap.uniqueID}, " +
+                        $"bucket={bucketIndex}, added={normalThingsAdded}, " +
+                        $"ids={string.Join(",", normalThingIds ?? new List<string>())}. " +
+                        "This covers buildings and holders in addition to pawns and projectiles.");
+                }
+            }
+
             if (removed <= 0 || !LoggedStaleMemberMaps.Add(ownerMap.uniqueID))
                 return;
 
@@ -574,6 +634,51 @@ namespace MP_MeowOnlineShop
                 $"removed={removed}, ids={string.Join(",", removedIds ?? new List<string>())}. " +
                 "This prevents a long-running host from ticking entities omitted by a " +
                 "cold-joining client's authoritative map rebuild.");
+        }
+
+        private static List<Thing> GetNormalTickerCandidates(Map map)
+        {
+            if (map == null)
+                return null;
+
+            List<Thing> allThings = map.listerThings?.AllThings;
+            if (allThings == null)
+                return null;
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (!NormalTickerCandidates.TryGetValue(map, out NormalTickerCandidateCache cache) ||
+                cache.AllThingsCount != allThings.Count ||
+                currentTick - cache.LastRefreshTick >= NormalTickerCacheRefreshInterval)
+            {
+                cache = new NormalTickerCandidateCache
+                {
+                    AllThingsCount = allThings.Count,
+                    LastRefreshTick = currentTick,
+                    Things = new List<Thing>()
+                };
+
+                for (int i = 0; i < allThings.Count; i++)
+                {
+                    Thing thing = allThings[i];
+                    if (!IsInvalidForOwner(thing, map) &&
+                        BelongsToTickList(thing, TickerType.Normal))
+                    {
+                        cache.Things.Add(thing);
+                    }
+                }
+
+                cache.Things.Sort(CompareStableThings);
+                NormalTickerCandidates[map] = cache;
+            }
+
+            return cache.Things;
+        }
+
+        private sealed class NormalTickerCandidateCache
+        {
+            internal int AllThingsCount;
+            internal int LastRefreshTick;
+            internal List<Thing> Things;
         }
 
         private static int RebuildSingleTickList(

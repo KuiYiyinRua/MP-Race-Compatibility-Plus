@@ -43,10 +43,12 @@ namespace MP_MeowOnlineShop
         public static readonly bool EnableCaravanUiRandTrace = false;
         /// <summary>true 时输出 Axolotl 修炼功法切换 send/replay 与派生数值快照日志（默认 false）。</summary>
         public static readonly bool EnableAxolotlCultivationToggleTrace = false;
+        public static readonly bool EnableAxolotlCommsTrace = false;
         /// <summary>true 时输出通讯台 Gizmo/FloatMenu 三层 Rand 包裹日志（默认 false）。</summary>
         public static readonly bool EnableCommsRandTrace = false;
         /// <summary>true 时输出 World/Zone Rand Push-Pop 配对计数日志（默认 false）。</summary>
         public static readonly bool EnableWorldRandScopeTrace = false;
+        public static readonly bool EnablePerspectiveShiftTrace = false;
     }
 
     /// <summary>
@@ -95,6 +97,8 @@ namespace MP_MeowOnlineShop
                 ApplyWorldRandStabilizerPatches();
                 Patch_GravshipAbandonQueue.Apply(Harmony);
                 Patch_TransportShipUnloadMp.Apply(Harmony);
+                Patch_TransporterLoadingSessionMp.Apply(Harmony);
+                Patch_MpServerLagLogThrottle.Apply(Harmony);
                 ApplyCaravanFormingDiagnostics();
                 ApplyVehicleFrameworkCaravanProxyGuard();
                 Patch_MpDesyncTraceBudget.Apply(Harmony);
@@ -114,6 +118,7 @@ namespace MP_MeowOnlineShop
                 Patch_DubsMintMenusPlant.Apply(Harmony);
                 Patch_MiliraActiveDropPod.Apply(Harmony);
                 Patch_MiliraFallenAngelQuest.Apply(Harmony);
+                Patch_MiliraCaravanRaidFactionContext.Apply(Harmony);
                 Patch_MiliraTaleStorytellerDeterminism.Apply(Harmony);
                 Patch_MiliraSupplyMp.Apply(Harmony);
                 Patch_MiliraMultifactionRelations.Apply(Harmony);
@@ -127,6 +132,7 @@ namespace MP_MeowOnlineShop
                 Patch_InsectGirlPermanentWoundMp.Apply(Harmony);
                 Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony);
                 Patch_DeterministicTickList.Apply(Harmony);
+                Patch_OrderedJobMultifactionContext.Apply(Harmony);
                 Patch_MapStateOrderNormalizer.Apply(Harmony);
                 Patch_CommandOrderDeterminism.Apply(Harmony);
                 Patch_AsyncTimeMapLoadSafety.Apply(Harmony);
@@ -162,6 +168,7 @@ namespace MP_MeowOnlineShop
                     () => Patch_RatkinWeaponsMp.Apply(Harmony));
                 ApplyMpConfigHotSyncPatch();
                 Patch_QuestAndIdeologyMp.Apply();
+                Patch_IncidentRaidFactionContext.Apply(Harmony);
                 Patch_MiningDiscoveryMp.Apply();
                 Patch_WorkSiteQuestDeterminism.Apply(Harmony);
                 Patch_CaravanVisitSiteFactionDeterminism.Apply(Harmony);

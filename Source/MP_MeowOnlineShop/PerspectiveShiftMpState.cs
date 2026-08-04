@@ -249,12 +249,15 @@ namespace MP_MeowOnlineShop
                     if (state.movementDiagnosticTick >= 0 && now >= state.movementDiagnosticTick)
                     {
                         state.movementDiagnosticTick = -1;
-                        Log.Message(
-                            $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
-                            $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
-                            $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
-                            $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
-                            $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                        if (ModDebug.EnablePerspectiveShiftTrace)
+                        {
+                            Log.Message(
+                                $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
+                                $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
+                                $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
+                                $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
+                                $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                        }
                     }
                 }
             }
@@ -462,12 +465,15 @@ namespace MP_MeowOnlineShop
 
             if (forceNew)
             {
-                Log.Message(
-                    $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
-                    $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
-                    $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
-                    $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
-                    $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+                if (ModDebug.EnablePerspectiveShiftTrace)
+                {
+                    Log.Message(
+                        $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
+                        $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
+                        $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
+                        $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
+                        $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+                }
             }
         }
 

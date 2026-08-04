@@ -101,6 +101,7 @@
     <Compile Include="Patch_DefensivePositionsMp.cs" />
     <Compile Include="Patch_MpConfigHotSync.cs" />
     <Compile Include="Patch_MpDesyncTraceBudget.cs" />
+    <Compile Include="Patch_MpServerLagLogThrottle.cs" />
     <Compile Include="Patch_AsyncRandStateDiagnostic.cs" />
     <Compile Include="Patch_PerformanceOptimizerMp.cs" />
     <Compile Include="Patch_SlowerPawnTickRateMp.cs" />
@@ -109,6 +110,7 @@
     <Compile Include="Patch_DubsMintMenusPlant.cs" />
     <Compile Include="Patch_MiliraActiveDropPod.cs" />
     <Compile Include="Patch_MiliraFallenAngelQuest.cs" />
+    <Compile Include="Patch_MiliraCaravanRaidFactionContext.cs" />
     <Compile Include="Patch_MiliraTaleStorytellerDeterminism.cs" />
     <Compile Include="Patch_MiliraSupplyMp.cs" />
     <Compile Include="Patch_MiliraMultifactionRelations.cs" />
@@ -125,6 +127,7 @@
     <Compile Include="Patch_MutantAbilityCacheMp.cs" />
     <Compile Include="Patch_InsectGirlPermanentWoundMp.cs" />
     <Compile Include="Patch_DeterministicTickList.cs" />
+    <Compile Include="Patch_OrderedJobMultifactionContext.cs" />
     <Compile Include="Patch_AsyncTimeMapLoadSafety.cs" />
     <Compile Include="Patch_NudityMattersMoreMp.cs" />
     <Compile Include="Patch_DeterministicWorldPawns.cs" />
@@ -135,6 +138,7 @@
     <Compile Include="Patch_DisableHarbingerTreeSpawn.cs" />
     <Compile Include="Patch_RitualObligationDateDeterminism.cs" />
     <Compile Include="Patch_RitualRoleChangeMultifactionPersistence.cs" />
+    <Compile Include="RitualRoleAssignmentPersistence.cs" />
     <Compile Include="Patch_GoodwillRecalcMultifactionDeterminism.cs" />
     <Compile Include="Patch_TraderStockDeterminism.cs" />
     <Compile Include="Patch_RWBeheadingRandIsolation.cs" />
@@ -152,6 +156,7 @@
     <Compile Include="Patch_PsychicRitualVfxRandIsolation.cs" />
     <Compile Include="Patch_PsychicRitualSkipAbductionMultifaction.cs" />
     <Compile Include="Patch_EliteRaidDeterminism.cs" />
+    <Compile Include="Patch_IncidentRaidFactionContext.cs" />
     <Compile Include="Patch_KiiroStoryEventsMp.cs" />
     <Compile Include="Patch_RatkinWeaponsMp.cs" />
     <Compile Include="Patch_MultifactionTpsOptimize.cs" />
@@ -216,6 +221,7 @@
     <Compile Include="Patch_AncientAmorphousThreatMp.cs" />
     <Compile Include="Patch_GravshipAbandonQueue.cs" />
     <Compile Include="Patch_TransportShipUnloadMp.cs" />
+    <Compile Include="Patch_TransporterLoadingSessionMp.cs" />
     <Compile Include="PerspectiveShiftMpState.cs" />
     <Compile Include="Patch_PerspectiveShiftMp.cs" />
   </ItemGroup>
