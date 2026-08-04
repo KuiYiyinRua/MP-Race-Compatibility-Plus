@@ -11,19 +11,15 @@ using Verse;
 namespace MP_MeowOnlineShop
 {
     /// <summary>
-    /// Multiplayer keeps every map-context Sync command in its global command
-    /// queue (consistentCommandOrder=true). During the Odyssey takeoff the
-    /// cutscene freezes the shared timer; when it resumes, commands queued at
-    /// the freeze tick may become due only after TakeoffEnded has abandoned
-    /// the old map. TickPatch.RunCmds then logs
-    /// "!!! Tickable of {mapId} not found!" and silently drops the command,
-    /// leaving the issuing side out of step with the peer that executed it
-    /// (Desync-108/109: gravship takeoff then "Wrong random state").
+    /// Odyssey takeoff is already frozen and synchronized by Multiplayer.
+    /// Command arrival queues are peer-local transport state, so map
+    /// abandonment must never branch on their contents. Desync-216 showed that
+    /// the old queue-driven deferral preserved different runtime TickList
+    /// memberships after takeoff and one peer then ticked extra turret work.
     ///
-    /// The fix defers AbandonMap by at most one tick when due commands for
-    /// that map are still queued, so the pending command executes while the
-    /// old map still exists. The same check runs on every peer, so the extra
-    /// tick is deterministic.
+    /// Multiplayer retains ownership of map abandonment. At the shared
+    /// TakeoffEnded boundary we instead rebuild every async map TickList from
+    /// its spawned registry, a deterministic simulation-state source.
     /// </summary>
     internal static class Patch_GravshipAbandonQueue
     {
@@ -107,12 +103,11 @@ namespace MP_MeowOnlineShop
                     "LandingEnded",
                     Type.EmptyTypes);
 
-                if (takeoffEnded == null || abandonMap == null || runCmds == null)
+                if (takeoffEnded == null)
                 {
                     Log.Warning(
-                        "[MP-MeowOnlineShop] Gravship abandon queue target " +
-                        $"resolution failed; patch skipped takeoff={takeoffEnded != null} " +
-                        $"abandon={abandonMap != null} runCmds={runCmds != null}.");
+                        "[MP-MeowOnlineShop] Gravship lifecycle guard skipped: " +
+                        "TakeoffEnded was not resolved.");
                     return;
                 }
 
@@ -127,28 +122,6 @@ namespace MP_MeowOnlineShop
                     finalizer: new HarmonyMethod(
                         typeof(Patch_GravshipAbandonQueue),
                         nameof(TakeoffEndedFinalizer))
-                    {
-                        priority = Priority.Last
-                    });
-                harmony.Patch(
-                    abandonMap,
-                    prefix: new HarmonyMethod(
-                        typeof(Patch_GravshipAbandonQueue),
-                        nameof(AbandonMapPrefix))
-                    {
-                        priority = Priority.First
-                    });
-                harmony.Patch(
-                    runCmds,
-                    prefix: new HarmonyMethod(
-                        typeof(Patch_GravshipAbandonQueue),
-                        nameof(RunCmdsPrefix))
-                    {
-                        priority = Priority.First
-                    },
-                    postfix: new HarmonyMethod(
-                        typeof(Patch_GravshipAbandonQueue),
-                        nameof(RunCmdsPostfix))
                     {
                         priority = Priority.Last
                     });
@@ -199,8 +172,9 @@ namespace MP_MeowOnlineShop
                 }
 
                 Log.Message(
-                    "[MP-MeowOnlineShop] Gravship abandon queue guard active: " +
-                    "old-map commands are drained before the takeoff map is abandoned.");
+                    "[MP-MeowOnlineShop] Gravship lifecycle guard active: " +
+                    "Multiplayer owns map abandonment; async TickLists rebuild " +
+                    "at the shared takeoff boundary.");
             }
             catch (Exception e)
             {
@@ -220,7 +194,32 @@ namespace MP_MeowOnlineShop
 
         private static Exception TakeoffEndedFinalizer(Exception __exception)
         {
-            _inTakeoffEnded = false;
+            try
+            {
+                if (MP.IsInMultiplayer && __exception == null)
+                {
+                    int rebuilt = Patch_DeterministicTickList
+                        .RebuildAllAsyncTickListsForStableMapLifecycle(
+                            "gravship-takeoff");
+                    if (_traceCountTakeoff < 3)
+                    {
+                        _traceCountTakeoff++;
+                        Log.Message(
+                            "[MP-MeowOnlineShop] GRAVSHIP_TAKEOFF_TICKLIST_REBUILD " +
+                            "maps=" + rebuilt + " tick=" + ReadTimer() + ".");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Gravship takeoff TickList rebuild " +
+                    "failed open: " + e.Message);
+            }
+            finally
+            {
+                _inTakeoffEnded = false;
+            }
             return __exception;
         }
 

@@ -94,6 +94,7 @@ namespace MP_MeowOnlineShop
                 // 与 Meow Framework 无关的联机补丁：始终尝试应用（内部按类型是否存在再决定是否打补丁）
                 ApplyWorldRandStabilizerPatches();
                 Patch_GravshipAbandonQueue.Apply(Harmony);
+                Patch_TransportShipUnloadMp.Apply(Harmony);
                 ApplyCaravanFormingDiagnostics();
                 ApplyVehicleFrameworkCaravanProxyGuard();
                 Patch_MpDesyncTraceBudget.Apply(Harmony);
@@ -124,6 +125,7 @@ namespace MP_MeowOnlineShop
                 Patch_UniqueIdSimulationBoundary.Apply(Harmony);
                 Patch_MutantAbilityCacheMp.Apply(Harmony);
                 Patch_InsectGirlPermanentWoundMp.Apply(Harmony);
+                Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony);
                 Patch_DeterministicTickList.Apply(Harmony);
                 Patch_MapStateOrderNormalizer.Apply(Harmony);
                 Patch_CommandOrderDeterminism.Apply(Harmony);
@@ -133,6 +135,10 @@ namespace MP_MeowOnlineShop
                 Patch_PawnFilthRandIsolation.Apply(Harmony);
                 Patch_MpIgnoredRandIsolation.Apply(Harmony);
                 Patch_HospitalityInteractions.Apply(Harmony);
+                // This is an unconditional, user-requested incident kill switch.
+                // It must run before optional third-party patches: a failed dynamic
+                // patch (for example RatkinWeapons) aborts the remaining bootstrap.
+                Patch_DisableHarbingerTreeSpawn.Apply(Harmony);
                 Patch_HarbingerTreeSpawnDeterminism.Apply(Harmony);
                 Patch_BloodAnimationsMp.Apply(Harmony);
                 Patch_CaravanFloatMenuDiagnostic.Apply(Harmony);
@@ -145,11 +151,15 @@ namespace MP_MeowOnlineShop
                 Patch_InspirationScheduleMp.Apply(Harmony);
                 Patch_ChildcareRandMp.Apply(Harmony);
                 Patch_RitualVisualEffectRandIsolation.Apply(Harmony);
+                Patch_PsychicRitualVfxRandIsolation.Apply(Harmony);
+                Patch_PsychicRitualSkipAbductionMultifaction.Apply(Harmony);
                 Patch_EliteRaidDeterminism.Apply(Harmony);
                 Patch_KiiroStoryEventsMp.Apply(Harmony);
                 Patch_SearchAndDestroyMp.Apply(Harmony);
                 Patch_DefensivePositionsMp.Apply(Harmony);
-                Patch_RatkinWeaponsMp.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "RatkinWeapons deterministic bayonet guard",
+                    () => Patch_RatkinWeaponsMp.Apply(Harmony));
                 ApplyMpConfigHotSyncPatch();
                 Patch_QuestAndIdeologyMp.Apply();
                 Patch_MiningDiscoveryMp.Apply();
@@ -163,8 +173,8 @@ namespace MP_MeowOnlineShop
                 Patch_StorytellerIntervalDeterminism.Apply(Harmony);
                 Patch_MilianDressMp.Apply(Harmony);
                 Patch_HarbingerTreeSpawnExecutionDeterminism.Apply(Harmony);
-                Patch_DisableHarbingerTreeSpawn.Apply(Harmony);
                 Patch_RitualObligationDateDeterminism.Apply(Harmony);
+                Patch_RitualRoleChangeMultifactionPersistence.Apply(Harmony);
                 Patch_GoodwillRecalcMultifactionDeterminism.Apply(Harmony);
                 Patch_TraderStockDeterminism.Apply(Harmony);
                 Patch_InsectGirlSpawnFactionDeterminism.Apply(Harmony);
@@ -183,6 +193,12 @@ namespace MP_MeowOnlineShop
                 ApplyRpgInventoryDropPatch();
                 ApplyRimJobWorldPatches();
                 Patch_RjwMenstruation.Apply(Harmony);
+                Patch_RjwOnaholeModes.Apply(Harmony);
+                Patch_RjwBrothelDeterminism.Apply(Harmony);
+                Patch_RjwRomanceRandom.Apply(Harmony);
+                Patch_RjwSexSlaveCraft.Apply(Harmony);
+                Patch_RjwEventsDeterminism.Apply(Harmony);
+                Patch_RjwEroTraderDeterminism.Apply(Harmony);
                 Patch_SecretaryNexusMp.Apply(Harmony);
                 Patch_FacialAnimationMp.Apply(Harmony);
                 ApplyAxolotlWeaponModePatches();
@@ -209,6 +225,24 @@ namespace MP_MeowOnlineShop
             catch (Exception e)
             {
                 Log.Error($"[MP-MeowOnlineShop] Failed to apply MP patch: {e}");
+            }
+        }
+
+        // A compatibility patch for an optional third-party mod must not prevent
+        // subsequent independent patches from registering.  Desync-212 through
+        // Desync-214 proved that one invalid Ratkin transpiler stopped the
+        // bootstrap before the Harbinger kill switch was reached.
+        private static void ApplyOptionalPatch(string patchName, Action apply)
+        {
+            try
+            {
+                apply?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Optional patch failed; continuing " +
+                    $"startup: {patchName}. {e.Message}");
             }
         }
 
@@ -1430,6 +1464,7 @@ namespace MP_MeowOnlineShop
                 }
 
                 ApplyRigorMortisSongCommonalityGuard();
+                Patch_RigorMortisStateActions.Apply(harmonyRM);
 
                 try
                 {

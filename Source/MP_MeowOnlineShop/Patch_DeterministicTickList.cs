@@ -35,9 +35,12 @@ namespace MP_MeowOnlineShop
             new HashSet<int>();
         private static readonly HashSet<int> LoggedMissingPawnMaps =
             new HashSet<int>();
+        private static readonly HashSet<int> LoggedMissingProjectileMaps =
+            new HashSet<int>();
         private static readonly HashSet<int> LoggedRuntimeOwnerMaps =
             new HashSet<int>();
         private static bool _loggedComplexMapCoverage;
+        private static bool _loggedOwnerFallback;
         private static FieldInfo _asyncMapField;
         private static FieldInfo _asyncTickingMapField;
         private static FieldInfo _asyncNormalField;
@@ -193,6 +196,98 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        internal static int RebuildAllAsyncTickListsForStableMapLifecycle(
+            string boundary)
+        {
+            if (!MP.IsInMultiplayer || Find.Maps == null)
+                return 0;
+
+            int rebuiltMaps = 0;
+            for (int i = 0; i < Find.Maps.Count; i++)
+            {
+                Map map = Find.Maps[i];
+                if (map == null)
+                    continue;
+
+                object asyncTime = GetAsyncTime(map);
+                if (asyncTime == null)
+                    continue;
+
+                var normal = _asyncNormalField?.GetValue(asyncTime) as TickList;
+                var rare = _asyncRareField?.GetValue(asyncTime) as TickList;
+                var longTicks = _asyncLongField?.GetValue(asyncTime) as TickList;
+                if (normal == null || rare == null || longTicks == null)
+                    continue;
+
+                RebuildLifecycleTickList(normal, map);
+                RebuildLifecycleTickList(rare, map);
+                RebuildLifecycleTickList(longTicks, map);
+                rebuiltMaps++;
+            }
+
+            return rebuiltMaps;
+        }
+
+        private static object GetAsyncTime(Map map)
+        {
+            try
+            {
+                Type extensions = AccessTools.TypeByName(
+                    "Multiplayer.Client.Extensions");
+                MethodInfo asyncTime = AccessTools.Method(
+                    extensions, "AsyncTime", new[] { typeof(Map) });
+                return asyncTime?.Invoke(null, new object[] { map });
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Map ResolveTickListOwner(TickList tickList)
+        {
+            if (tickList == null || Find.Maps == null)
+                return null;
+
+            for (int i = 0; i < Find.Maps.Count; i++)
+            {
+                Map map = Find.Maps[i];
+                if (map == null)
+                    continue;
+
+                object asyncTime = GetAsyncTime(map);
+                if (asyncTime == null)
+                    continue;
+
+                Type asyncType = asyncTime.GetType();
+                FieldInfo normal = _asyncNormalField ??
+                    AccessTools.Field(asyncType, "tickListNormal");
+                FieldInfo rare = _asyncRareField ??
+                    AccessTools.Field(asyncType, "tickListRare");
+                FieldInfo longTicks = _asyncLongField ??
+                    AccessTools.Field(asyncType, "tickListLong");
+
+                if ((normal != null &&
+                     ReferenceEquals(normal.GetValue(asyncTime), tickList)) ||
+                    (rare != null &&
+                     ReferenceEquals(rare.GetValue(asyncTime), tickList)) ||
+                    (longTicks != null &&
+                     ReferenceEquals(longTicks.GetValue(asyncTime), tickList)))
+                {
+                    return map;
+                }
+            }
+
+            return null;
+        }
+
+        private static void RebuildLifecycleTickList(TickList tickList, Map map)
+        {
+            ListOwners[tickList] = map;
+            RebuildSingleTickList(tickList, map, out _);
+            InitializedLists.Add(tickList);
+        }
+
         private static void ResetTickList(TickList tickList)
         {
             var buckets = ThingListsField.GetValue(tickList) as List<List<Thing>>;
@@ -244,9 +339,17 @@ namespace MP_MeowOnlineShop
             // without this compatibility patch observing that initialization.
             // AsyncTimeComp sets its static tickingMap immediately before all
             // three per-map TickLists execute, so it is the authoritative owner
-            // at this boundary. Rebind on every execution rather than allowing
+            // at this boundary. If that field is unavailable, fall back to
+            // matching the live TickList instance against every map's
+            // AsyncTimeComp. Rebind on every execution rather than allowing
             // only the rejoining client to repair a missing spawned pawn.
             Map runtimeOwner = _asyncTickingMapField?.GetValue(null) as Map;
+            bool usedOwnerFallback = false;
+            if (runtimeOwner == null)
+            {
+                runtimeOwner = ResolveTickListOwner(__instance);
+                usedOwnerFallback = runtimeOwner != null;
+            }
             if (runtimeOwner != null && ownerMap != runtimeOwner)
             {
                 ownerMap = runtimeOwner;
@@ -255,9 +358,20 @@ namespace MP_MeowOnlineShop
                 {
                     Log.Message(
                         "[MP-MeowOnlineShop] Bound active async TickLists from " +
-                        $"Multiplayer tickingMap: map={runtimeOwner.uniqueID}. " +
+                        (usedOwnerFallback
+                            ? "the live AsyncTimeComp owner scan"
+                            : "Multiplayer tickingMap") +
+                        $": map={runtimeOwner.uniqueID}. " +
                         "Runtime membership reconciliation now applies equally " +
                         "to long-running hosts and joining clients.");
+                }
+                if (usedOwnerFallback && !_loggedOwnerFallback)
+                {
+                    _loggedOwnerFallback = true;
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Deterministic TickList owner " +
+                        "fallback is active; Multiplayer tickingMap was not " +
+                        "resolved from this runtime.");
                 }
             }
 
@@ -391,6 +505,62 @@ namespace MP_MeowOnlineShop
                         $"members before execution: map={ownerMap.uniqueID}, " +
                         $"bucket={bucketIndex}, added={added}, " +
                         $"ids={string.Join(",", addedIds ?? new List<string>())}.");
+                }
+            }
+
+            // Desync-05 proved that dynamic Normal-TickList members need the
+            // same inverse repair as pawns. The cold client rebuilt
+            // MiliraBullet_PlasmaPistolCharged40274 from listerThings while the
+            // long-running host no longer had that still-spawned projectile in
+            // its runtime TickList. The client consequently executed
+            // Projectile.CheckForFreeIntercept alone. Scan only RimWorld's
+            // dedicated projectile group, rather than every map thing, and
+            // restore missing members immediately before the Normal list runs.
+            int projectilesAdded = 0;
+            List<string> projectileIds = null;
+            if (tickType == TickerType.Normal)
+            {
+                List<Thing> projectiles = ownerMap.listerThings?
+                    .ThingsInGroup(ThingRequestGroup.Projectile);
+                if (projectiles != null)
+                {
+                    for (int i = 0; i < projectiles.Count; i++)
+                    {
+                        Thing projectile = projectiles[i];
+                        if (!(projectile is Projectile) || projectile.Destroyed ||
+                            !projectile.Spawned || projectile.Map != ownerMap ||
+                            projectile.def == null ||
+                            StableHash(projectile) % buckets.Count != bucketIndex ||
+                            !seen.Add(projectile))
+                        {
+                            continue;
+                        }
+
+                        bucket.Add(projectile);
+                        projectilesAdded++;
+                        if (!LoggedMissingProjectileMaps.Contains(ownerMap.uniqueID))
+                        {
+                            if (projectileIds == null)
+                                projectileIds = new List<string>();
+                            if (projectileIds.Count < 8)
+                                projectileIds.Add(projectile.ThingID ?? "<null>");
+                        }
+                    }
+                }
+            }
+
+            if (projectilesAdded > 0)
+            {
+                bucket.Sort(CompareStableThings);
+                if (LoggedMissingProjectileMaps.Add(ownerMap.uniqueID))
+                {
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Restored missing spawned projectile TickList " +
+                        $"members before execution: map={ownerMap.uniqueID}, " +
+                        $"bucket={bucketIndex}, added={projectilesAdded}, " +
+                        $"ids={string.Join(",", projectileIds ?? new List<string>())}. " +
+                        "This keeps long-running hosts aligned with cold clients that " +
+                        "rebuild projectiles from the authoritative map registry.");
                 }
             }
 

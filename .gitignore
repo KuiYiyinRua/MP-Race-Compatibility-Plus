@@ -32,6 +32,7 @@ _candidate_*/
 *.code-workspace
 .cursor/
 .kimi/
+.[!.]*/
 
 # OS noise
 Thumbs.db

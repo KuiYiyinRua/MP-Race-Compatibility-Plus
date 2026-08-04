@@ -26,6 +26,7 @@ namespace MP_MeowOnlineShop
         public bool walk;
         public int movementJobId = -1;
         public int lastInputTick = -1;
+        public int lastAppliedInputSequence;
         public int nextMovementJobTick;
         public Lord savedLord;
         public Building pendingMinifiedPickup;
@@ -35,6 +36,8 @@ namespace MP_MeowOnlineShop
         public Dictionary<string, bool> needsAlerted = new Dictionary<string, bool>();
 
         [Unsaved] public object runtimeAvatar;
+        [Unsaved] public int movementDiagnosticTick = -1;
+        [Unsaved] public IntVec3 movementDiagnosticStart = IntVec3.Invalid;
 
         public void ExposeData()
         {
@@ -50,6 +53,7 @@ namespace MP_MeowOnlineShop
             Scribe_Values.Look(ref walk, "walk");
             Scribe_Values.Look(ref movementJobId, "movementJobId", -1);
             Scribe_Values.Look(ref lastInputTick, "lastInputTick", -1);
+            Scribe_Values.Look(ref lastAppliedInputSequence, "lastAppliedInputSequence");
             Scribe_Values.Look(ref nextMovementJobTick, "nextMovementJobTick");
             Scribe_References.Look(ref savedLord, "savedLord");
             Scribe_References.Look(ref pendingMinifiedPickup, "pendingMinifiedPickup");
@@ -65,6 +69,7 @@ namespace MP_MeowOnlineShop
     public sealed class PerspectiveShiftMpComponent : GameComponent
     {
         private List<PerspectiveShiftControlledAvatar> controlled = new List<PerspectiveShiftControlledAvatar>();
+        [Unsaved] internal bool hadOwnershipRecordsAtLoad;
 
         public PerspectiveShiftMpComponent(Game game)
         {
@@ -141,28 +146,55 @@ namespace MP_MeowOnlineShop
             ReleaseState(state, restoreLord: true);
         }
 
-        public void SetMoveIntent(string owner, Pawn pawn, int epoch, int moveX, int moveZ, bool sprint, bool walk)
+        public void SetMoveIntent(
+            string owner,
+            Pawn pawn,
+            int epoch,
+            int inputSequence,
+            int moveX,
+            int moveZ,
+            bool sprint,
+            bool walk)
         {
             PerspectiveShiftControlledAvatar state = ForOwner(owner);
             if (state == null || state.pawn != pawn || state.epoch != epoch)
+                return;
+            if (inputSequence <= state.lastAppliedInputSequence)
                 return;
 
             int normalizedX = Math.Max(-1, Math.Min(1, moveX));
             int normalizedZ = Math.Max(-1, Math.Min(1, moveZ));
             bool normalizedWalk = !sprint && walk;
-            bool changed = state.moveX != normalizedX || state.moveZ != normalizedZ ||
-                           state.sprint != sprint || state.walk != normalizedWalk;
+            bool directionChanged = state.moveX != normalizedX || state.moveZ != normalizedZ;
+            bool gaitChanged = state.sprint != sprint || state.walk != normalizedWalk;
             state.moveX = normalizedX;
             state.moveZ = normalizedZ;
             state.sprint = sprint;
             state.walk = normalizedWalk;
+            state.lastAppliedInputSequence = inputSequence;
             state.lastInputTick = Find.TickManager?.TicksGame ?? 0;
             Patch_PerspectiveShiftMp.CopyIntentToRuntime(state);
+            Patch_PerspectiveShiftMp.NotifyMoveIntentApplied(
+                state,
+                inputSequence);
 
             if (state.moveX == 0 && state.moveZ == 0)
                 StopMovementJob(state);
             else
-                EnsureMovementJob(state, forceNew: changed);
+            {
+                // Changing sprint/walk used to tear down and recreate the Goto
+                // job even though its route and destination were unchanged. That
+                // introduces a visible pause on every modifier transition. The
+                // command is already replayed identically on every peer, so the
+                // active compatibility-owned job can safely adopt the new gait.
+                if (gaitChanged && IsMovementJob(state))
+                    state.pawn.CurJob.locomotionUrgency = MovementUrgency(state);
+                bool retargeted = directionChanged &&
+                                  TryRetargetMovementJob(state);
+                EnsureMovementJob(
+                    state,
+                    forceNew: directionChanged && !retargeted);
+            }
         }
 
         public override void GameComponentTick()
@@ -170,7 +202,23 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Patch_PerspectiveShiftMp.Active)
                 return;
 
-            foreach (PerspectiveShiftControlledAvatar state in OrderedStates.ToList())
+            if (MpRuntimeInfo.TryGetAsyncTimeActive(out bool asyncTime) && asyncTime)
+                return;
+
+            TickStates(OrderedStates.ToList());
+        }
+
+        public void TickForMap(Map map)
+        {
+            if (map == null || !MP.IsInMultiplayer || !Patch_PerspectiveShiftMp.Active)
+                return;
+
+            TickStates(OrderedStates.Where(state => state.pawn?.Map == map).ToList());
+        }
+
+        private void TickStates(IEnumerable<PerspectiveShiftControlledAvatar> states)
+        {
+            foreach (PerspectiveShiftControlledAvatar state in states)
             {
                 Pawn pawn = state.pawn;
                 if (pawn == null || pawn.Destroyed || pawn.Dead)
@@ -196,18 +244,90 @@ namespace MP_MeowOnlineShop
                 }
 
                 if (state.moveX != 0 || state.moveZ != 0)
+                {
                     EnsureMovementJob(state, forceNew: false);
+                    if (state.movementDiagnosticTick >= 0 && now >= state.movementDiagnosticTick)
+                    {
+                        state.movementDiagnosticTick = -1;
+                        Log.Message(
+                            $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
+                            $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
+                            $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
+                            $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
+                            $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                    }
+                }
             }
         }
 
         public override void FinalizeInit()
         {
             base.FinalizeInit();
-            controlled.RemoveAll(s => s == null || s.pawn == null || string.IsNullOrEmpty(s.owner));
+            NormalizeLoadedRegistry();
             foreach (PerspectiveShiftControlledAvatar state in OrderedStates)
                 Patch_PerspectiveShiftMp.EnsureRuntimeAvatar(state);
 
             Patch_PerspectiveShiftMp.RestoreLocalAvatarFromRegistry();
+        }
+
+        private void NormalizeLoadedRegistry()
+        {
+            hadOwnershipRecordsAtLoad = controlled.Any(state => state != null);
+            var valid = controlled
+                .Where(state =>
+                    state != null && state.pawn != null &&
+                    !state.pawn.Destroyed &&
+                    !string.IsNullOrEmpty(state.owner))
+                .ToList();
+            var duplicateOwners = new HashSet<string>(
+                valid.GroupBy(state => state.owner, StringComparer.Ordinal)
+                    .Where(group => group.Count() > 1)
+                    .Select(group => group.Key),
+                StringComparer.Ordinal);
+            var duplicatePawns = new HashSet<Pawn>(
+                valid.GroupBy(state => state.pawn)
+                    .Where(group => group.Count() > 1)
+                    .Select(group => group.Key));
+
+            List<PerspectiveShiftControlledAvatar> rejected = controlled
+                .Where(state => state != null &&
+                    (state.pawn == null || state.pawn.Destroyed ||
+                     string.IsNullOrEmpty(state.owner) ||
+                     duplicateOwners.Contains(state.owner) ||
+                     duplicatePawns.Contains(state.pawn)))
+                .Distinct()
+                .OrderBy(state => state.owner, StringComparer.Ordinal)
+                .ThenBy(state => state.pawn?.thingIDNumber ?? -1)
+                .ToList();
+            foreach (PerspectiveShiftControlledAvatar state in rejected)
+            {
+                state.moveX = 0;
+                state.moveZ = 0;
+                state.sprint = false;
+                state.walk = false;
+                if (state.pawn != null && !state.pawn.Destroyed)
+                    StopMovementJob(state);
+            }
+
+            // Ambiguous ownership is never guessed. Dropping every side of a
+            // duplicate makes affected players explicitly reclaim a pawn after
+            // joining instead of binding one peer to somebody else's avatar.
+            controlled = valid
+                .Where(state =>
+                    !duplicateOwners.Contains(state.owner) &&
+                    !duplicatePawns.Contains(state.pawn))
+                .OrderBy(state => state.pawn.thingIDNumber)
+                .ThenBy(state => state.owner, StringComparer.Ordinal)
+                .ToList();
+
+            if (rejected.Count > 0)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Perspective Shift removed ambiguous saved " +
+                    $"avatar ownership while joining: records={rejected.Count}, " +
+                    $"owners={duplicateOwners.Count}, pawns={duplicatePawns.Count}. " +
+                    "No local Avatar will be bound until an explicit synchronized claim.");
+            }
         }
 
         public override void ExposeData()
@@ -271,6 +391,33 @@ namespace MP_MeowOnlineShop
             state.movementJobId = -1;
         }
 
+        private static bool TryRetargetMovementJob(
+            PerspectiveShiftControlledAvatar state)
+        {
+            if (!IsMovementJob(state) || state.pawn?.pather == null)
+                return false;
+
+            Pawn pawn = state.pawn;
+            IntVec3 destination = FindDestination(
+                pawn,
+                state.moveX,
+                state.moveZ);
+            if (!destination.IsValid || destination == pawn.Position)
+                return false;
+
+            // Keep the same Job/loadID when WASD direction changes. Ending and
+            // recreating the Goto job made quick W->W+D transitions visibly
+            // stop the authoritative pawn. Updating targetA and restarting only
+            // the path request is deterministic because this runs inside the
+            // ordered movement-intent command on every peer.
+            pawn.CurJob.targetA = destination;
+            pawn.CurJob.locomotionUrgency = MovementUrgency(state);
+            pawn.pather.StartPath(destination, PathEndMode.OnCell);
+            state.nextMovementJobTick =
+                (Find.TickManager?.TicksGame ?? 0) + 10;
+            return pawn.pather.Moving;
+        }
+
         private static void EnsureMovementJob(PerspectiveShiftControlledAvatar state, bool forceNew)
         {
             Pawn pawn = state.pawn;
@@ -303,12 +450,33 @@ namespace MP_MeowOnlineShop
             job.playerForced = true;
             job.expiryInterval = 240;
             job.checkOverrideOnExpire = true;
-            job.locomotionUrgency = state.sprint
+            job.locomotionUrgency = MovementUrgency(state);
+
+            bool accepted = pawn.jobs.TryTakeOrderedJob(job);
+            if (accepted)
+            {
+                state.movementJobId = job.loadID;
+                state.movementDiagnosticStart = pawn.Position;
+                state.movementDiagnosticTick = now + 30;
+            }
+
+            if (forceNew)
+            {
+                Log.Message(
+                    $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
+                    $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
+                    $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
+                    $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
+                    $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+            }
+        }
+
+        private static LocomotionUrgency MovementUrgency(
+            PerspectiveShiftControlledAvatar state)
+        {
+            return state.sprint
                 ? LocomotionUrgency.Sprint
                 : state.walk ? LocomotionUrgency.Amble : LocomotionUrgency.Jog;
-
-            if (pawn.jobs.TryTakeOrderedJob(job))
-                state.movementJobId = job.loadID;
         }
 
         private static IntVec3 FindDestination(Pawn pawn, int moveX, int moveZ)

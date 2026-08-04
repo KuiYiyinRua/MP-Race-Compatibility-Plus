@@ -134,6 +134,7 @@
     <Compile Include="Patch_HarbingerTreeSpawnDeterminism.cs" />
     <Compile Include="Patch_DisableHarbingerTreeSpawn.cs" />
     <Compile Include="Patch_RitualObligationDateDeterminism.cs" />
+    <Compile Include="Patch_RitualRoleChangeMultifactionPersistence.cs" />
     <Compile Include="Patch_GoodwillRecalcMultifactionDeterminism.cs" />
     <Compile Include="Patch_TraderStockDeterminism.cs" />
     <Compile Include="Patch_RWBeheadingRandIsolation.cs" />
@@ -148,6 +149,8 @@
     <Compile Include="Patch_InspirationScheduleMp.cs" />
     <Compile Include="Patch_ChildcareRandMp.cs" />
     <Compile Include="Patch_RitualVisualEffectRandIsolation.cs" />
+    <Compile Include="Patch_PsychicRitualVfxRandIsolation.cs" />
+    <Compile Include="Patch_PsychicRitualSkipAbductionMultifaction.cs" />
     <Compile Include="Patch_EliteRaidDeterminism.cs" />
     <Compile Include="Patch_KiiroStoryEventsMp.cs" />
     <Compile Include="Patch_RatkinWeaponsMp.cs" />
@@ -158,6 +161,7 @@
     <Compile Include="Patch_MiliraFlightMode.cs" />
     <Compile Include="Patch_MiliraFly.cs" />
     <Compile Include="Patch_RigorMortis.cs" />
+    <Compile Include="Patch_RigorMortisStateActions.cs" />
     <Compile Include="Patch_RigorMortisStoryDialogs.cs" />
     <Compile Include="Patch_RigorMortisUtilityWindows.cs" />
     <Compile Include="RigorMortisStoryRuntimeMap.cs" />
@@ -197,6 +201,12 @@
     <Compile Include="Patch_RjwAddons.cs" />
     <Compile Include="Patch_RjwSerializationRandIsolation.cs" />
     <Compile Include="Patch_RjwMenstruation.cs" />
+    <Compile Include="Patch_RjwOnaholeModes.cs" />
+    <Compile Include="Patch_RjwBrothelDeterminism.cs" />
+    <Compile Include="Patch_RjwRomanceRandom.cs" />
+    <Compile Include="Patch_RjwSexSlaveCraft.cs" />
+    <Compile Include="Patch_RjwEventsDeterminism.cs" />
+    <Compile Include="Patch_RjwEroTraderDeterminism.cs" />
     <Compile Include="Patch_SecretaryNexusMp.cs" />
     <Compile Include="Patch_FacialAnimationMp.cs" />
     <Compile Include="Patch_ThirdPartyPerformanceMp.cs" />
@@ -205,6 +215,7 @@
     <Compile Include="Patch_AcceptJoinerWorldCommand.cs" />
     <Compile Include="Patch_AncientAmorphousThreatMp.cs" />
     <Compile Include="Patch_GravshipAbandonQueue.cs" />
+    <Compile Include="Patch_TransportShipUnloadMp.cs" />
     <Compile Include="PerspectiveShiftMpState.cs" />
     <Compile Include="Patch_PerspectiveShiftMp.cs" />
   </ItemGroup>

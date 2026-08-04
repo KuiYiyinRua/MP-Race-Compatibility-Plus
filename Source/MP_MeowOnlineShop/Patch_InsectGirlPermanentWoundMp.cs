@@ -310,4 +310,191 @@ namespace MP_MeowOnlineShop
             }
         }
     }
+
+    /// <summary>
+    /// Desync-221: after a wild Insect Girl is tamed, CompInsectGirl calls the
+    /// mod's VerifySpawnLegal method.  That method compares the pawn faction
+    /// with Faction.OfPlayerSilentFail and can either legalize the pawn or run
+    /// PostIllegalSpawned (which discards it and mutates the component's spawn
+    /// bookkeeping).  In an async multifaction session OfPlayer is a temporary
+    /// per-map execution context, not necessarily the newly tamed pawn's real
+    /// owning faction.  Thus two peers can make opposite decisions immediately
+    /// after Pawn.SetFaction.
+    ///
+    /// Scope only the affected validation call: a player-owned pawn evaluates
+    /// against its actual owner; a non-player pawn evaluates under MP's shared
+    /// spectator faction.  The previous context is restored even on exception.
+    /// This leaves taming, the normal component tick and single-player intact.
+    /// </summary>
+    internal static class Patch_InsectGirlTamingFactionDeterminism
+    {
+        private const string InsectGirlComponentTypeName =
+            "Kzi.GameComponent_InsectGirl";
+        private const string InsectGirlCompTypeName = "Kzi.CompInsectGirl";
+
+        private static bool _applied;
+        private static bool _loggedActive;
+        private static bool _loggedFailure;
+        private static FieldInfo _ofPlayerField;
+        private static PropertyInfo _worldCompProperty;
+        private static FieldInfo _spectatorFactionField;
+
+        private sealed class InsectGirlTamingScopeState
+        {
+            internal bool Active;
+            internal Faction SavedFaction;
+        }
+
+        internal static void Apply(Harmony harmony)
+        {
+            if (_applied || !MP.enabled || harmony == null)
+                return;
+            _applied = true;
+
+            try
+            {
+                Type componentType = AccessTools.TypeByName(InsectGirlComponentTypeName);
+                Type compType = AccessTools.TypeByName(InsectGirlCompTypeName);
+                MethodInfo target = componentType == null || compType == null
+                    ? null
+                    : AccessTools.Method(componentType, "VerifySpawnLegal",
+                        new[] { typeof(Pawn), compType, typeof(bool) });
+                MethodInfo prefix = AccessTools.Method(
+                    typeof(Patch_InsectGirlTamingFactionDeterminism),
+                    nameof(VerifySpawnLegalPrefix));
+                MethodInfo finalizer = AccessTools.Method(
+                    typeof(Patch_InsectGirlTamingFactionDeterminism),
+                    nameof(VerifySpawnLegalFinalizer));
+
+                _ofPlayerField = AccessTools.Field(typeof(FactionManager), "ofPlayer");
+                Type multiplayerType = AccessTools.TypeByName(
+                    "Multiplayer.Client.Multiplayer");
+                _worldCompProperty = multiplayerType == null
+                    ? null
+                    : AccessTools.Property(multiplayerType, "WorldComp");
+                _spectatorFactionField = _worldCompProperty?.PropertyType == null
+                    ? null
+                    : AccessTools.Field(_worldCompProperty.PropertyType,
+                        "spectatorFaction");
+
+                if (target == null || prefix == null || finalizer == null ||
+                    _ofPlayerField == null || _worldCompProperty == null ||
+                    _spectatorFactionField == null ||
+                    _spectatorFactionField.FieldType != typeof(Faction))
+                {
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Insect Girls taming faction " +
+                        "determinism target resolution failed; tamed pawns can " +
+                        "still desync.");
+                    return;
+                }
+
+                harmony.Patch(target,
+                    prefix: new HarmonyMethod(prefix) { priority = Priority.First },
+                    finalizer: new HarmonyMethod(finalizer) { priority = Priority.Last });
+
+                Log.Message(
+                    "[MP-MeowOnlineShop] Insect Girls taming faction " +
+                    "determinism active: spawn legality uses a stable owner " +
+                    "context on every peer.");
+            }
+            catch (Exception e)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Insect Girls taming faction " +
+                    "determinism apply failed: " + e.Message);
+            }
+        }
+
+        private static void VerifySpawnLegalPrefix(
+            Pawn p,
+            ref InsectGirlTamingScopeState __state)
+        {
+            __state = null;
+            if (!MP.IsInMultiplayer || p == null)
+                return;
+
+            try
+            {
+                Faction target = p.Faction != null && p.Faction.IsPlayer
+                    ? p.Faction
+                    : TryGetSpectatorFaction();
+                FactionManager factionManager = Find.FactionManager;
+                if (target == null || factionManager == null || _ofPlayerField == null)
+                    return;
+
+                Faction previous = _ofPlayerField.GetValue(factionManager) as Faction;
+                if (ReferenceEquals(previous, target))
+                    return;
+
+                _ofPlayerField.SetValue(factionManager, target);
+                __state = new InsectGirlTamingScopeState
+                {
+                    Active = true,
+                    SavedFaction = previous
+                };
+
+                if (!_loggedActive)
+                {
+                    _loggedActive = true;
+                    Log.Message(
+                        "[MP-MeowOnlineShop] Insect Girls taming validation " +
+                        "uses the pawn owner/spectator faction context " +
+                        "(VerifySpawnLegal is now peer-identical).");
+                }
+            }
+            catch (Exception e)
+            {
+                if (!_loggedFailure)
+                {
+                    _loggedFailure = true;
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Insect Girls taming faction " +
+                        "context prefix failed open: " + e.Message);
+                }
+            }
+        }
+
+        private static Exception VerifySpawnLegalFinalizer(
+            Exception __exception,
+            InsectGirlTamingScopeState __state)
+        {
+            if (__state?.Active == true && _ofPlayerField != null)
+            {
+                try
+                {
+                    FactionManager factionManager = Find.FactionManager;
+                    if (factionManager != null)
+                        _ofPlayerField.SetValue(factionManager, __state.SavedFaction);
+                }
+                catch (Exception e)
+                {
+                    if (!_loggedFailure)
+                    {
+                        _loggedFailure = true;
+                        Log.Warning(
+                            "[MP-MeowOnlineShop] Insect Girls taming faction " +
+                            "context restore failed: " + e.Message);
+                    }
+                }
+            }
+
+            return __exception;
+        }
+
+        private static Faction TryGetSpectatorFaction()
+        {
+            try
+            {
+                object worldComp = _worldCompProperty?.GetValue(null, null);
+                return worldComp == null
+                    ? null
+                    : _spectatorFactionField?.GetValue(worldComp) as Faction;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
 }

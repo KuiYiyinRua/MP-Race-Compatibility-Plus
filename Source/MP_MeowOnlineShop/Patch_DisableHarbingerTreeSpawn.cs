@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
@@ -18,10 +19,13 @@ namespace MP_MeowOnlineShop
     /// - `IncidentWorker_HarbingerTreeSpawn.TryExecuteWorker` performs the
     ///   actual spawn (and `CanFireNowSub` is the eligibility probe).
     ///
-    /// In multiplayer all three are skipped so the event can never be queued,
-    /// selected, or executed, and its Rand/eligibility probing cannot advance
-    /// the synchronized stream. Singleplayer is also disabled because the
-    /// request is unconditional for this event.
+    /// The actual 1.6 worker path is the shared
+    /// `IncidentWorker_SpecialTreeSpawn` base method, not necessarily an
+    /// override on `IncidentWorker_HarbingerTreeSpawn`.  Patch both resolved
+    /// worker types but gate the shared methods by IncidentDef, so only this
+    /// event can never be queued, selected, or executed.  Its Rand/eligibility
+    /// probing therefore cannot advance the synchronized stream; other special
+    /// tree incidents retain their normal behavior.
     /// </summary>
     internal static class Patch_DisableHarbingerTreeSpawn
     {
@@ -37,6 +41,7 @@ namespace MP_MeowOnlineShop
             try
             {
                 int patched = 0;
+                var patchedWorkerMethods = new HashSet<MethodBase>();
 
                 patched += TryPatchSkip(
                     harmony,
@@ -44,20 +49,37 @@ namespace MP_MeowOnlineShop
                     "TrySpawnHarbingerTrees",
                     Type.EmptyTypes);
 
-                Type workerType = AccessTools.TypeByName(
+                Type specialTreeWorkerType = AccessTools.TypeByName(
+                    "RimWorld.IncidentWorker_SpecialTreeSpawn");
+                patched += TryPatchBoolResult(
+                    harmony,
+                    specialTreeWorkerType,
+                    "CanFireNowSub",
+                    new[] { typeof(IncidentParms) },
+                    patchedWorkerMethods);
+                patched += TryPatchBoolResult(
+                    harmony,
+                    specialTreeWorkerType,
+                    "TryExecuteWorker",
+                    new[] { typeof(IncidentParms) },
+                    patchedWorkerMethods);
+
+                Type harbingerWorkerType = AccessTools.TypeByName(
                     "RimWorld.IncidentWorker_HarbingerTreeSpawn");
-                if (workerType != null)
+                if (harbingerWorkerType != null)
                 {
                     patched += TryPatchBoolResult(
                         harmony,
-                        workerType,
+                        harbingerWorkerType,
                         "CanFireNowSub",
-                        new[] { typeof(IncidentParms) });
+                        new[] { typeof(IncidentParms) },
+                        patchedWorkerMethods);
                     patched += TryPatchBoolResult(
                         harmony,
-                        workerType,
+                        harbingerWorkerType,
                         "TryExecuteWorker",
-                        new[] { typeof(IncidentParms) });
+                        new[] { typeof(IncidentParms) },
+                        patchedWorkerMethods);
                 }
 
                 if (patched == 0)
@@ -120,7 +142,8 @@ namespace MP_MeowOnlineShop
             Harmony harmony,
             Type type,
             string methodName,
-            Type[] args)
+            Type[] args,
+            HashSet<MethodBase> patchedMethods)
         {
             try
             {
@@ -130,7 +153,8 @@ namespace MP_MeowOnlineShop
                 MethodInfo prefix = AccessTools.Method(
                     typeof(Patch_DisableHarbingerTreeSpawn),
                     nameof(BoolResultPrefix));
-                if (target == null || prefix == null)
+                if (target == null || prefix == null ||
+                    patchedMethods == null || !patchedMethods.Add(target))
                     return 0;
 
                 harmony.Patch(
@@ -152,10 +176,22 @@ namespace MP_MeowOnlineShop
             return false;
         }
 
-        private static bool BoolResultPrefix(ref bool __result)
+        private static bool BoolResultPrefix(
+            IncidentWorker __instance,
+            ref bool __result)
         {
+            if (!IsHarbingerTreeSpawn(__instance))
+                return true;
+
             __result = false;
             return false;
+        }
+
+        private static bool IsHarbingerTreeSpawn(IncidentWorker worker)
+        {
+            IncidentDef def = worker?.def;
+            return def == IncidentDefOf.HarbingerTreeSpawn ||
+                   def?.defName == "HarbingerTreeSpawn";
         }
     }
 }

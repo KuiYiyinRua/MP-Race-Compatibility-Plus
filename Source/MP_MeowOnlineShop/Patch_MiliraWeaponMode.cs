@@ -6,13 +6,15 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace MP_MeowOnlineShop
 {
     /// <summary>
-    /// Multiplayer compatibility for Milira/Ancot weapon mode switching comps.
-    /// Handles both state sync (command click replay) and deterministic Rand wrapping.
+    /// Multiplayer compatibility for every weapon shipped by Milira Race.
+    /// Handles weapon-mode command replay, Ancot's custom targeting override,
+    /// and the direct-control firing boundary used by Perspective Shift.
     /// </summary>
     internal static class Patch_MiliraWeaponMode
     {
@@ -29,6 +31,51 @@ namespace MP_MeowOnlineShop
             "AncotLibrary.CompRangeWeaponVerbSwitch",
             "AncotLibrary.CompRangeWeaponVerbSwitch_EnergyPassive"
         };
+
+        // Concrete, non-projectile weapon ThingDefs in Milira Race 1.6. Keeping
+        // this allow-list exact prevents the Perspective Shift executor from
+        // changing unrelated Ancot weapons supplied by other mods.
+        private static readonly HashSet<string> MiliraWeaponDefNames =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "Milian_BishopScepter",
+                "Milian_PivotScepter",
+                "Milian_ParticleLongRangeSniper",
+                "Milian_KnightHalberd",
+                "Milian_KnightSword",
+                "Milian_KnightLance",
+                "Milian_KnightHammer",
+                "Milian_ParticleBeamGun",
+                "Milian_PulsedBeamGun",
+                "Milian_ParticleBeamBlaster",
+                "Milian_RookBlade",
+                "Milian_RookBladeII",
+                "Milira_SwiftBlade",
+                "Milira_Glaive",
+                "Milira_SawBlade",
+                "Milira_PoleBlade",
+                "Milira_Lance",
+                "Milira_Sickle",
+                "Milira_Hammer",
+                "Milira_TwoHandSword",
+                "Milira_Spear",
+                "Milira_SingleHandblade",
+                "Milian_ParticleSMG",
+                "Milian_ParticleDiffusionBlaster",
+                "Milian_ParticleLMG",
+                "Milira_PlasmaPistol",
+                "Milira_PlasmaRifle",
+                "Milira_PlasmaSMG",
+                "Milira_PlasmaCannon",
+                "Milira_PlasmaMG",
+                "Milira_PlasmaPulseSniperRifle",
+                "Milira_MagneticRailRifle",
+                "Milira_HandRailGun",
+                "Milira_RayPistol",
+                "Milira_RayRifle",
+                "Milira_ConvergentRaySniper",
+                "Milira_LaserMG"
+            };
 
         private static readonly string[] InitMethodNames =
         {
@@ -64,6 +111,7 @@ namespace MP_MeowOnlineShop
         private static int _patchedMethods;
         private static int _captureLogCount;
         private static int _syncReplayLogCount;
+        private static bool _sustainedTargetSyncRegistered;
         private const int MaxTraceLogs = 8;
 
         private sealed class CommandMeta
@@ -120,6 +168,8 @@ namespace MP_MeowOnlineShop
                 PatchCompMethod(harmony, compType, "Notify_SwitchPassive", randPrefix, randFinalizer, null);
             }
 
+            RegisterSustainedTargetingOverride();
+
             if (commandPrefix != null)
             {
                 foreach (Type t in GenTypes.AllTypes)
@@ -143,7 +193,104 @@ namespace MP_MeowOnlineShop
                 }
             }
 
-            Log.Message($"[MP-MeowOnlineShop] Milira patch active: syncMethods={_registeredSyncMethods}, patchedMethods={_patchedMethods}.");
+            Log.Message(
+                $"[MP-MeowOnlineShop] Milira all-weapons patch active: " +
+                $"weaponDefs={MiliraWeaponDefNames.Count}, syncMethods={_registeredSyncMethods}, " +
+                $"sustainedTargetSync={_sustainedTargetSyncRegistered}, patchedMethods={_patchedMethods}.");
+        }
+
+        private static void RegisterSustainedTargetingOverride()
+        {
+            Type sustainedVerb = AccessTools.TypeByName("AncotLibrary.Verb_ShootSustained");
+            MethodInfo orderForceTarget = sustainedVerb == null
+                ? null
+                : AccessTools.Method(
+                    sustainedVerb,
+                    nameof(Verb.OrderForceTarget),
+                    new[] { typeof(LocalTargetInfo) });
+
+            // Multiplayer registers ITargetingSource overrides only from
+            // Assembly-CSharp. Ancot's override stores the forced downed pawn
+            // and current target, so it needs its own command boundary.
+            if (orderForceTarget == null || orderForceTarget.DeclaringType != sustainedVerb)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Milira all-weapons patch: " +
+                    "Ancot sustained-fire OrderForceTarget target was not resolved.");
+                return;
+            }
+
+            try
+            {
+                MP.RegisterSyncMethod(sustainedVerb, nameof(Verb.OrderForceTarget))
+                    .SetContext(SyncContext.CurrentMap)
+                    .CancelIfAnyArgNull();
+                _sustainedTargetSyncRegistered = true;
+                _registeredSyncMethods++;
+            }
+            catch (Exception e)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Milira all-weapons patch: failed to register " +
+                    $"Ancot sustained-fire targeting: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Executes Perspective Shift firing for Milira weapons without
+        /// re-entering its UI-oriented HandleFiring method. The caller already
+        /// runs inside one ordered MP command and one deterministic Rand scope.
+        /// </summary>
+        internal static bool TryHandlePerspectiveShiftFire(Pawn pawn, IntVec3 cell)
+        {
+            Thing weapon = pawn?.equipment?.Primary;
+            if (weapon?.def == null ||
+                !MiliraWeaponDefNames.Contains(weapon.def.defName))
+            {
+                return false;
+            }
+
+            if (pawn.Map == null || !pawn.Spawned || pawn.Dead || pawn.Downed ||
+                pawn.InMentalState || !cell.InBounds(pawn.Map))
+            {
+                return true;
+            }
+
+            Thing targetThing = pawn.Map.thingGrid.ThingsListAt(cell)
+                .Where(t => t != null && t != pawn &&
+                            (t is Pawn || t.def.category == ThingCategory.Building ||
+                             t.def.category == ThingCategory.Item))
+                .OrderBy(t => t is Pawn ? 0 : 1)
+                .ThenBy(t => t.thingIDNumber)
+                .FirstOrDefault();
+            LocalTargetInfo target = targetThing != null
+                ? new LocalTargetInfo(targetThing)
+                : new LocalTargetInfo(cell);
+
+            Vector3 targetPos = targetThing != null
+                ? targetThing.DrawPos
+                : cell.ToVector3Shifted();
+            Vector3 direction = targetPos - pawn.DrawPos;
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+                pawn.Rotation = Rot4.FromAngleFlat(angle);
+            }
+
+            if (pawn.Position.DistanceTo(cell) <= 1.42f && targetThing != null)
+            {
+                pawn.meleeVerbs?.TryMeleeAttack(targetThing, null, false);
+                return true;
+            }
+
+            Verb verb = pawn.equipment.PrimaryEq?.PrimaryVerb;
+            if (verb != null && !verb.verbProps.IsMeleeAttack &&
+                verb.Available() && verb.CanHitTarget(target))
+            {
+                verb.TryStartCastOn(target, false, true, false, false);
+            }
+
+            return true;
         }
 
         private static void PatchCompMethod(Harmony harmony, Type compType, string methodName, MethodInfo prefix, MethodInfo finalizer, MethodInfo postfix)
