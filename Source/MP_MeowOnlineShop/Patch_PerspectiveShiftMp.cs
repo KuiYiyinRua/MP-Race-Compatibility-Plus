@@ -784,7 +784,9 @@ namespace MP_MeowOnlineShop
                     }
                     else if (pawn.jobs?.curJob != null && pawn.jobs.curJob.def.playerInterruptible)
                     {
-                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                        pawn.jobs.EndCurrentJob(
+                            JobCondition.InterruptForced,
+                            startNewJob: false);
                     }
                 }
             }
@@ -1273,7 +1275,9 @@ namespace MP_MeowOnlineShop
                              .Where(candidate => candidate != null && candidate != pawn)
                              .OrderBy(candidate => candidate.thingIDNumber))
                 {
-                    reserver.jobs?.EndCurrentJob(JobCondition.InterruptForced);
+                    reserver.jobs?.EndCurrentJob(
+                        JobCondition.InterruptForced,
+                        startNewJob: false);
                 }
 
                 pawn.Map.reservationManager.ReleaseAllForTarget(storedItem);

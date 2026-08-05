@@ -16,6 +16,10 @@ namespace MP_MeowOnlineShop
     /// inverse: the long-running host retained Axolotl522 in map 0 while the cold
     /// client correctly rebuilt without it. Rebuild every per-map list after load,
     /// then reconcile only the bucket about to execute against its owning map.
+    /// Transient visual motes are excluded entirely: they are not part of the
+    /// authoritative listerThings registry, and their Rand-consuming
+    /// construction/tick timing can otherwise differ between peers after a
+    /// gravship landing or rejoin.
     /// </summary>
     internal static class Patch_DeterministicTickList
     {
@@ -157,8 +161,8 @@ namespace MP_MeowOnlineShop
                 {
                     Thing thing = things[i];
                     if (thing == null || thing.Destroyed || !thing.Spawned ||
-                        thing.Map != map ||
-                        thing.def == null || !seen.Add(thing))
+                        thing.Map != map || thing.def == null ||
+                        IsVisualMote(thing) || !seen.Add(thing))
                     {
                         continue;
                     }
@@ -399,7 +403,7 @@ namespace MP_MeowOnlineShop
                 for (int i = 0; i < pending.Count; i++)
                 {
                     var thing = pending[i];
-                    if (thing == null ||
+                    if (thing == null || IsVisualMote(thing) ||
                         (ownerMap != null && IsInvalidForOwner(thing, ownerMap)))
                         continue;
 
@@ -450,7 +454,8 @@ namespace MP_MeowOnlineShop
                 bool duplicate = !invalid && !seen.Add(thing);
                 bool wrongBucket = !invalid && !duplicate &&
                                    StableHash(thing) % buckets.Count != bucketIndex;
-                if (!invalid && !duplicate && !wrongBucket)
+                bool visualMote = !invalid && IsVisualMote(thing);
+                if (!invalid && !duplicate && !wrongBucket && !visualMote)
                     return false;
 
                 if (!LoggedStaleMemberMaps.Contains(ownerMap.uniqueID) &&
@@ -702,6 +707,7 @@ namespace MP_MeowOnlineShop
                 Thing thing = things[i];
                 if (thing == null || thing.Destroyed || !thing.Spawned ||
                     thing.Map != ownerMap || thing.def == null ||
+                    IsVisualMote(thing) ||
                     !seen.Add(thing) || !BelongsToTickList(thing, tickType))
                 {
                     continue;
@@ -732,10 +738,17 @@ namespace MP_MeowOnlineShop
         {
             if (thing?.def == null)
                 return false;
+            if (IsVisualMote(thing))
+                return false;
 
             if (tickType == TickerType.Normal)
                 return thing is IThingHolder || thing.def.tickerType == TickerType.Normal;
             return thing.def.tickerType == tickType;
+        }
+
+        private static bool IsVisualMote(Thing thing)
+        {
+            return thing is Mote;
         }
 
         private static void RemoveAllOccurrences(

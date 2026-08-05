@@ -14,6 +14,8 @@
     <RuntimeIdentifiers>win;win-x64;win-x86</RuntimeIdentifiers>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -78,6 +80,10 @@
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="System" />
@@ -149,10 +155,12 @@
     <Compile Include="Patch_RpgDialogMp.cs" />
     <Compile Include="Patch_FishShadowRandIsolation.cs" />
     <Compile Include="Patch_SimpleFxSplashesRandIsolation.cs" />
+    <Compile Include="Patch_MoteConstructionRandIsolation.cs" />
     <Compile Include="Patch_StaticQualityDeterminism.cs" />
     <Compile Include="Patch_InspirationScheduleMp.cs" />
     <Compile Include="Patch_ChildcareRandMp.cs" />
     <Compile Include="Patch_RitualVisualEffectRandIsolation.cs" />
+    <Compile Include="Patch_AncotTurretRandIsolation.cs" />
     <Compile Include="Patch_PsychicRitualVfxRandIsolation.cs" />
     <Compile Include="Patch_PsychicRitualSkipAbductionMultifaction.cs" />
     <Compile Include="Patch_EliteRaidDeterminism.cs" />
@@ -162,6 +170,10 @@
     <Compile Include="Patch_MultifactionTpsOptimize.cs" />
     <Compile Include="Patch_MiliraWeaponMode.cs" />
     <Compile Include="Patch_AncotCommandMode.cs" />
+    <Compile Include="Patch_GodHands.cs" />
+    <Compile Include="Patch_GodHandsTurretCommands.cs" />
+    <Compile Include="Patch_GodHandsDesignators.cs" />
+    <Compile Include="Patch_GodHandsControllers.cs" />
     <Compile Include="Patch_MiliraShieldMode.cs" />
     <Compile Include="Patch_MiliraFlightMode.cs" />
     <Compile Include="Patch_MiliraFly.cs" />
@@ -216,14 +228,18 @@
     <Compile Include="Patch_FacialAnimationMp.cs" />
     <Compile Include="Patch_ThirdPartyPerformanceMp.cs" />
     <Compile Include="Patch_MultiplayerVtrContextGuard.cs" />
+    <Compile Include="Patch_AsyncTickSchedulerPhase.cs" />
     <Compile Include="Patch_StoragePriorityAndAsyncQuest.cs" />
     <Compile Include="Patch_AcceptJoinerWorldCommand.cs" />
     <Compile Include="Patch_AncientAmorphousThreatMp.cs" />
-    <Compile Include="Patch_GravshipAbandonQueue.cs" />
+    <Compile Include="Patch_GravshipOrphanCommands.cs" />
+    <Compile Include="Patch_GravshipLandingMp.cs" />
+    <Compile Include="Patch_InvalidMapIndexSafety.cs" />
     <Compile Include="Patch_TransportShipUnloadMp.cs" />
     <Compile Include="Patch_TransporterLoadingSessionMp.cs" />
     <Compile Include="PerspectiveShiftMpState.cs" />
     <Compile Include="Patch_PerspectiveShiftMp.cs" />
+    <Compile Include="MiliraAddons\*.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -12,21 +12,23 @@
 
 | 优先级 | 问题 | 后果 |
 | --- | --- | --- |
-| P1 | 入会配置热同步直接覆盖本机配置并自动继续连接 | 不受信任或误配主机可静默改写本地 Mod 配置；热重载失败也可能留下半更新状态 |
+| P1 | 入会配置热同步曾直接覆盖本机配置并自动继续连接 | 不受信任或误配主机可静默改写本地 Mod 配置；热重载失败也可能留下半更新状态（3.0.117 已改为分类热应用 + 回滚） |
 | P1 | 四套 Gizmo 重放同步方法没有声明 `SyncContext` | 多地图、多阵营或依赖 `Find.CurrentMap`/选择集的动作可能在错误上下文执行，造成无效操作或 desync |
 | P2 | Milira/Axolotl 模式补丁按名称启发式注册私有方法，并吞掉注册异常 | 上游 Mod 更新后可能同步了错误方法、漏同步，且日志不足以定位；不同环境的注册顺序风险增大 |
 | P2 | 常开高频诊断日志 | 通讯、战斗和交易密集时增大 I/O、日志噪音与排障成本 |
 
-建议先禁用或改造配置热同步，再为自定义 Gizmo 命令补齐上下文与空对象取消规则；之后把反射扫描收敛为按 Mod 版本验证过的精确签名表。
+配置热同步已在 3.0.117 改为“可验证项热应用、不可验证项走原生重启、失败整体回滚、任何风险项都不自动连接”；自定义 Gizmo 命令仍应补齐上下文与空对象取消规则。
 
 ## 调整进度
 
 2026-07-25 已完成第一轮修复：
 
-- `Patch_MpConfigHotSync` 默认不再安装 `JoinDataWindow.PostOpen` 自动导入补丁，因此不会直接写入远端配置或自动继续连接；配置不匹配回到 Multiplayer 原生的临时配置导入与重启流程。
+- `Patch_MpConfigHotSync` 3.0.117 改为默认启用但按项验证：标准 `ModSettings` 与 HugsLib 只有在运行实例、`WriteSettings`、字段/HugsLib 保存链全部验证通过后才热应用；XML Extensions、无运行实例、无 `WriteSettings`、验证失败或客户端独有配置一律保留给原生 Fix and Restart 流程，并阻止自动连接。
+- 可用 `-mpmeowhotcfg=false` 完全禁用该补丁，恢复 Multiplayer 原生的临时配置导入与重启流程。
+- 所有写文件与运行时变更先备份；只要有一项需要重启/失败/被拒绝，就回滚本批已热应用的变更。
 - Milira Weapon/Shield/Flight 与 Axolotl Weapon 的自定义 Gizmo 重放同步方法现在携带 `SyncContext.CurrentMap`，并启用 `CancelIfAnyArgNull()`。
 - Rigor Mortis 与 Meow Purchase 的高频追踪日志默认关闭；需要排障时再临时开启相应 `ModDebug` 开关。
-- Release 构建已验证通过：0 warning、0 error。多人运行回归仍待执行。
+- Release 构建已验证通过：0 warning、0 error。3.0.117 的多人运行回归仍在执行。
 
 ## 架构
 
@@ -91,24 +93,24 @@ sequenceDiagram
 
 ### P1：配置热同步绕过 Multiplayer 的临时配置与重启隔离
 
-证据：
+证据与现状（3.0.117）：
 
-- `Patch_MpConfigHotSync.cs:190-237` 遍历来自远端的 `remoteModConfigs`，解析路径后执行 `Directory.CreateDirectory` 与 `File.WriteAllText`。
-- `Patch_MpConfigHotSync.cs:93-97` 在写入及反射热重载成功后直接调用 `connectAnyway`，关闭不匹配窗口。
+- 旧实现遍历来自远端的 `remoteModConfigs`，解析路径后直接写活动设置文件，并在热重载成功后调用 `connectAnyway`。
 - 对照 Multiplayer 自身 `Source/Client/Util/SyncConfigs.cs`：官方流程将远端配置写入 `MultiplayerTempConfigs`，设置子进程标记后重启；重启前不会直接覆盖活动 Mod 的常规设置文件。
+- 3.0.117 先做 `(modId, fileName)` 到运行中 Mod/实例类型的严格映射，路径必须落在 `GenFilePaths.SaveDataFolderPath` 下，拒绝路径分隔符、非法文件名、`..`、超长内容与未知 Mod；写入前对文件和运行时字段快照，失败时回滚；只有全部配置 `hot/unchanged` 且没有客户端独有配置时才调用 `connectAnyway`。
 
-影响：
+影响（旧行为）：
 
 - 主机传来的内容会直接覆盖客户端本地设置。即使主机本身不是恶意来源，也可能覆盖包含个人路径、账号、服务地址或本地偏好的第三方 Mod 配置。
-- `fileName` 与内容来自网络数据。当前仅依靠 `ResolveSettingsPath` 和运行中 Mod 的存在性约束，缺少允许的 Mod ID/设置类白名单、文件名格式验证、长度限制、内容预览和明确用户确认。
-- 反射热重载任一 Mod 失败时，文件可能已经写入；`safeToAutoContinue` 会阻止自动连接，但没有回滚已覆盖的文件。
+- `fileName` 与内容来自网络数据。旧实现缺少严格的 Mod ID/设置类白名单、文件名格式验证、长度限制、内容预览和明确用户确认。
+- 反射热重载任一 Mod 失败时，文件可能已经写入；旧逻辑会阻止自动连接，但没有回滚已覆盖的文件。
 
-建议：
+落地（3.0.117）：
 
-1. 默认禁用 `Patch_MpConfigHotSync`；改为仅展示“可导入配置”的提示，由用户点击确认。
-2. 优先复用 Multiplayer 的 `SyncConfigs.SaveConfigs` + 重启路径，不要直接写活动设置文件和反射清空 `modSettings`。
-3. 若必须保留热同步，只允许本 Mod 自己的已知设置文件；以 `(packageId, settingsTypeName)` 白名单校验，拒绝路径分隔符、`..`、空/过长内容和未知 Mod。
-4. 写入前备份，所有文件和运行时重载都成功后才原子替换；失败则恢复备份并保留 JoinDataWindow。
+1. 默认启用，但支持 `-mpmeowhotcfg=false` 完全禁用，禁用后不安装补丁、不改任何配置。
+2. 普通 `ModSettings`：modId 必须是运行中 Mod 的 `PackageIdPlayerFacing`，fileName 必须是该 Mod 运行实例类型名，实例必须存在且 `modSettings != null`；通过 Scribe 加载 staging 文件、调用 `WriteSettings`、确认至少一个具体字段变化后才写正式文件。
+3. HugsLib：快照 `StringValue`/`HasUnsavedChanges`，应用远端 handle 值并调用 `SaveChanges()`；失败时恢复快照并再次保存。
+4. XML Extensions 等启动期绑定配置不热应用，只审计为 `restartRequired`；任何非 `hot/unchanged` 项都会使本批变更整体回滚并禁止自动连接，保留 JoinDataWindow 供人工选择。
 
 ### P1：自定义 Gizmo 回放命令未携带 Multiplayer 执行上下文
 
@@ -168,7 +170,7 @@ sequenceDiagram
 
 - `Patch_MultifactionTpsOptimize` 的实验调度默认关闭；不建议仅凭静态审阅开启。它直接影响 `MapPostTick`，应作为独立实验功能维护。
 - 多层 `Rand` 包裹虽然方向正确，但局部实现使用静态字段保存待 Pop 的地图。当前 RimWorld 主游戏逻辑通常单线程，仍应在嵌套调用与异常路径中验证 Push/Pop 配对；未来若出现重入，优先改为 per-invocation `__state` 对象或栈。
-- 未发现使用 `DateTime.Now`、`System.Random` 或字符串运行时 `GetHashCode()` 作为同步随机种子的直接证据；`Patch_MpConfigHotSync` 的 `GetHashCode()` 仅作本地窗口去重，不属于游戏状态协议。
+- 未发现使用 `DateTime.Now`、`System.Random` 或字符串运行时 `GetHashCode()` 作为同步随机种子的直接证据；`Patch_MpConfigHotSync` 的本地窗口去重已改为引用比较，不再依赖对象哈希码，不属于游戏状态协议。
 
 ## 建议的回归矩阵
 
@@ -178,7 +180,7 @@ sequenceDiagram
 | Milira / Axolotl | 每种模式按钮、能量/护盾操作 | 主机与客户端分别触发；双地图、不同 faction 下结果一致 |
 | Rigor Mortis | 通讯、故事选项、棺材恢复/坠落 | Dialog 行为一致且不会重复执行 |
 | 世界/事件 | Caravan、Zone Gizmo、采矿/污染事件 | 连续触发后 World Rand 与 trace 无分叉 |
-| 加入会话 | 仅配置差异、未知配置项、热重载失败 | 不自动覆盖本地文件；失败可回滚且保留人工决定 |
+| 加入会话 | 仅配置差异、未知配置项、热重载失败 | 可验证项热应用并自动继续；重启项/失败项整体回滚、保留人工决定，不自动连接 |
 | 性能 | 2000+ tick、多地图、战斗和交易同时进行 | 日志量受控；实验 TPS 调度关闭时行为与原版 MP 一致 |
 
 ## 审阅边界与后续

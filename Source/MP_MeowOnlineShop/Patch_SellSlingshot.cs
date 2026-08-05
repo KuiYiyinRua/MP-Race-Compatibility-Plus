@@ -95,7 +95,9 @@ namespace MP_MeowOnlineShop
 
                 // 与 Meow Framework 无关的联机补丁：始终尝试应用（内部按类型是否存在再决定是否打补丁）
                 ApplyWorldRandStabilizerPatches();
-                Patch_GravshipAbandonQueue.Apply(Harmony);
+                Patch_GravshipOrphanCommands.Apply(Harmony);
+                Patch_GravshipLandingMp.Apply(Harmony);
+                Patch_InvalidMapIndexSafety.Apply(Harmony);
                 Patch_TransportShipUnloadMp.Apply(Harmony);
                 Patch_TransporterLoadingSessionMp.Apply(Harmony);
                 Patch_MpServerLagLogThrottle.Apply(Harmony);
@@ -107,6 +109,7 @@ namespace MP_MeowOnlineShop
                 Patch_SlowerPawnTickRateMp.Apply(Harmony);
                 Patch_ThirdPartyPerformanceMp.Apply(Harmony);
                 Patch_MultiplayerVtrContextGuard.Apply(Harmony);
+                Patch_AsyncTickSchedulerPhase.Apply(Harmony);
                 Patch_DateNotifierMultifactionDeterminism.Apply(Harmony);
                 Patch_StoragePriorityMp.Apply(Harmony);
                 Patch_MultiplayerAsyncQuestSnapshot.Apply(Harmony);
@@ -153,10 +156,12 @@ namespace MP_MeowOnlineShop
                 Patch_RpgDialogMp.Apply(Harmony);
                 Patch_FishShadowRandIsolation.Apply(Harmony);
                 Patch_SimpleFxSplashesRandIsolation.Apply(Harmony);
+                Patch_MoteConstructionRandIsolation.Apply(Harmony);
                 Patch_StaticQualityDeterminism.Apply(Harmony);
                 Patch_InspirationScheduleMp.Apply(Harmony);
                 Patch_ChildcareRandMp.Apply(Harmony);
                 Patch_RitualVisualEffectRandIsolation.Apply(Harmony);
+                Patch_AncotTurretRandIsolation.Apply(Harmony);
                 Patch_PsychicRitualVfxRandIsolation.Apply(Harmony);
                 Patch_PsychicRitualSkipAbductionMultifaction.Apply(Harmony);
                 Patch_EliteRaidDeterminism.Apply(Harmony);
@@ -216,6 +221,9 @@ namespace MP_MeowOnlineShop
                 ApplyAxolotlVerbSaveFixPatches();
                 ApplyAxolotlCommsPatches();
                 Patch_AxolotlAlchemyStoveMp.Apply();
+                ApplyOptionalPatch(
+                    "GodHands multiplayer compatibility",
+                    () => Patch_GodHands.Apply(Harmony));
 
                 if (!ModsConfig.IsActive(MeowFrameworkPackageId))
                 {
@@ -582,7 +590,9 @@ namespace MP_MeowOnlineShop
         }
 
         /// <summary>
-        /// Multiplayer 加入窗口：仅配置不一致时自动热同步并继续加入，避免强制重启。
+        /// Join window config hot sync: verifiable items are hot-applied before
+        /// download; unverifiable items fall back to the native restart flow.
+        /// Use -mpmeowhotcfg=false to disable this patch entirely.
         /// </summary>
         private static void ApplyMpConfigHotSyncPatch()
         {

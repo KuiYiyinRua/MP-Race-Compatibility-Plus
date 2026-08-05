@@ -19,6 +19,15 @@ namespace MP_MeowOnlineShop
     /// other peer. That cross-domain ordering makes job IDs and Rand states
     /// diverge exactly after a shuttle landing.
     ///
+    /// Desync-259 reproduced the same ordering failure with Odyssey passenger
+    /// shuttles. The Drafted setter is not a reliable queue boundary: it is
+    /// skipped when the pawn is already drafted or when the local map is
+    /// reported as a home map, so one peer defers the draft while the other
+    /// lets the pawn tick through its job naturally. Queueing now happens at
+    /// UnloadThingFromShuttle itself, from the method's own arguments, so every
+    /// peer schedules the same pawns regardless of local draft state. The home
+    /// map guard is applied when the deferred setter actually runs.
+    ///
     /// The setter is deferred to the destination map's next MapPreTick. All
     /// peers then run the vanilla draft side effects in the same per-map
     /// context and stable pawn-ID order before that map's tick lists execute.
@@ -37,7 +46,6 @@ namespace MP_MeowOnlineShop
 
         private static bool _applied;
         private static bool _processingDeferred;
-        private static bool _loggedDeferral;
         private static int _shipUnloadDepth;
 
         internal static void Apply(Harmony harmony)
@@ -128,16 +136,56 @@ namespace MP_MeowOnlineShop
             }
         }
 
-        private static void UnloadPrefix()
+        private static void UnloadPrefix(
+            TransportShip ship,
+            Thing thingToDrop)
         {
-            if (MP.IsInMultiplayer)
-                _shipUnloadDepth++;
+            if (!MP.IsInMultiplayer)
+                return;
+
+            _shipUnloadDepth++;
+
+            if (!(thingToDrop is Pawn pawn) || pawn == null ||
+                pawn.drafter == null || !pawn.IsPlayerControlled)
+            {
+                return;
+            }
+
+            Map map = ship?.shipThing?.Map;
+            if (map == null)
+                return;
+
+            int mapId = map.uniqueID;
+            if (!PendingDraftsByMap.TryGetValue(mapId, out List<Pawn> pending))
+            {
+                pending = new List<Pawn>();
+                PendingDraftsByMap[mapId] = pending;
+            }
+            if (!pending.Contains(pawn))
+                pending.Add(pawn);
         }
 
-        private static Exception UnloadFinalizer(Exception __exception)
+        private static Exception UnloadFinalizer(
+            TransportShip ship,
+            Thing thingToDrop,
+            Exception __exception)
         {
             if (_shipUnloadDepth > 0)
                 _shipUnloadDepth--;
+
+            if (!MP.IsInMultiplayer ||
+                !(thingToDrop is Pawn pawn) || pawn == null)
+            {
+                return __exception;
+            }
+
+            Map map = ship?.shipThing?.Map;
+            if (map == null || pawn.Destroyed || !pawn.Spawned ||
+                pawn.Map != map)
+            {
+                RemovePendingDraft(map, pawn);
+            }
+
             return __exception;
         }
 
@@ -159,33 +207,16 @@ namespace MP_MeowOnlineShop
 
             Pawn pawn = __instance?.pawn;
             if (pawn == null || pawn.Destroyed || !pawn.Spawned ||
-                pawn.Map == null || __instance.Drafted)
+                pawn.Map == null)
             {
                 return true;
             }
 
-            int mapId = pawn.Map.uniqueID;
-            if (!PendingDraftsByMap.TryGetValue(mapId, out List<Pawn> pending))
-            {
-                pending = new List<Pawn>();
-                PendingDraftsByMap[mapId] = pending;
-            }
-            if (!pending.Contains(pawn))
-                pending.Add(pawn);
-
             // Mirror the resulting Drafted value immediately, but postpone the
             // full setter side effects (queued-job clear, current-job end, and
             // next-job selection) until the map owns the Rand/UniqueID context.
-            DraftedField.SetValue(__instance, true);
-
-            if (!_loggedDeferral)
-            {
-                _loggedDeferral = true;
-                Log.Message(
-                    "[MP-MeowOnlineShop] Transport-ship unload auto-draft " +
-                    "deferred to map context: pawn=" + pawn.thingIDNumber +
-                    ", map=" + mapId + ".");
-            }
+            if (!__instance.Drafted)
+                DraftedField.SetValue(__instance, true);
             return false;
         }
 
@@ -216,10 +247,14 @@ namespace MP_MeowOnlineShop
             List<Pawn> valid = pending
                 .Where(pawn =>
                     pawn != null && !pawn.Destroyed && pawn.Spawned &&
-                    pawn.Map == __instance && pawn.drafter != null)
+                    pawn.Map == __instance && pawn.drafter != null &&
+                    pawn.IsPlayerControlled)
                 .OrderBy(pawn => pawn.thingIDNumber)
                 .ToList();
             if (valid.Count == 0)
+                return;
+
+            if (__instance.IsPlayerHome)
                 return;
 
             _processingDeferred = true;
@@ -237,6 +272,23 @@ namespace MP_MeowOnlineShop
             {
                 _processingDeferred = false;
             }
+        }
+
+        private static void RemovePendingDraft(Map map, Pawn pawn)
+        {
+            if (map == null || pawn == null)
+                return;
+
+            if (!PendingDraftsByMap.TryGetValue(
+                    map.uniqueID,
+                    out List<Pawn> pending))
+            {
+                return;
+            }
+
+            pending.Remove(pawn);
+            if (pending.Count == 0)
+                PendingDraftsByMap.Remove(map.uniqueID);
         }
     }
 }
