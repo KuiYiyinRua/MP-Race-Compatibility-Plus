@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <SurgeryQuiz_Medicine.label>Pharmacology</SurgeryQuiz_Medicine.label>
+  <SurgeryQuiz_Medicine.question>In vanilla, which type of medicine has the highest surgery success factor?</SurgeryQuiz_Medicine.question>
+  <SurgeryQuiz_Medicine.SurgeryQuiz_Medicine/>
+  <SurgeryQuiz_Medicine.options.0>Herbal medicine</SurgeryQuiz_Medicine.options.0>
+  <SurgeryQuiz_Medicine.options.1>Industrial medicine</SurgeryQuiz_Medicine.options.1>
+  <SurgeryQuiz_Medicine.options.2>Glitterworld medicine</SurgeryQuiz_Medicine.options.2>
+  <SurgeryQuiz_Medicine.options.3>Ambrosia</SurgeryQuiz_Medicine.options.3>
+  <SurgeryQuiz_Terrain.label>Sanitation</SurgeryQuiz_Terrain.label>
+  <SurgeryQuiz_Terrain.question>Without a medical bed, which terrain is ideal for performing surgery?</SurgeryQuiz_Terrain.question>
+  <SurgeryQuiz_Terrain.SurgeryQuiz_Terrain/>
+  <SurgeryQuiz_Terrain.options.0>Dirt</SurgeryQuiz_Terrain.options.0>
+  <SurgeryQuiz_Terrain.options.1>Carpet</SurgeryQuiz_Terrain.options.1>
+  <SurgeryQuiz_Terrain.options.2>Sterile tile</SurgeryQuiz_Terrain.options.2>
+  <SurgeryQuiz_Terrain.options.3>Grass</SurgeryQuiz_Terrain.options.3>
+  <SurgeryQuiz_Necrosis.label>Pathology</SurgeryQuiz_Necrosis.label>
+  <SurgeryQuiz_Necrosis.question>What is the primary purpose of amputating a rotting limb?</SurgeryQuiz_Necrosis.question>
+  <SurgeryQuiz_Necrosis.SurgeryQuiz_Necrosis/>
+  <SurgeryQuiz_Necrosis.options.0>Prevent infection spread</SurgeryQuiz_Necrosis.options.0>
+  <SurgeryQuiz_Necrosis.options.1>Prevent mood drop</SurgeryQuiz_Necrosis.options.1>
+  <SurgeryQuiz_Necrosis.options.2>Improve aesthetics</SurgeryQuiz_Necrosis.options.2>
+  <SurgeryQuiz_Necrosis.options.3>Avoid insect hive</SurgeryQuiz_Necrosis.options.3>
+  <SurgeryQuiz_Skill.label>Skill Knowledge</SurgeryQuiz_Skill.label>
+  <SurgeryQuiz_Skill.question>Which skill directly determines the success rate of surgery?</SurgeryQuiz_Skill.question>
+  <SurgeryQuiz_Skill.SurgeryQuiz_Skill/>
+  <SurgeryQuiz_Skill.options.0>Intellectual</SurgeryQuiz_Skill.options.0>
+  <SurgeryQuiz_Skill.options.1>Social</SurgeryQuiz_Skill.options.1>
+  <SurgeryQuiz_Skill.options.2>Medical</SurgeryQuiz_Skill.options.2>
+  <SurgeryQuiz_Skill.options.3>Crafting</SurgeryQuiz_Skill.options.3>
+  <SurgeryQuiz_Factors.label>General Awareness</SurgeryQuiz_Factors.label>
+  <SurgeryQuiz_Factors.question>Which of the following factors does NOT affect surgery success rate?</SurgeryQuiz_Factors.question>
+  <SurgeryQuiz_Factors.SurgeryQuiz_Factors/>
+  <SurgeryQuiz_Factors.options.0>Lighting intensity</SurgeryQuiz_Factors.options.0>
+  <SurgeryQuiz_Factors.options.1>Room temperature</SurgeryQuiz_Factors.options.1>
+  <SurgeryQuiz_Factors.options.2>Bed quality</SurgeryQuiz_Factors.options.2>
+  <SurgeryQuiz_Factors.options.3>Surgeon's personality</SurgeryQuiz_Factors.options.3>
+  <SurgeryQuiz_BloodLoss.label>Physiology</SurgeryQuiz_BloodLoss.label>
+  <SurgeryQuiz_BloodLoss.question>At what blood loss percentage will a colonist die immediately?</SurgeryQuiz_BloodLoss.question>
+  <SurgeryQuiz_BloodLoss.SurgeryQuiz_BloodLoss/>
+  <SurgeryQuiz_BloodLoss.options.0>60%</SurgeryQuiz_BloodLoss.options.0>
+  <SurgeryQuiz_BloodLoss.options.1>80%</SurgeryQuiz_BloodLoss.options.1>
+  <SurgeryQuiz_BloodLoss.options.2>100%</SurgeryQuiz_BloodLoss.options.2>
+  <SurgeryQuiz_BloodLoss.options.3>120%</SurgeryQuiz_BloodLoss.options.3>
+  <SurgeryQuiz_Cleanliness.label>Sanitation</SurgeryQuiz_Cleanliness.label>
+  <SurgeryQuiz_Cleanliness.question>In vanilla, what is the maximum cleanliness bonus provided by sterile tiles?</SurgeryQuiz_Cleanliness.question>
+  <SurgeryQuiz_Cleanliness.SurgeryQuiz_Cleanliness/>
+  <SurgeryQuiz_Cleanliness.options.0>0.1</SurgeryQuiz_Cleanliness.options.0>
+  <SurgeryQuiz_Cleanliness.options.1>0.3</SurgeryQuiz_Cleanliness.options.1>
+  <SurgeryQuiz_Cleanliness.options.2>0.6</SurgeryQuiz_Cleanliness.options.2>
+  <SurgeryQuiz_Cleanliness.options.3>1.0</SurgeryQuiz_Cleanliness.options.3>
+  <SurgeryQuiz_Immunity.label>Physiology</SurgeryQuiz_Immunity.label>
+  <SurgeryQuiz_Immunity.question>Which body function attribute directly affects the immunity gain speed?</SurgeryQuiz_Immunity.question>
+  <SurgeryQuiz_Immunity.SurgeryQuiz_Immunity/>
+  <SurgeryQuiz_Immunity.options.0>Eating</SurgeryQuiz_Immunity.options.0>
+  <SurgeryQuiz_Immunity.options.1>Blood filtration</SurgeryQuiz_Immunity.options.1>
+  <SurgeryQuiz_Immunity.options.2>Moving</SurgeryQuiz_Immunity.options.2>
+  <SurgeryQuiz_Immunity.options.3>Breathing</SurgeryQuiz_Immunity.options.3>
+  <SurgeryQuiz_Luciferium.label>Pharmacology</SurgeryQuiz_Luciferium.label>
+  <SurgeryQuiz_Luciferium.question>Which drug, often referred to as "A bargain with the devil," must never be stopped once started, or it results in death?</SurgeryQuiz_Luciferium.question>
+  <SurgeryQuiz_Luciferium.SurgeryQuiz_Luciferium/>
+  <SurgeryQuiz_Luciferium.options.0>Yayo</SurgeryQuiz_Luciferium.options.0>
+  <SurgeryQuiz_Luciferium.options.1>Psychoid tea</SurgeryQuiz_Luciferium.options.1>
+  <SurgeryQuiz_Luciferium.options.2>Luciferium</SurgeryQuiz_Luciferium.options.2>
+  <SurgeryQuiz_Luciferium.options.3>Smokeleaf</SurgeryQuiz_Luciferium.options.3>
+  <SurgeryQuiz_FailResult.label>Surgery Practice</SurgeryQuiz_FailResult.label>
+  <SurgeryQuiz_FailResult.question>In vanilla, if a surgery is determined to be a "Catastrophic Failure," what is the most typical consequence?</SurgeryQuiz_FailResult.question>
+  <SurgeryQuiz_FailResult.SurgeryQuiz_FailResult/>
+  <SurgeryQuiz_FailResult.options.0>Removal of incorrect body parts and widespread damage</SurgeryQuiz_FailResult.options.0>
+  <SurgeryQuiz_FailResult.options.1>Wasted medicine without additional damage</SurgeryQuiz_FailResult.options.1>
+  <SurgeryQuiz_FailResult.options.2>Patient instantly heals all wounds</SurgeryQuiz_FailResult.options.2>
+  <SurgeryQuiz_FailResult.options.3>Surgeon gains a 'Genius Surgeon' mood buff</SurgeryQuiz_FailResult.options.3>
+</LanguageData>

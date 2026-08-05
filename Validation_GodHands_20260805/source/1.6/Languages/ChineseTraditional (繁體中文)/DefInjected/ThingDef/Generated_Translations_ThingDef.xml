@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <GodHand_GearboxGenerator.label>手摇齿轮箱发电机</GodHand_GearboxGenerator.label>
+  <GodHand_GearboxGenerator.description>一个复杂的机械装置，将手摇动力转化为工业电力。由十字齿轮箱和大型悬臂组成。</GodHand_GearboxGenerator.description>
+  <GodHand_EndRodGenerator.label>异世界第一类永动机</GodHand_EndRodGenerator.label>
+  <GodHand_EndRodGenerator.description>来自异世界的第一类永动机，可以用来捕获生物。</GodHand_EndRodGenerator.description>
+  <GodHand_TurretHead.label>炮塔头饰</GodHand_TurretHead.label>
+  <GodHand_TurretHead.description>一个被神之手扯下来的炮塔顶部，现在它是一个时尚的帽子。\n\n警告：这可能会让你看起来像个移动防御工事。</GodHand_TurretHead.description>
+  <GodHand_TurretBase.label>崩解中的炮塔基座</GodHand_TurretBase.label>
+  <GodHand_TurretBase.description>被神之手拔掉炮塔头部后剩下的基座残骸，结构不稳定，即将崩解。</GodHand_TurretBase.description>
+  <GodHand_PawnFlyer.label>神之手飞行容器</GodHand_PawnFlyer.label>
+</LanguageData>

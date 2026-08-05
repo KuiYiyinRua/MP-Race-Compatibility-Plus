@@ -1,0 +1,7 @@
+<loadFolders>
+	<v1.6>
+		<li>/</li>
+		<li>1.6</li>
+		<li IfModActive="rim.job.world,rim.job.world_steam">1.6/Mod/RJW</li>		
+	</v1.6>
+</loadFolders>

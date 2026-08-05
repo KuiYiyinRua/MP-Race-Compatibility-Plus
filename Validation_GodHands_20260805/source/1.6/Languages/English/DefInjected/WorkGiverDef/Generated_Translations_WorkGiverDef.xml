@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <GodHand_RefuelTurretHead.label>Reload turret ammunition</GodHand_RefuelTurretHead.label>
+  <GodHand_HandCrankGearbox.label>operate hand crank generator</GodHand_HandCrankGearbox.label>
+  <GodHand_HandCrankGearbox.verb>hand crank</GodHand_HandCrankGearbox.verb>
+  <GodHand_HandCrankGearbox.gerund>cranking</GodHand_HandCrankGearbox.gerund>
+</LanguageData>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- 神之庇护相关的 HediffDefs -->
+  
+  <HediffDef>
+    <defName>GodHand_ProtectionIndividual</defName>
+    <label>Divine Protection</label>
+    <description>Under the direct protection of the God Hand, the individual is surrounded by a phase shield nearly invisible to the naked eye. In this state, the individual receives extremely high defensive bonuses.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.1, 0.7, 1.0)</defaultLabelColor>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>60000</disappearsAfterTicks> <!-- 24小时 -->
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statOffsets>
+          <ArmorRating_Sharp>1.5</ArmorRating_Sharp>
+          <ArmorRating_Blunt>1.5</ArmorRating_Blunt>
+          <ArmorRating_Heat>1.5</ArmorRating_Heat>
+        </statOffsets>
+        <statFactors>
+          <IncomingDamageFactor>0</IncomingDamageFactor>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

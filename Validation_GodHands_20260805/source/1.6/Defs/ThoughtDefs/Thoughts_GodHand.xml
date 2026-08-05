@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <ThoughtDef>
+    <defName>CaressedByGodHand</defName>
+    <durationDays>1</durationDays>
+    <thoughtClass>Thought_Memory</thoughtClass>
+    <stackLimit>1</stackLimit>
+    <stackedEffectMultiplier>1</stackedEffectMultiplier>
+    <stages>
+      <li>
+        <label>Caressed by {1}</label>
+        <description>I was caressed by {1}. That warmth and power filled me with overwhelming happiness.</description>
+        <baseMoodEffect>6</baseMoodEffect>
+      </li>
+      <li>
+        <label>Deeply caressed by {1}</label>
+        <description>{1}'s hand lingered on me. The strange sensation still echoes through my body.</description>
+        <baseMoodEffect>12</baseMoodEffect>
+      </li>
+      <li>
+        <label>Immersed in {1}'s presence</label>
+        <description>I feel soaked in {1}'s presence. My mind tingles at the edge of breaking.</description>
+        <baseMoodEffect>18</baseMoodEffect>
+      </li>
+      <li>
+        <label>Embraced by {1}</label>
+        <description>{1} wraps tightly around me. It is with me. We will never be apart.</description>
+        <baseMoodEffect>24</baseMoodEffect>
+      </li>
+      <li>
+        <label>Overwhelmed by {1}'s touch</label>
+        <description>Waves of pleasure and power crash through me. I can barely hold myself together.</description>
+        <baseMoodEffect>30</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+</Defs>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- 炮塔之力 - 穿戴炮塔头时获得的头部HP加成 -->
+  <HediffDef>
+    <defName>GodHand_TurretHeadBonus</defName>
+    <hediffClass>GodHandMod.Hediff_TurretHeadBonus</hediffClass>
+    <label>Turret Power</label>
+    <description>A turret has been welded to the head, and the metal structure enhances the head's protection.\n\nThe turret's structural HP is distributed proportionally to the head and its sub-parts, increasing their maximum HP.</description>
+    <isBad>false</isBad>
+    <everCurableByItem>false</everCurableByItem>
+    <initialSeverity>1</initialSeverity>
+    <maxSeverity>1</maxSeverity>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <stages>
+      <li>
+        <becomeVisible>true</becomeVisible>
+      </li>
+    </stages>
+  </HediffDef>
+</Defs>

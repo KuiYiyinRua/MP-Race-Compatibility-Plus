@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- GodHand_BoatFilling -->
+  <GodHand_BoatFilling.stages.0.label>Filled by the rod (tight)</GodHand_BoatFilling.stages.0.label>
+  <GodHand_BoatFilling.stages.0.description>This rough mechanical invasion is nothing but torture... My body is being torn apart... The pain makes me want to scream in agony...</GodHand_BoatFilling.stages.0.description>
+  <GodHand_BoatFilling.stages.1.label>Filled by the rod (adapting)</GodHand_BoatFilling.stages.1.label>
+  <GodHand_BoatFilling.stages.1.description>This constant swelling... surprisingly, it's not so unbearable anymore. My sanity is being eroded by this foreign presence bit by bit...</GodHand_BoatFilling.stages.1.description>
+  <GodHand_BoatFilling.stages.2.label>Filled by the rod (dilated)</GodHand_BoatFilling.stages.2.label>
+  <GodHand_BoatFilling.stages.2.description>Everything inside has been stretched wide... As long as the mechanism continues its cycle, I feel a twisted sense of comfort...</GodHand_BoatFilling.stages.2.description>
+  <GodHand_BoatFilling.stages.3.label>Filled by the rod (broken)</GodHand_BoatFilling.stages.3.label>
+  <GodHand_BoatFilling.stages.3.description>Ah... My body has completely conformed to the shape of the device. Just keep going, let me be filled forever. This intoxication... there's no turning back...</GodHand_BoatFilling.stages.3.description>
+
+  <!-- GodHand_BoatEmptying -->
+  <GodHand_BoatEmptying.stages.0.label>Withdrawal (void)</GodHand_BoatEmptying.stages.0.label>
+  <GodHand_BoatEmptying.stages.0.description>That sense of fullness is gone... It's cold inside now. I want to be filled again... Please, put me back...</GodHand_BoatEmptying.stages.0.description>
+</LanguageData>

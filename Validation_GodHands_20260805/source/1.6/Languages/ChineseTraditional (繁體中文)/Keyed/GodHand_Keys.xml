@@ -1,0 +1,751 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <GodHand_PawnCapturedByMachine>{0} 被机器捕获并拘束在了船上！</GodHand_PawnCapturedByMachine>
+  
+  <!-- 设定界面 -->
+  <GodHand.Settings.Page.General>通用设置</GodHand.Settings.Page.General>
+  <GodHand.Settings.Page.GodHand>神之手</GodHand.Settings.Page.GodHand>
+  <GodHand.Settings.Page.GodWrench>神之扳手</GodHand.Settings.Page.GodWrench>
+  <GodHand.Settings.Page.Poke>神之脑瓜崩</GodHand.Settings.Page.Poke>
+  <GodHand.Settings.Page.Caress>神之爱抚</GodHand.Settings.Page.Caress>
+  <GodHand.Settings.Page.Cleaning>神之清洁</GodHand.Settings.Page.Cleaning>
+  <GodHand.Settings.Page.Judgment>神之裁决</GodHand.Settings.Page.Judgment>
+  
+  <GodHand.Settings.FunctionSwitches>总控开关</GodHand.Settings.FunctionSwitches>
+  <GodHand.Settings.EnableGodHand>启用神之手</GodHand.Settings.EnableGodHand>
+  <GodHand.Settings.EnableGodHand.Tooltip>关闭后无法使用神之手抓取和移动 Pawn/物品</GodHand.Settings.EnableGodHand.Tooltip>
+  
+  <GodHand.Settings.GodHandSubFunctions>== 神之手子功能 ==</GodHand.Settings.GodHandSubFunctions>
+  <GodHand.Settings.GodHandEnableShake>启用摇晃功能</GodHand.Settings.GodHandEnableShake>
+  <GodHand.Settings.GodHandEnableShake.Tooltip>允许抓取单位并快速摇晃来使其呕吐</GodHand.Settings.GodHandEnableShake.Tooltip>
+  <GodHand.Settings.GodHandEnableMeleeMode>启用近战模式</GodHand.Settings.GodHandEnableMeleeMode>
+  <GodHand.Settings.GodHandEnableMeleeMode.Tooltip>允许使用抓取的近战武器进行攻击</GodHand.Settings.GodHandEnableMeleeMode.Tooltip>
+  <GodHand.Settings.GodHandEnableShootingMode>启用射击模式</GodHand.Settings.GodHandEnableShootingMode>
+  <GodHand.Settings.GodHandEnableShootingMode.Tooltip>允许使用抓取的远程武器进行射击</GodHand.Settings.GodHandEnableShootingMode.Tooltip>
+  <GodHand.Settings.GodHandEnableForceIngest>启用强制喂食</GodHand.Settings.GodHandEnableForceIngest>
+  <GodHand.Settings.GodHandEnableForceIngest.Tooltip>允许将食物或药物拖到Pawn身上强制喂食</GodHand.Settings.GodHandEnableForceIngest.Tooltip>
+
+  <GodHand.Settings.EnableDebugLog>启用调试日志</GodHand.Settings.EnableDebugLog>
+  <GodHand.Settings.EnableDebugLog.Tooltip>启用后，将在控制台中输出详细的调试日志</GodHand.Settings.EnableDebugLog.Tooltip>
+  <GodHand.Settings.DisableNSFW>关闭异世界第一类永动机不适宜内容</GodHand.Settings.DisableNSFW>
+  <GodHand.Settings.DisableNSFW.Tooltip>勾选后将禁用所有异世界第一类永动机的奇怪交互逻辑。</GodHand.Settings.DisableNSFW.Tooltip>
+  <GodHand.Settings.DisableEndRodGenerator>关闭异世界第一类永动机</GodHand.Settings.DisableEndRodGenerator>
+  <GodHand.Settings.DisableEndRodGenerator.Tooltip>勾选后将禁用该建筑的建造，且在加载存档时会自动拆除地图上现有的此类建筑并返还材料。</GodHand.Settings.DisableEndRodGenerator.Tooltip>
+  <GodHand.Settings.EnableGodWrench>启用神之扳手</GodHand.Settings.EnableGodWrench>
+  <GodHand.Settings.EnableGodWrench.Tooltip>关闭后无法使用神之扳手移动建筑</GodHand.Settings.EnableGodWrench.Tooltip>
+  <GodHand.Settings.EnableCaress>启用神之爱抚</GodHand.Settings.EnableCaress>
+  <GodHand.Settings.EnableCaress.Tooltip>关闭后无法使用神之爱抚功能</GodHand.Settings.EnableCaress.Tooltip>
+  <GodHand.Settings.EnableCleaning>启用神之清洁</GodHand.Settings.EnableCleaning>
+  <GodHand.Settings.EnableCleaning.Tooltip>关闭后无法使用神之清洁功能</GodHand.Settings.EnableCleaning.Tooltip>
+  <GodHand.Settings.EnableJudgment>启用神之裁决</GodHand.Settings.EnableJudgment>
+  <GodHand.Settings.EnableJudgment.Tooltip>关闭后无法使用神之裁决功能</GodHand.Settings.EnableJudgment.Tooltip>
+  <GodHand.Settings.EnablePoke>启用神之脑瓜崩</GodHand.Settings.EnablePoke>
+  <GodHand.Settings.EnablePoke.Tooltip>关闭后无法使用神之脑瓜崩功能</GodHand.Settings.EnablePoke.Tooltip>
+  <GodHand.Settings.EnableAssistant>啟用神之助手</GodHand.Settings.EnableAssistant>
+  <GodHand.Settings.EnableAssistant.Tooltip>關閉後無法使用神之助手功能</GodHand.Settings.EnableAssistant.Tooltip>
+  
+  <GodHand.Settings.Page.GodWrench>神之扳手配置</GodHand.Settings.Page.GodWrench>
+  <GodHand.Settings.GodWrenchSubFunctions>== 扳手子功能 ==</GodHand.Settings.GodWrenchSubFunctions>
+  <GodHand.Settings.GodWrenchEnableBulkScoop>批量拾取模式</GodHand.Settings.GodWrenchEnableBulkScoop>
+  <GodHand.Settings.GodWrenchEnableBulkScoop.Tooltip>允许一次性拎起范围内的所有建筑物。请注意重量……开玩笑的，你是神，没有重量。</GodHand.Settings.GodWrenchEnableBulkScoop.Tooltip>
+  <GodHand.Settings.GodWrenchEnablePrecisionMode>超精细调整模式</GodHand.Settings.GodWrenchEnablePrecisionMode>
+  <GodHand.Settings.GodWrenchEnablePrecisionMode.Tooltip>开启后，在使用扳手拎起建筑时可以通过 Q/E 键进行亚格数级别的微调，完美主义者的福音。</GodHand.Settings.GodWrenchEnablePrecisionMode.Tooltip>
+  <GodHand.Settings.TurretHeadMaxTurrets>多联装底座上限: {0}</GodHand.Settings.TurretHeadMaxTurrets>
+  <GodHand.Settings.GodWrenchDescription>神之扳手允许你像摆放积木一样随意移动基地的建筑，甚至是那些沉重的防御炮塔。</GodHand.Settings.GodWrenchDescription>
+  
+  <GodHand.Settings.PokeSubFunctions>== 脑瓜崩子功能 ==</GodHand.Settings.PokeSubFunctions>
+  <GodHand.Settings.PokeEnableResurrection>启用神之复苏</GodHand.Settings.PokeEnableResurrection>
+  <GodHand.Settings.PokeEnableResurrection.Tooltip>允许通过脑瓜崩复活刚刚死亡的单位</GodHand.Settings.PokeEnableResurrection.Tooltip>
+  <GodHand.Settings.PokeEnableMentalBreakInterrupt>启用打断崩溃</GodHand.Settings.PokeEnableMentalBreakInterrupt>
+  <GodHand.Settings.PokeEnableMentalBreakInterrupt.Tooltip>允许通过脑瓜崩打断单位的精神崩溃</GodHand.Settings.PokeEnableMentalBreakInterrupt.Tooltip>
+  <GodHand.Settings.PokeEnableInspiration>启用获得灵感</GodHand.Settings.PokeEnableInspiration>
+  <GodHand.Settings.PokeEnableInspiration.Tooltip>脑瓜崩有概率给予单位灵感</GodHand.Settings.PokeEnableInspiration.Tooltip>
+  <GodHand.Settings.PokeEnableFlick>启用弹飞功能</GodHand.Settings.PokeEnableFlick>
+  <GodHand.Settings.PokeEnableFlick.Tooltip>允许将单位像虫子一样弹飞</GodHand.Settings.PokeEnableFlick.Tooltip>
+  
+  <GodHand.Settings.EnableThrow>启用甩飞功能</GodHand.Settings.EnableThrow>
+  <GodHand.Settings.EnableThrow.Tooltip>关闭后只能拖动单位，不能甩飞造成伤害</GodHand.Settings.EnableThrow.Tooltip>
+  <GodHand.Settings.MaxThrowCells.Tooltip>抛出过程中如果超过此距离，运动将被强制截断。</GodHand.Settings.MaxThrowCells.Tooltip>
+  <GodHand.Settings.EnableRimTalkIntegration>实验性rimtalk联动开关(可能导致额外消耗)</GodHand.Settings.EnableRimTalkIntegration>
+  <GodHand.Settings.EnableRimTalkIntegration.Tooltip>可能导致额外消耗</GodHand.Settings.EnableRimTalkIntegration.Tooltip>
+
+  <GodHand.Settings.JudgmentCrushDamage>核心碾压伤害倍率: {0} ({1}x)</GodHand.Settings.JudgmentCrushDamage>
+  <GodHand.Settings.JudgmentCrushRadiusValue>碾压有效半径倍率: {0}x</GodHand.Settings.JudgmentCrushRadiusValue>
+  <GodHand.Settings.JudgmentShockwaveDamage>余波冲击伤害倍率: {0} ({1}x)</GodHand.Settings.JudgmentShockwaveDamage>
+  <GodHand.Settings.JudgmentShockwaveRadiusValue>冲击波扩散倍率: {0}x</GodHand.Settings.JudgmentShockwaveRadiusValue>
+
+  <GodHand.Settings.JudgmentReviewMode>审查模式</GodHand.Settings.JudgmentReviewMode>
+  <GodHand.Settings.JudgmentReviewMode.Tooltip>开启后进入审查模式，不再显示中指。</GodHand.Settings.JudgmentReviewMode.Tooltip>
+  <GodHand.Settings.RimTalkDetected>检测到 RimTalk 集成已激活</GodHand.Settings.RimTalkDetected>
+  <GodHand.Settings.RimTalkNotDetected>未检测到 RimTalk</GodHand.Settings.RimTalkNotDetected>
+  <GodHand.Settings.RimTalk.ControlledByGodHand>[ 此选项已被神之手重定向处理 ]</GodHand.Settings.RimTalk.ControlledByGodHand>
+  <GodHand.Settings.PlayerName>玩家名字</GodHand.Settings.PlayerName>
+  <GodHand.Settings.PlayerPersona>玩家身份描述</GodHand.Settings.PlayerPersona>
+  
+  <GodHand.Settings.Page.RimTalk>RimTalk 联动</GodHand.Settings.Page.RimTalk>
+  <GodHand.Settings.Page.PlayerInfo>玩家设定</GodHand.Settings.Page.PlayerInfo>
+  <GodHand.Settings.PlayerInfo.Basic>== 基础信息 ==</GodHand.Settings.PlayerInfo.Basic>
+  <GodHand.Settings.PlayerInfo.AgeGender>性别与年龄</GodHand.Settings.PlayerInfo.AgeGender>
+  <GodHand.Settings.PlayerInfo.Title>头衔</GodHand.Settings.PlayerInfo.Title>
+  <GodHand.Settings.PlayerInfo.Race>种族/异种</GodHand.Settings.PlayerInfo.Race>
+  
+  <GodHand.Settings.PlayerInfo.Backstory>== 背景故事 ==</GodHand.Settings.PlayerInfo.Backstory>
+  <GodHand.Settings.PlayerInfo.Childhood>童年经历</GodHand.Settings.PlayerInfo.Childhood>
+  <GodHand.Settings.PlayerInfo.BackstoryChildhood>童年经历</GodHand.Settings.PlayerInfo.BackstoryChildhood>
+  <GodHand.Settings.PlayerInfo.Adulthood>成年经历</GodHand.Settings.PlayerInfo.Adulthood>
+  <GodHand.Settings.PlayerInfo.BackstoryAdulthood>成年经历</GodHand.Settings.PlayerInfo.BackstoryAdulthood>
+  
+  <GodHand.Settings.PlayerInfo.Attributes>== 属性与状态 ==</GodHand.Settings.PlayerInfo.Attributes>
+  <GodHand.Settings.PlayerInfo.Traits>特性 (Traits)</GodHand.Settings.PlayerInfo.Traits>
+  <GodHand.Settings.PlayerInfo.Skills>技能 (Skills)</GodHand.Settings.PlayerInfo.Skills>
+  <GodHand.Settings.PlayerInfo.Health>健康状况</GodHand.Settings.PlayerInfo.Health>
+  <GodHand.Settings.PlayerInfo.Mood>心情状态</GodHand.Settings.PlayerInfo.Mood>
+  <GodHand.Settings.PlayerInfo.Thoughts>当前想法/记忆</GodHand.Settings.PlayerInfo.Thoughts>
+  
+  <GodHand.Settings.PlayerInfo.Social>== 社会关系 ==</GodHand.Settings.PlayerInfo.Social>
+  <GodHand.Settings.PlayerInfo.Relations>关系</GodHand.Settings.PlayerInfo.Relations>
+  <GodHand.Settings.PlayerInfo.Ideology>文化/意识形态</GodHand.Settings.PlayerInfo.Ideology>
+  
+  <GodHand.Settings.PlayerInfo.Misc>== 其他 ==</GodHand.Settings.PlayerInfo.Misc>
+  <GodHand.Settings.PlayerInfo.Equipment>装备</GodHand.Settings.PlayerInfo.Equipment>
+  <GodHand.Settings.PlayerInfo.Personality>人设性格</GodHand.Settings.PlayerInfo.Personality>
+  
+  <GodHand.Settings.PlayerIdentity.Tooltip>设定你在AI对话中的名字和身份。AI会用这些信息来称呼你并理解你的角色（例如：名字"神使"，身份"超凡智能的化身"）。</GodHand.Settings.PlayerIdentity.Tooltip>
+  
+  <!-- 记忆条目 -->
+  <GodHand.Memory.Grabbed>我刚刚被 {1} 抓起并移动到了新的位置</GodHand.Memory.Grabbed>
+  <GodHand.Memory.Thrown>我刚刚被 {1} 抓起并用力甩飞了出去</GodHand.Memory.Thrown>
+  <GodHand.Memory.ForcedIngest>我刚刚被 {1} 强迫摄入了 {0}</GodHand.Memory.ForcedIngest>
+  <GodHand.Memory.Vomited>我刚才被 {1} 剧烈摇晃，难受得吐了出来</GodHand.Memory.Vomited>
+  <GodHand.Memory.Poked>我刚才被 {1} 弹了脑瓜崩，现在还觉得晕乎乎的</GodHand.Memory.Poked>
+  <GodHand.Memory.PokedOut>我的疯劲刚才被 {1} 一记脑瓜崩给弹没了，这太神奇了</GodHand.Memory.PokedOut>
+  <GodHand.Memory.Epiphany>我刚才被 {1} 弹了一下脑瓜崩，脑子里突然灵光一现：{0}</GodHand.Memory.Epiphany>
+  <GodHand.Memory.Resurrected>我竟然被 {1} 从死者国度带回来了……我复活了！</GodHand.Memory.Resurrected>
+  <GodHand.Memory.Flicked>我刚刚被 {1} 像弹虫子一样弹飞了！</GodHand.Memory.Flicked>
+  <GodHand.Memory.Caressed>我刚刚被 {1} 温柔地抚摸了，这种感觉从未有过……</GodHand.Memory.Caressed>
+  <GodHand.Memory.ResistanceReduced>在 {1} 的感召下，我感觉我的坚持正在瓦解</GodHand.Memory.ResistanceReduced>
+  <GodHand.Memory.NoLongerLoyal>被 {1} 抚摸后，我感觉之前的想法变得没有意义了，我不再盲从</GodHand.Memory.NoLongerLoyal>
+  <GodHand.Memory.Surrendered>我彻底臣服于 {1} 的魅力，我不跑了，我投降</GodHand.Memory.Surrendered>
+  <GodHand.Memory.Healed>{1} 彻底治愈了我的伤口，我感觉重获新生</GodHand.Memory.Healed>
+  <GodHand.Memory.AddictionCured>在 {1} 的干预下，我感觉我的恶习（瘾）一扫而空</GodHand.Memory.AddictionCured>
+  <GodHand.Memory.BeingHealed>我正沐浴在来自 {1} 的治愈光芒中</GodHand.Memory.BeingHealed>
+  <GodHand.Memory.JudgmentKilled>我被 {1} 抹杀了……</GodHand.Memory.JudgmentKilled>
+  <GodHand.Memory.JudgmentCrushed>我承受了来自 {1} 的恐怖碾压</GodHand.Memory.JudgmentCrushed>
+  <GodHand.Memory.JudgmentShockwave>我被来自 {1} 的能量余波击中了</GodHand.Memory.JudgmentShockwave>
+  <GodHand.Memory.JudgmentStasis>我的感知和身体都被 {1} 强制停滞了</GodHand.Memory.JudgmentStasis>
+  <GodHand.Memory.JudgmentWitnessed>{1} 释放了一次神之裁决</GodHand.Memory.JudgmentWitnessed>
+  <GodHand.Memory.BodySizeChanged>我感觉我的身体大小正在发生超自然的改变……我的体型现在是原来的 {0} 倍</GodHand.Memory.BodySizeChanged>
+  <GodHand.Memory.ContextPrefix>最近与神之手的互动：</GodHand.Memory.ContextPrefix>
+  
+  <GodHand.Time.JustNow>刚刚</GodHand.Time.JustNow>
+  <GodHand.Time.Recently>不久前</GodHand.Time.Recently>
+  <GodHand.Time.Today>今天早些时候</GodHand.Time.Today>
+  <GodHand.Time.Yesterday>昨天</GodHand.Time.Yesterday>
+  <GodHand.Time.LongAgo>前几天</GodHand.Time.LongAgo>
+  <GodHand.Memory.LastTimeWas>上次是</GodHand.Memory.LastTimeWas>
+  <GodHand.Memory.HighPriorityPrompt>【重要提示：以下是该角色近期与玩家的互动。这些是玩家对世界的直接影响。请在生成对话时优先考虑这些经历。】</GodHand.Memory.HighPriorityPrompt>
+  <GodHand.RimTalk.Prompt.Thrown>【内心独白】我刚刚竟然被 {1} 抓起来扔飞了！表达我的震惊和对这股神秘力量的吐槽。</GodHand.RimTalk.Prompt.Thrown>
+  <GodHand.RimTalk.Prompt.Poked>【内心独白】我刚才脑瓜崩被 {1} 弹了一下！这太突然了，表达我的晕头转向和不满（或者被弹醒后的感激）。</GodHand.RimTalk.Prompt.Poked>
+  <GodHand.RimTalk.Prompt.Caressed>【内心独白】刚才我被 {1} 温柔抚摸的感觉……真的很难用语言形容。表达我的沉醉和受宠若惊。</GodHand.RimTalk.Prompt.Caressed>
+  <GodHand.RimTalk.Prompt.Grabbed>【内心独白】我刚刚被 {1} 抓起来移动到了另一个地方。这种完全被支配的感觉让我感到……</GodHand.RimTalk.Prompt.Grabbed>
+  <GodHand.RimTalk.Prompt.Healed>【内心独白】奇迹发生了！我的伤口刚才被 {1} 瞬间治愈了。感谢神祇的眷顾。</GodHand.RimTalk.Prompt.Healed>
+  <GodHand.RimTalk.Prompt.Resurrected>【内心独白】我……我不是死了吗？刚才 {1} 的一记弹指竟然让我复活了……讨论这重生的奇迹。</GodHand.RimTalk.Prompt.Resurrected>
+  <GodHand.RimTalk.Prompt.ForcedIngest>【内心独白】刚才有一股无法抗拒的力量让我吞下了那个东西……这是 {1} 的意志吗？表达我的困惑和无可奈何。</GodHand.RimTalk.Prompt.ForcedIngest>
+  <GodHand.RimTalk.System.Background>【重要背景】你（Pawn）刚刚经历了一次来自超凡力量（玩家）的直接干预。</GodHand.RimTalk.System.Background>
+  <GodHand.RimTalk.System.Persona>【玩家人设】{0}</GodHand.RimTalk.System.Persona>
+  <GodHand.RimTalk.System.Content>【互动内容】{0}</GodHand.RimTalk.System.Content>
+  <GodHand.RimTalk.System.Instruction>【指令】请以第一人称进行内心独白。不要与其他 Pawn 进行社交互动，只表达你此刻最真实的感受、震憾或感悟。</GodHand.RimTalk.System.Instruction>
+  <GodHand.RimTalk.Prompt.JudgmentShockwave>【内心独白】刚刚我附近发生了一场巨大的爆炸！我被余波震得头晕目眩，这绝对不是凡人的力量……难道是 {1} 的震怒？表达我的恐惧和劫后余生的庆幸。</GodHand.RimTalk.Prompt.JudgmentShockwave>
+  <GodHand.RimTalk.Prompt.JudgmentStasis>【内心独白】我的全身都被锁定了！我动弹不得，感觉时间都在我身上停止了。这种被 {1} 绝对静止支配的感觉太可怕了……</GodHand.RimTalk.Prompt.JudgmentStasis>
+  
+  <GodHand.Settings.PlayMemeSound>播放"因为神之手的力量是无限的"MEME</GodHand.Settings.PlayMemeSound>
+  <GodHand.Settings.PlayMemeSound.Tooltip>抓取单位时播放预设的MEME音效</GodHand.Settings.PlayMemeSound.Tooltip>
+  <GodHand.Settings.ShowFlavorError>显示风味红字</GodHand.Settings.ShowFlavorError>
+  <GodHand.Settings.ShowFlavorError.Tooltip>在进入游戏时显示一条幽默的"假错误"消息</GodHand.Settings.ShowFlavorError.Tooltip>
+  
+  <GodHand.Settings.GrabFilters>== 抓取过滤 ==</GodHand.Settings.GrabFilters>
+  <GodHand.Settings.CanGrabFriendly>可以抓取友方</GodHand.Settings.CanGrabFriendly>
+  <GodHand.Settings.CanGrabFriendly.Tooltip>包括殖民者、友好派系和驯养动物</GodHand.Settings.CanGrabFriendly.Tooltip>
+  <GodHand.Settings.CanGrabHostile>可以抓取敌对</GodHand.Settings.CanGrabHostile>
+  <GodHand.Settings.CanGrabHostile.Tooltip>敌对派系、袭击者和敌对机械体</GodHand.Settings.CanGrabHostile.Tooltip>
+  <GodHand.Settings.CanGrabNeutral>可以抓取中立</GodHand.Settings.CanGrabNeutral>
+  <GodHand.Settings.CanGrabNeutral.Tooltip>中立派系、访客、野人和野生动物</GodHand.Settings.CanGrabNeutral.Tooltip>
+  
+  <GodHand.Settings.RimTalkCooldowns>== 智能频率控制 (节省 Token) ==</GodHand.Settings.RimTalkCooldowns>
+  <GodHand.Settings.RimTalkGlobalCooldown>全局生成冷却 (秒): {0}</GodHand.Settings.RimTalkGlobalCooldown>
+  <GodHand.Settings.RimTalkGlobalCooldown.Tooltip>所有神之手触发的内心独白之间的最小间隔。增加此值可防止刷屏。</GodHand.Settings.RimTalkGlobalCooldown.Tooltip>
+  <GodHand.Settings.RimTalkIndividualCooldown>个体生成冷却 (秒): {0}</GodHand.Settings.RimTalkIndividualCooldown>
+  <GodHand.Settings.RimTalkIndividualCooldown.Tooltip>同一个角色在短时间内不会连续对神之手干预产生两次反应。</GodHand.Settings.RimTalkIndividualCooldown.Tooltip>
+  
+  <GodHand.Settings.RimTalkChances>== 交互触发概率 ==</GodHand.Settings.RimTalkChances>
+  <GodHand.Settings.RimTalkChance.Thrown>甩飞反应概率: {0}%</GodHand.Settings.RimTalkChance.Thrown>
+  <GodHand.Settings.RimTalkChance.Poked>脑瓜崩反应概率: {0}%</GodHand.Settings.RimTalkChance.Poked>
+  <GodHand.Settings.RimTalkChance.Caressed>爱抚反应概率: {0}%</GodHand.Settings.RimTalkChance.Caressed>
+  <GodHand.Settings.RimTalkChance.Grabbed>抓取反应概率: {0}%</GodHand.Settings.RimTalkChance.Grabbed>
+  <GodHand.Settings.RimTalkChance.Healed>治愈/戒毒反应概率: {0}%</GodHand.Settings.RimTalkChance.Healed>
+  <GodHand.Settings.RimTalkChance.Resurrected>复活反应概率: {0}%</GodHand.Settings.RimTalkChance.Resurrected>
+  <GodHand.Settings.RimTalkChance.ForcedIngest>强制进食反应概率: {0}%</GodHand.Settings.RimTalkChance.ForcedIngest>
+  <GodHand.Settings.RimTalkChance.JudgmentShockwave>裁决冲击波反应概率: {0}%</GodHand.Settings.RimTalkChance.JudgmentShockwave>
+  <GodHand.Settings.RimTalkChance.JudgmentStasis>永恒停滞反应概率: {0}%</GodHand.Settings.RimTalkChance.JudgmentStasis>
+  
+  <GodHand.Settings.RimTalkCustomization>== 反应内容自定义 ==</GodHand.Settings.RimTalkCustomization>
+  <GodHand.Settings.RimTalkCustomPrompts>内心独白模板覆盖</GodHand.Settings.RimTalkCustomPrompts>
+  <GodHand.Settings.RimTalkCustomMemories>角色记忆模板覆盖</GodHand.Settings.RimTalkCustomMemories>
+  <GodHand.Settings.RimTalkCustomHint>留空则使用默认文本。支持占位符：{0} (角色名), {1} (玩家名)。</GodHand.Settings.RimTalkCustomHint>
+  
+  <GodHand.Settings.ThrowParameters>== 甩飞参数 ==</GodHand.Settings.ThrowParameters>
+  <GodHand.Settings.ThrowDistanceFactor>甩飞距离系数: {0}</GodHand.Settings.ThrowDistanceFactor>
+  <GodHand.Settings.BaseDamage>基础伤害: {0}</GodHand.Settings.BaseDamage>
+  <GodHand.Settings.DamagePerCell>每格额外伤害: {0}</GodHand.Settings.DamagePerCell>
+  <GodHand.Settings.MaxThrowCells>最大甩飞距离: {0} 格</GodHand.Settings.MaxThrowCells>
+  <GodHand.Settings.MinThrowSpeed>最小甩动速度: {0} (格/秒)</GodHand.Settings.MinThrowSpeed>
+  <GodHand.Settings.ThrowDistanceHint>提示：甩飞速度越快，造成的伤害越高；甩飞距离受力量系数影响。</GodHand.Settings.ThrowDistanceHint>
+  
+  <GodHand.Settings.ThrowDisabled>== 甩飞已禁用 ==</GodHand.Settings.ThrowDisabled>
+  <GodHand.ThrowDisabledReason>(甩飞功能已禁用)</GodHand.ThrowDisabledReason>
+  <GodHand.Settings.ResetThisPage>重置本页设置</GodHand.Settings.ResetThisPage>
+  <GodHand.Settings.ResetToDefaults>重置全部设置</GodHand.Settings.ResetToDefaults>
+  
+  <!-- 神之爱抚参数 -->
+  <GodHand.Settings.CaressParameters>== 神之爱抚参数 ==</GodHand.Settings.CaressParameters>
+  <GodHand.Settings.CaressMoodBonus>心情加成: {0}</GodHand.Settings.CaressMoodBonus>
+  <GodHand.Settings.CaressMaxStages>最大堆叠次数: {0}</GodHand.Settings.CaressMaxStages>
+  <GodHand.Settings.CaressEnablePrisonerResistanceReduction>启用降低抵抗</GodHand.Settings.CaressEnablePrisonerResistanceReduction>
+  <GodHand.Settings.CaressEnablePrisonerResistanceReduction.Tooltip>允许通过爱抚降低囚犯的抵抗度</GodHand.Settings.CaressEnablePrisonerResistanceReduction.Tooltip>
+  <GodHand.Settings.CaressPrisonerResistance>囚犯抵抗度降低: {0}%</GodHand.Settings.CaressPrisonerResistance>
+  <GodHand.Settings.CaressEnableEnemySurrender>启用感化敌人</GodHand.Settings.CaressEnableEnemySurrender>
+  <GodHand.Settings.CaressEnableEnemySurrender.Tooltip>允许通过爱抚感化敌人使其投降</GodHand.Settings.CaressEnableEnemySurrender.Tooltip>
+  <GodHand.Settings.CaressEnemySurrender>敌人投降概率: {0}%</GodHand.Settings.CaressEnemySurrender>
+  <GodHand.Settings.CaressEnableRemoveLoyalty>启用移除死忠</GodHand.Settings.CaressEnableRemoveLoyalty>
+  <GodHand.Settings.CaressEnableRemoveLoyalty.Tooltip>允许通过爱抚移除囚犯的死忠状态</GodHand.Settings.CaressEnableRemoveLoyalty.Tooltip>
+  <GodHand.Settings.CaressRemoveLoyalty>移除死忠概率: {0}%</GodHand.Settings.CaressRemoveLoyalty>
+  
+  <!-- 神之手 -->
+  <GodHand.Label>神之手</GodHand.Label>
+  <GodHand.Description>神之手的力量是绝对的！\n\n【基本操作】\n左键：抓取/拖拽目标，快速甩动可将其“甩飞”\n右键：立即释放抓取/取消当前任务\n\n【辅助快捷键】\nQ / E：切换抓取模式 (Pawn ⇄ 物品)\nShift + 滚轮：动态调整抓取影响半径\nTab：底层重叠物品循环切换\n\n【进阶模式】\n开启射击模式：抓取远程武器时按 Q\n开启近战模式：抓取近战武器时按 E</GodHand.Description>
+  <GodHand.Description.Simple>因为神之手的力量是绝对的！\n右键点击图标查看操作手册。</GodHand.Description.Simple>
+  <GodHand.Help.View>查看功能手册</GodHand.Help.View>
+  
+  <!-- 神之扳手 -->
+  <GodWrench.Label>神之扳手</GodWrench.Label>
+  <GodWrench.Description>随心所欲重塑布局。\n\n【核心功能】\n左键：拖动建筑、植物或资源\n右键：释放建筑/取消拖拽\n\n【模式切换】\n按 Q / E 键循环切换：\n- 建筑模式：普通移动\n- 超精模式：像素级摆放 (点击建筑打开面板)\n- 天花板模式：移动厚岩顶/屋顶\n- 矿脉模式：重新定位深层矿床\n- 炮塔头模式：无损拆卸/合并炮塔\n\n【高级操作】\nShift + 左键：批量吸附/移动\nShift + 滚轮：调整批量吸附半径\nTab：切换重叠的建筑/资源</GodWrench.Description>
+  <GodWrench.Description.Simple>搬运一切吧！\n右键点击图标查看操作手册。</GodWrench.Description.Simple>
+  
+  <!-- 神之爱抚 -->
+  <CaressGodHand_Label>神之爱抚</CaressGodHand_Label>
+  <CaressGodHand_Desc>抚摸你的Pawn吧！\n\n【心情效果】\n抚摸pawn获得+{0}心情，最多堆叠{1}次。\n\n【囚犯互动】\n降低{2}%抵抗度，并有{3}%概率不再死忠、变为可招募。\n\n【敌人互动】\n{4}%概率感化敌人，使其投降成为囚犯。</CaressGodHand_Desc>
+  <CaressGodHand_Desc.Simple>抚摸你的Pawn吧！\n右键按钮以打开介绍页面。</CaressGodHand_Desc.Simple>
+  <CaressGodHand_MustBePawn>必须是Pawn</CaressGodHand_MustBePawn>
+  <CaressGodHand_Dead>目标已死亡</CaressGodHand_Dead>
+  <CaressGodHand_NotHumanlike>{0}不是人形Pawn，无法被抚摸</CaressGodHand_NotHumanlike>
+  <CaressGodHand_Caressed>{1} 伸手抚摸了 {0}</CaressGodHand_Caressed>
+  
+  <!-- 神之清洁 -->
+  <CleaningGodHand.Label>神之清洁</CleaningGodHand.Label>
+  <CleaningGodHand.Description>净化世间一切污秽。\n\n【三种模式】\n按Q/E键循环切换模式：\n- 仅清洁模式：只清洁不排水\n- 排水泵模式：清洁 + 安全排水\n- 水面擦除模式：清洁 + 强力排水\n\n【仅清洁模式】\n清除污渍、垃圾和有毒污染（Biotech）。\n\n【排水泵模式】\n清洁的同时排干沼泽、浅水、泥地等可排水地形。\n原版排水泵逻辑\n\n【水面擦除模式】\n清洁的同时强制擦除所有水地形。\n可以清除深水、海洋等原版排水泵无法处理的水体。\n\n【额外】\n治愈范围内生物的伤口（{0}点/次），移除疤痕和成瘾。\n催生植物生长（{1}%加成），修复受损物品。\n\n【操作】\nQ/E：循环切换模式\nShift+滚轮：调整清洁范围</CleaningGodHand.Description>
+  <CleaningGodHand.Description.Simple>扫除一切污秽！\n右键按钮以打开介绍页面。</CleaningGodHand.Description.Simple>
+  
+  <!-- 神之清洁设置 -->
+  <GodHand.Settings.CleaningParameters>神之清洁参数</GodHand.Settings.CleaningParameters>
+  <GodHand.Settings.CleaningEnableHealing>启用治疗功能</GodHand.Settings.CleaningEnableHealing>
+  <GodHand.Settings.CleaningEnableHealing.Tooltip>清洁时缓慢治疗范围内的Pawn</GodHand.Settings.CleaningEnableHealing.Tooltip>
+  <GodHand.Settings.CleaningHealAmount>治疗量：{0}</GodHand.Settings.CleaningHealAmount>
+  <GodHand.Settings.CleaningEnablePlantGrowth>启用植物催生</GodHand.Settings.CleaningEnablePlantGrowth>
+  <GodHand.Settings.CleaningEnablePlantGrowth.Tooltip>清洁时加速范围内植物的生长</GodHand.Settings.CleaningEnablePlantGrowth.Tooltip>
+  <GodHand.Settings.CleaningPlantGrowthBonus>生长加成：{0}%</GodHand.Settings.CleaningPlantGrowthBonus>
+  <GodHand.Settings.CleaningPlayMusic>播放清洁音乐</GodHand.Settings.CleaningPlayMusic>
+  <GodHand.Settings.CleaningPlayMusic.Tooltip>使用神之清洁时播放背景音乐</GodHand.Settings.CleaningPlayMusic.Tooltip>
+  <GodHand.Settings.CleaningEnableRepair>启用物品修复</GodHand.Settings.CleaningEnableRepair>
+  <GodHand.Settings.CleaningEnableRepair.Tooltip>清洁时修复范围内的物品耐久</GodHand.Settings.CleaningEnableRepair.Tooltip>
+  <GodHand.Settings.CleaningRemoveScars>启用疤痕移除</GodHand.Settings.CleaningRemoveScars>
+  <GodHand.Settings.CleaningRemoveScars.Tooltip>治疗时同时移除永久性损伤（疤痕）</GodHand.Settings.CleaningRemoveScars.Tooltip>
+  <GodHand.Settings.CleaningCureAddiction>启用戒除成瘾</GodHand.Settings.CleaningCureAddiction>
+  <GodHand.Settings.CleaningCureAddiction.Tooltip>治疗时戒除药物成瘾</GodHand.Settings.CleaningCureAddiction.Tooltip>
+  <GodHand.Settings.CleaningEnableTending>启用伤口包扎</GodHand.Settings.CleaningEnableTending>
+  <GodHand.Settings.CleaningEnableTending.Tooltip>清洁时自动为受伤的生物进行包扎护理</GodHand.Settings.CleaningEnableTending.Tooltip>
+  <GodHand.Settings.CleaningEnableRegrowth>启用肢体再生</GodHand.Settings.CleaningEnableRegrowth>
+  <GodHand.Settings.CleaningEnableRegrowth.Tooltip>清洁时修复生物缺失的肢体或器官</GodHand.Settings.CleaningEnableRegrowth.Tooltip>
+  <GodHand.Settings.CleaningEnableFoodPreservation>启用食物保鲜</GodHand.Settings.CleaningEnableFoodPreservation>
+  <GodHand.Settings.CleaningEnableFoodPreservation.Tooltip>清洁时重置食物的新鲜度，防止腐烂</GodHand.Settings.CleaningEnableFoodPreservation.Tooltip>
+  <GodHand.Cleaning.RadiusMsg>清洁范围已调整为: {0}x{0}</GodHand.Cleaning.RadiusMsg>
+  <GodHand.Cleaning.Mode.Cleaning>仅清洁模式</GodHand.Cleaning.Mode.Cleaning>
+  <GodHand.Cleaning.Mode.Pumping>排水泵模式</GodHand.Cleaning.Mode.Pumping>
+  <GodHand.Cleaning.Mode.Pumping>排水泵模式</GodHand.Cleaning.Mode.Pumping>
+  <GodHand.Cleaning.Mode.WaterErase>水面擦除模式</GodHand.Cleaning.Mode.WaterErase>
+  <GodHand.Settings.MaxGodAssistantTasks>最大同时助手数量: {0}</GodHand.Settings.MaxGodAssistantTasks>
+  
+  <!-- 神之裁决 -->
+  <JudgmentGodHand.Label>神之裁决</JudgmentGodHand.Label>
+  <JudgmentGodHand.Description>对违抗者降下最终裁决。\n\n【神裁天罚】\n自云端垂直降下一记威力无穷的打击，并引发局部的物理坍缩。中心区域将承受毁灭性的重压，随后产生的高能冲击波足以震碎各种先进装甲。\n\n【骤死流场】\n在目标区域展开一个持续10秒的高维干涉场。场内的因果律将被实时修正，任何具有生物特征的目标其意识与生命循环都会被迅速终结。\n\n【永恒停滞】\n将目标的时间相位强制锁定。目标的存在本身将被维持在绝对的停滞临界点。在这种状态下，目标将脱离线性的时间流动，任何外部常规干扰均无法对其产生实质性改变。\n\n【宽恕模式】\n释放目标的时间相位锁定。被锁定的目标将重新回到现实的时间流中，并立即恢复其生物特征、感知以及正常的物理代谢。</JudgmentGodHand.Description>
+  <JudgmentGodHand.Description.Simple>予以他们终末审判！\nQ/E 键切换模式，右键查看详细介绍。</JudgmentGodHand.Description.Simple>
+  <JudgmentGodHand.CannotTargetFogged>无法选择战争迷雾中的位置</JudgmentGodHand.CannotTargetFogged>
+  <GodHand.Judgment.Mode.Catastrophic>神裁天罚</GodHand.Judgment.Mode.Catastrophic>
+  <GodHand.Judgment.Mode.SuddenDeathField>骤死流场</GodHand.Judgment.Mode.SuddenDeathField>
+  <GodHand.Judgment.Mode.StasisLock>永恒停滞</GodHand.Judgment.Mode.StasisLock>
+  <GodHand.Judgment.Mode.Forgiveness>宽恕模式</GodHand.Judgment.Mode.Forgiveness>
+  <GodHand.Judgment.ModeSwitch>裁决模式切换为: {0}</GodHand.Judgment.ModeSwitch>
+  
+  <!-- 神之裁决设置 -->
+  <GodHand.Settings.Page.Judgment>神之裁决</GodHand.Settings.Page.Judgment>
+  <GodHand.Settings.JudgmentParameters>神之裁决参数</GodHand.Settings.JudgmentParameters>
+
+  
+  <!-- 风味红字 -->
+  <GodHand.FlavorError.Message>我修复了大部分的报错，但是我保留了一部分，我觉得保留了一部分红字，才知道你玩的是RIMWORLD\n\n当然，你可以在设置中关闭这条报错\n\n          ——&lt;神之手&gt;Pa</GodHand.FlavorError.Message>
+
+  <!-- 动态心情阶段 -->
+  <GodHand.Mood.Label>被 {1} 抚摸 +{0}</GodHand.Mood.Label>
+  <GodHand.Mood.Desc>齁噫噢噢噢噢哦哦哦❤❤ 要坏掉了❤ 噫哦哦哦哦哦❤</GodHand.Mood.Desc>
+  
+  <!-- 抚摸反馈 -->
+  <GodHand.Caress.NoLongerLoyal>{0} 不再对原本的派系死忠，可以被招募了。</GodHand.Caress.NoLongerLoyal>
+  <GodHand.Caress.ResistanceReduced>{0} 的抵抗度降低了 {1} (从 {2} 降至 {3})。</GodHand.Caress.ResistanceReduced>
+  <GodHand.Caress.Soothed>{0} 被安抚了，虽然没有投降，但暂时平静了下来。</GodHand.Caress.Soothed>
+  <GodHand.Caress.Surrender>{0} 无法抵挡神之爱抚的诱惑，决定投降！</GodHand.Caress.Surrender>
+  <GodHand.Caress.Hesitate>{0} 感到动摇，但尚未投降。</GodHand.Caress.Hesitate>
+  
+  <!-- 神之脑瓜崩 & 摇晃 -->
+  <GodHand.Poke.Label>神之脑瓜崩</GodHand.Poke.Label>
+  <GodHand.Poke.Desc>给他们一点小小的神之震撼。\n\n【脑瓜崩】\n左键点击Pawn，对其造成强力眩晕和头痛，但不会造成实质伤害。\n\n【弹飞功能】\n按住左键并拖动，可以像弹虫子一样将Pawn弹飞出去！\n拖动距离越远，弹飞距离越远。\n\n【当头棒喂】\n如果目标正在精神崩溃，脑瓜崩有概率直接将其打醒（中断崩溃状态）。\n\n【神之复苏】\n左键点击尸体，有50%概率将其复活。\n复活者将遭受[剧烈的头部冲击]，意识在1天内极为脆弱。</GodHand.Poke.Desc>
+  <GodHand.Poke.Desc.Simple>给这些淘气的Pawn一个脑瓜崩！\n右键按钮以打开介绍页面。</GodHand.Poke.Desc.Simple>
+  <GodHand.Poke.Mote>嘣！</GodHand.Poke.Mote>
+  <GodHand.Poke.MentalBreakInterrupted>{0} 被一记脑瓜崩弹醒了，停止了发疯！</GodHand.Poke.MentalBreakInterrupted>
+  <GodHand.Poke.MentalBreakFailed>{0} 对脑瓜崩毫无反应，继续发疯。</GodHand.Poke.MentalBreakFailed>
+  <GodHand.Poke.Flicked>{0} 被 {1} 弹飞了！</GodHand.Poke.Flicked>
+  <GodHand.Poke.Epiphany>突然开窍！</GodHand.Poke.Epiphany>
+  <GodHand.Poke.EpiphanyMessage>{0} 被弹了一下脑瓜崩，突然开窍了！获得了灵感：{1}</GodHand.Poke.EpiphanyMessage>
+  <GodHand.Poke.EpiphanyMote>开窍！</GodHand.Poke.EpiphanyMote>
+  <GodHand.Poke.ResurrectedMote>复活！</GodHand.Poke.ResurrectedMote>
+  <GodHand.Poke.FailedMote>失败</GodHand.Poke.FailedMote>
+  <GodHand.Shake.Vomit>{0} 被剧烈的摇晃弄吐了。</GodHand.Shake.Vomit>
+  
+  <!-- 物品抓取 & 强制互动 -->
+  <GodHand.ModeSwitch>抓取模式切换为: {0}</GodHand.ModeSwitch>
+  <GodHand.Mode.Pawn>Pawn模式</GodHand.Mode.Pawn>
+  <GodHand.Mode.Item>物品模式</GodHand.Mode.Item>
+  <GodHand.Item.ForceIngest>强制 {0} 摄入了 {1}。</GodHand.Item.ForceIngest>
+  <GodHand.Item.CannotEat>{0} 无法摄入 {1}。</GodHand.Item.CannotEat>
+  <GodHand.Item.SelectionHint>\n(Tab: {0}/{1})</GodHand.Item.SelectionHint>
+  <GodHand.ThrowDisabledReason>(甩飞功能已禁用)</GodHand.ThrowDisabledReason>
+  <GodHand.Cleaning.RadiusDisplay>清洁范围: {0}x{0}</GodHand.Cleaning.RadiusDisplay>
+  
+  <!-- 武器攻击 -->
+  <GodHand.Weapon.MeleeHint>近战武器：拖到目标上戳击</GodHand.Weapon.MeleeHint>
+  <GodHand.Weapon.RangedHint>远程武器：右键瞄准射击</GodHand.Weapon.RangedHint>
+  <GodHand.Weapon.MeleeAttack>神之手用{0}戳了{1}！</GodHand.Weapon.MeleeAttack>
+  <GodHand.Weapon.RangedAttack>神之手用{0}射击了目标位置！</GodHand.Weapon.RangedAttack>
+  <GodHand.Weapon.NoTarget>没有目标可以攻击</GodHand.Weapon.NoTarget>
+  <GodHand.Weapon.OutOfRange>目标距离{0:F1}格，超出射程{1}格</GodHand.Weapon.OutOfRange>
+  <GodHand.Weapon.NotAvailable>武器当前不可用（可能需要装填）</GodHand.Weapon.NotAvailable>
+  <GodHand.Weapon.ShootFailed>射击失败</GodHand.Weapon.ShootFailed>
+  <GodHand.Weapon.NotMeleeWeapon>这不是近战武器</GodHand.Weapon.NotMeleeWeapon>
+  <GodHand.Weapon.NotRangedWeapon>这不是远程武器</GodHand.Weapon.NotRangedWeapon>
+  <GodHand.Weapon.MeleeModeOn>近战模式已开启！拖动武器戳击敌人！</GodHand.Weapon.MeleeModeOn>
+  <GodHand.Weapon.MeleeModeOff>近战模式已关闭</GodHand.Weapon.MeleeModeOff>
+  <GodHand.Weapon.ShootingModeOn>射击模式已开启！武器已固定，左键射击，Q键退出！</GodHand.Weapon.ShootingModeOn>
+  <GodHand.Weapon.ShootingModeOff>射击模式已关闭</GodHand.Weapon.ShootingModeOff>
+  
+  <!-- 神之扳手 - 模式 -->
+  <GodHand.Wrench.PrecisionMode>神之扳手：超精模式</GodHand.Wrench.PrecisionMode>
+  <GodHand.Wrench.NormalMode>神之扳手：普通模式</GodHand.Wrench.NormalMode>
+  <GodHand.Wrench.Mode.Building>建筑模式</GodHand.Wrench.Mode.Building>
+  <GodHand.Wrench.Mode.Precision>超精模式</GodHand.Wrench.Mode.Precision>
+  <GodHand.Wrench.Mode.Roof>天花板模式</GodHand.Wrench.Mode.Roof>
+  <GodHand.Wrench.Mode.DeepResource>矿脉模式</GodHand.Wrench.Mode.DeepResource>
+  <GodHand.Wrench.ClickToAdjust>点击调整</GodHand.Wrench.ClickToAdjust>
+  <GodHand.Wrench.PrecisionDialogOpened>正在调整: {0}</GodHand.Wrench.PrecisionDialogOpened>
+  
+  <!-- 超精调整对话框 -->
+  <GodHand.Wrench.PrecisionAdjustTitle>超精度调整: {0}</GodHand.Wrench.PrecisionAdjustTitle>
+  <GodHand.Wrench.Offset>位置偏移</GodHand.Wrench.Offset>
+  <GodHand.Wrench.Rotation>旋转角度</GodHand.Wrench.Rotation>
+  <GodHand.Wrench.Scale>缩放比例</GodHand.Wrench.Scale>
+  <GodHand.Wrench.DrawLayer>渲染层级</GodHand.Wrench.DrawLayer>
+  <GodHand.Wrench.TextureOrientation>贴图朝向 (锁定显示的贴图面)</GodHand.Wrench.TextureOrientation>
+  <GodHand.Wrench.ResetAll>重置所有</GodHand.Wrench.ResetAll>
+  <GodHand.Wrench.EnterValue>输入数值 ({0} - {1})</GodHand.Wrench.EnterValue>
+  <GodHand.Wrench.EnterValueUnlimited>输入数值 (无限制)</GodHand.Wrench.EnterValueUnlimited>
+  <GodHand.Wrench.EnterValueFor>输入 {0} 的数值 (无限制)</GodHand.Wrench.EnterValueFor>
+  <GodHand.Wrench.StepHint>步长: {0} (按住Shift微调)</GodHand.Wrench.StepHint>
+  <GodHand.Wrench.Auto>自动</GodHand.Wrench.Auto>
+  
+  <!-- 超精扳手高级功能 -->
+  <GodHand.Wrench.TurretSettings>炮塔特殊设置</GodHand.Wrench.TurretSettings>
+  <GodHand.Wrench.TurretRotation>炮筒旋转: {0}°</GodHand.Wrench.TurretRotation>
+  <GodHand.Wrench.OpenRenderTreeEditor>打开渲染树编辑器 (整容刀)</GodHand.Wrench.OpenRenderTreeEditor>
+  <GodHand.Wrench.RenderTreeEditorHint>为Pawn提供更精确的节点级调整</GodHand.Wrench.RenderTreeEditorHint>
+  
+  <!-- 神之整容刀 -->
+  <GodHand.PlasticSurgery.ToolLabel>神之整容刀</GodHand.PlasticSurgery.ToolLabel>
+  <GodHand.PlasticSurgery.ToolDesc>精确调整Pawn的渲染效果，支持位置、旋转、缩放、图层等全方位调整。
+点击Pawn打开编辑器。</GodHand.PlasticSurgery.ToolDesc>
+  <GodHand.PlasticSurgery.Help.Content>神之整容刀 - 渲染树编辑器
+
+【核心功能】
+左侧面板：
+- Alpha透明度调整：控制Pawn整体透明度
+- 动画选择器：切换不同动画效果
+- 渲染节点树：显示Pawn的所有渲染组件（头部、身体、服装、装备等）
+
+右侧面板（选中节点后）：
+- 位置偏移：X/Z轴像素级移动
+- 旋转角度：-180°到+180°旋转
+- 缩放比例：0.01x到10x缩放
+- 图层调整：控制绘制顺序
+- 翻转选项：水平翻转贴图
+- 支点调整：精确控制旋转中心
+- 重置按钮：一键恢复默认值
+
+【操作提示】
+1. 左侧树状图点击节点，右侧显示调整选项
+2. 调整会实时生效，可即时预览效果
+3. 支持自动跟踪选中的Pawn
+4. 所有调整都是可逆的，随时可以重置
+
+【高级应用】
+- 调整角色装备显示位置
+- 修正MOD冲突导致的渲染错位
+- 创造独特的视觉效果
+- 解决贴图遮挡问题</GodHand.PlasticSurgery.Help.Content>
+  
+  <!-- 整容刀对话框翻译 -->
+  <GodHand.PlasticSurgery.Title>{0} ({1})</GodHand.PlasticSurgery.Title>
+  <GodHand.PlasticSurgery.Alpha>透明度 {0}</GodHand.PlasticSurgery.Alpha>
+  <GodHand.PlasticSurgery.Animation>动画</GodHand.PlasticSurgery.Animation>
+  <GodHand.PlasticSurgery.None>无</GodHand.PlasticSurgery.None>
+  <GodHand.PlasticSurgery.ShowAllNodes>显示所有节点</GodHand.PlasticSurgery.ShowAllNodes>
+  <GodHand.PlasticSurgery.NoNodeSelected>未选中节点</GodHand.PlasticSurgery.NoNodeSelected>
+  <GodHand.PlasticSurgery.Enabled>启用</GodHand.PlasticSurgery.Enabled>
+  <GodHand.PlasticSurgery.OffsetLayer>偏移 {0} 图层 {1}</GodHand.PlasticSurgery.OffsetLayer>
+  <GodHand.PlasticSurgery.OffsetX>X (左右): {0}</GodHand.PlasticSurgery.OffsetX>
+  <GodHand.PlasticSurgery.OffsetZ>Z (上下): {0}</GodHand.PlasticSurgery.OffsetZ>
+  <GodHand.PlasticSurgery.Layer>Y (层级): {0}</GodHand.PlasticSurgery.Layer>
+  <GodHand.PlasticSurgery.Pivot>支点 ({0}, {1})</GodHand.PlasticSurgery.Pivot>
+  <GodHand.PlasticSurgery.PivotX>X (左右): {0}</GodHand.PlasticSurgery.PivotX>
+  <GodHand.PlasticSurgery.PivotY>Z (上下): {0}</GodHand.PlasticSurgery.PivotY>
+  <GodHand.PlasticSurgery.Rotation>旋转 {0}°</GodHand.PlasticSurgery.Rotation>
+  <GodHand.PlasticSurgery.Angle>角度: {0}°</GodHand.PlasticSurgery.Angle>
+  <GodHand.PlasticSurgery.Scale>缩放 {0}</GodHand.PlasticSurgery.Scale>
+  <GodHand.PlasticSurgery.ScaleX>缩放 X (宽度): {0}</GodHand.PlasticSurgery.ScaleX>
+  <GodHand.PlasticSurgery.ScaleZ>缩放 Z (高度): {0}</GodHand.PlasticSurgery.ScaleZ>
+  <GodHand.PlasticSurgery.ScaleValue>缩放: {0}</GodHand.PlasticSurgery.ScaleValue>
+  <GodHand.PlasticSurgery.Flip>翻转 ({0})</GodHand.PlasticSurgery.Flip>
+  <GodHand.PlasticSurgery.Reset>重置</GodHand.PlasticSurgery.Reset>
+  <GodHand.PlasticSurgery.ForcedFacing>强制朝向: </GodHand.PlasticSurgery.ForcedFacing>
+  <GodHand.PlasticSurgery.Auto>自动</GodHand.PlasticSurgery.Auto>
+  <GodHand.PlasticSurgery.CopyConfig>复制配置</GodHand.PlasticSurgery.CopyConfig>
+  <GodHand.PlasticSurgery.PasteConfig>粘贴到选中</GodHand.PlasticSurgery.PasteConfig>
+  <GodHand.PlasticSurgery.ClearMulti>清除多选</GodHand.PlasticSurgery.ClearMulti>
+  <GodHand.PlasticSurgery.SelectedCount>已选中 {0} 个节点</GodHand.PlasticSurgery.SelectedCount>
+  <GodHand.PlasticSurgery.PasteSuccess>成功粘贴配置到 {0} 个节点</GodHand.PlasticSurgery.PasteSuccess>
+  <GodHand.PlasticSurgery.ConfigCopied>配置已复制</GodHand.PlasticSurgery.ConfigCopied>
+  <GodHand.PlasticSurgery.TextureFacing>贴图面: </GodHand.PlasticSurgery.TextureFacing>
+  <GodHand.PlasticSurgery.TabGlobal>全局</GodHand.PlasticSurgery.TabGlobal>
+  <GodHand.PlasticSurgery.TabNorth>北 (N)</GodHand.PlasticSurgery.TabNorth>
+  <GodHand.PlasticSurgery.TabEast>东 (E)</GodHand.PlasticSurgery.TabEast>
+  <GodHand.PlasticSurgery.TabSouth>南 (S)</GodHand.PlasticSurgery.TabSouth>
+  <GodHand.PlasticSurgery.TabWest>西 (W)</GodHand.PlasticSurgery.TabWest>
+  
+  <!-- 下拉列表选项 -->
+  <Rot_North>北</Rot_North>
+  <Rot_East>东</Rot_East>
+  <Rot_South>南</Rot_South>
+  <Rot_West>西</Rot_West>
+  
+  
+  <!-- 旧的放大镜翻译保留以防其他地方引用 -->
+  <GodHand.Magnifier.NoPawn>此位置没有Pawn</GodHand.Magnifier.NoPawn>
+  <GodHand.Magnifier.PawnDead>Pawn已死亡</GodHand.Magnifier.PawnDead>
+  <GodHand.Magnifier.InvalidTarget>无效的目标</GodHand.Magnifier.InvalidTarget>
+  <GodHand.Magnifier.Started>开始调整 {0} 的体型（{1}）</GodHand.Magnifier.Started>
+  <GodHand.Magnifier.VisualMode>视觉缩放模式</GodHand.Magnifier.VisualMode>
+  <GodHand.Magnifier.RealMode>真实体型模式</GodHand.Magnifier.RealMode>
+  <GodHand.Magnifier.ModeChanged>切换到 {0}</GodHand.Magnifier.ModeChanged>
+  <GodHand.Magnifier.VisualScaleChanged>{0} 的视觉大小调整为 {1}x</GodHand.Magnifier.VisualScaleChanged>
+  <GodHand.Magnifier.RealScaleChanged>{0} 的真实体型调整为 {1}x</GodHand.Magnifier.RealScaleChanged>
+  <GodHand.Magnifier.ScrollToScale>滚轮缩放 | Q/E切换 | 右键完成</GodHand.Magnifier.ScrollToScale>
+  <GodHand.Magnifier.Cancelled>取消调整 {0}</GodHand.Magnifier.Cancelled>
+  
+  <!-- 炮塔头饰 - 燃料系统 -->
+  <GodHand.TurretHead.LabelFormat>{0}炮塔头</GodHand.TurretHead.LabelFormat>
+  <GodHand.TurretHead.LabelSingle>{0}炮塔头</GodHand.TurretHead.LabelSingle>
+  <GodHand.TurretHead.LabelMultipleTurrets>炮塔头 (x{0}: {1}...)</GodHand.TurretHead.LabelMultipleTurrets>
+  <GodHand.TurretHead.TurretList>已安装的炮塔:</GodHand.TurretHead.TurretList>
+  <GodHand.TurretHead.InspectTurretCount>炮塔数量: {0}</GodHand.TurretHead.InspectTurretCount>
+  <GodHand.TurretHead.ShotsLeft>[{0}发]</GodHand.TurretHead.ShotsLeft>
+  <GodHand.TurretHead.Aiming>[瞄准中]</GodHand.TurretHead.Aiming>
+  <GodHand.TurretHead.FuelLabel>射击次数: {0}/{1}</GodHand.TurretHead.FuelLabel>
+  <GodHand.TurretHead.FuelLabelWithType>射击次数: {0}/{1} ({2})</GodHand.TurretHead.FuelLabelWithType>
+  <GodHand.TurretHead.FuelDesc>燃料: {0}/{1}\n剩余射击次数: {2}\n\n点击补充燃料 ({3})</GodHand.TurretHead.FuelDesc>
+  <GodHand.TurretHead.FuelLow>燃料不足！</GodHand.TurretHead.FuelLow>
+  <GodHand.TurretHead.FuelCritical>燃料即将耗尽！</GodHand.TurretHead.FuelCritical>
+  <GodHand.TurretHead.OutOfFuel>{0} 的燃料已耗尽！</GodHand.TurretHead.OutOfFuel>
+  <GodHand.TurretHead.NoFuelType>该炮塔头不需要补充燃料</GodHand.TurretHead.NoFuelType>
+  <GodHand.TurretHead.FuelFull>燃料已满</GodHand.TurretHead.FuelFull>
+  <GodHand.TurretHead.NoFuelAvailable>找不到可用的 {0}</GodHand.TurretHead.NoFuelAvailable>
+  <GodHand.TurretHead.Refueled>{0} 补充了 {1} 单位燃料</GodHand.TurretHead.Refueled>
+  <GodHand.TurretHead.InspectFuel>燃料: {0}/{1} (剩余射击: {2})</GodHand.TurretHead.InspectFuel>
+  <GodHand.TurretHead.LabelMultiple>炮塔头 (x{0})</GodHand.TurretHead.LabelMultiple>
+  <GodHand.TurretHead.MaxTurretsReached>已达到最大炮塔数量 ({0})</GodHand.TurretHead.MaxTurretsReached>
+  
+  <!-- 炮塔头饰 - 扳手模式 -->
+  <GodHand.Wrench.Mode.TurretHead>炮塔头模式</GodHand.Wrench.Mode.TurretHead>
+  <GodHand.Wrench.SnatchTurret>拔取炮塔</GodHand.Wrench.SnatchTurret>
+  <GodHand.Wrench.TurretSnatched>炮塔已拔取！</GodHand.Wrench.TurretSnatched>
+  <GodHand.Wrench.TurretAdded>+{0} 炮塔</GodHand.Wrench.TurretAdded>
+  <GodHand.Wrench.TurretAddedToHead>炮塔已添加到头饰 ({0}/{1})</GodHand.Wrench.TurretAddedToHead>
+  <GodHand.Wrench.NotATurret>这不是炮塔</GodHand.Wrench.NotATurret>
+  <GodHand.Wrench.TurretRemoved>-1 {0}</GodHand.Wrench.TurretRemoved>
+  <GodHand.Wrench.NoTurretsToRemove>没有可移除的炮塔</GodHand.Wrench.NoTurretsToRemove>
+  <GodHand.Wrench.ModulesExtracted>已提取 {0} 个炮塔模块</GodHand.Wrench.ModulesExtracted>
+  
+  <!-- 炮塔头 - 右键菜单 -->
+  <GodHand.TurretHead.CannotReach>无法到达炮塔头</GodHand.TurretHead.CannotReach>
+  <GodHand.TurretHead.CannotWearApparel>无法穿戴装备</GodHand.TurretHead.CannotWearApparel>
+  <GodHand.TurretHead.Equip>装备 {0}</GodHand.TurretHead.Equip>
+  <GodHand.TurretHead.MergeTurrets>合并炮塔 (+{0}, 共{1}个)</GodHand.TurretHead.MergeTurrets>
+  <GodHand.TurretHead.Equipped>{0} 装备了 {1}</GodHand.TurretHead.Equipped>
+  <GodHand.TurretHead.CannotWear>无法穿戴此装备</GodHand.TurretHead.CannotWear>
+  <GodHand.TurretHead.Merged>{0} 合并了 {1} 个炮塔 (共{2}个)</GodHand.TurretHead.Merged>
+  <GodHand.TurretHead.MergeFailed>合并失败</GodHand.TurretHead.MergeFailed>
+  <GodHand.TurretHead.HeadHPBonus>头部HP加成: +{0}</GodHand.TurretHead.HeadHPBonus>
+  
+  <!-- 炮塔之力 Hediff -->
+  <GodHand.Hediff.TurretPower>炮塔之力</GodHand.Hediff.TurretPower>
+  <GodHand.Hediff.TurretPowerBracket>{0}个炮塔, +{1}HP</GodHand.Hediff.TurretPowerBracket>
+  <GodHand.Hediff.InstalledTurrets>已安装的炮塔:</GodHand.Hediff.InstalledTurrets>
+  <GodHand.Hediff.TotalTurretHP>炮塔总HP: {0}</GodHand.Hediff.TotalTurretHP>
+  <GodHand.Hediff.HeadHPBonus>头部HP加成: +{0} (炮塔HP的一半)</GodHand.Hediff.HeadHPBonus>
+  <GodHand.Hediff.PartBonusDetail>各部位HP加成:</GodHand.Hediff.PartBonusDetail>
+  
+  <!-- 地图边界外释放 -->
+  <GodHand.ExitMap.JoinedCaravan>{0} 被神之手送入了远行队！</GodHand.ExitMap.JoinedCaravan>
+  <GodHand.ExitMap.Evacuated>{0} 被神之手扔出了地图！</GodHand.ExitMap.Evacuated>
+  <GodHand.Memory.ThrownToCaravan>被神之手抛出地图，加入了远行队</GodHand.Memory.ThrownToCaravan>
+  <GodHand.Memory.ThrownOutOfMap>被神之手扔出了地图边界</GodHand.Memory.ThrownOutOfMap>
+
+  <!-- 设置页面增强文本 -->
+  <GodHand.Settings.GlobalMisc>全局杂项</GodHand.Settings.GlobalMisc>
+  <GodHand.Settings.GodHandGrabRadius>抓取半径: {0}</GodHand.Settings.GodHandGrabRadius>
+  <GodHand.Settings.ThrowMaxCellsValue>最大飞行距离: {0} 格</GodHand.Settings.ThrowMaxCellsValue>
+  <GodHand.Settings.ThrowBaseDamageValue>碰撞基础伤害: {0}</GodHand.Settings.ThrowBaseDamageValue>
+  <GodHand.Settings.CaressMoodBonusValue>心情加成: {0}</GodHand.Settings.CaressMoodBonusValue>
+  <GodHand.Settings.CaressResistanceReductionPerTickValue>每次降低抵抗力: {0}</GodHand.Settings.CaressResistanceReductionPerTickValue>
+  <GodHand.Settings.CaressSurrenderChanceValue>敌军投降概率(每次): {0}</GodHand.Settings.CaressSurrenderChanceValue>
+  <GodHand.Settings.CaressRemoveLoyaltyChanceValue>移除死忠概率(每次): {0}</GodHand.Settings.CaressRemoveLoyaltyChanceValue>
+  <GodHand.Settings.CleaningHealAmountValue>治疗量: {0}</GodHand.Settings.CleaningHealAmountValue>
+  <GodHand.Settings.CleaningPlantGrowthBonusValue>植物生长增益: {0}</GodHand.Settings.CleaningPlantGrowthBonusValue>
+  <GodHand.Settings.JudgmentCrushRadiusValue>粉碎半径倍率: {0}</GodHand.Settings.JudgmentCrushRadiusValue>
+
+  <GodHand.Settings.Page.GodWrench>神之扳手配置</GodHand.Settings.Page.GodWrench>
+
+  <GodHand.Settings.CleaningDescription>神之清洁不仅可以除垢，还能治愈心灵和身躯。</GodHand.Settings.CleaningDescription>
+  <GodHand.Settings.CaressDescription>通过抚摸来改变殖民者和俘虏的状态。</GodHand.Settings.CaressDescription>
+  <GodHand.Settings.GodHandDescription>抓取、投掷与扳手采集配置。</GodHand.Settings.GodHandDescription>
+  <GodHand.Settings.RimTalkDescription>RimTalk 联动配置。</GodHand.Settings.RimTalkDescription>
+  <GodHand.Settings.PokeDescription>脑瓜崩与弹飞功能设定</GodHand.Settings.PokeDescription>
+  <GodHand.Settings.PlayerInfoDescription>设置你在游戏中的虚拟身份。</GodHand.Settings.PlayerInfoDescription>
+
+  <GodHand.Settings.PlayerInfo.AgeGender>性别与年龄</GodHand.Settings.PlayerInfo.AgeGender>
+  <GodHand.Settings.PlayerInfo.Title>头衔</GodHand.Settings.PlayerInfo.Title>
+  <GodHand.Settings.PlayerInfo.Race>种族/异种</GodHand.Settings.PlayerInfo.Race>
+  <GodHand.Settings.PlayerInfo.Traits>特性 (Traits)</GodHand.Settings.PlayerInfo.Traits>
+  <GodHand.Settings.PlayerInfo.Skills>技能 (Skills)</GodHand.Settings.PlayerInfo.Skills>
+  <GodHand.Settings.PlayerInfo.Health>健康状况</GodHand.Settings.PlayerInfo.Health>
+  <GodHand.Settings.PlayerInfo.Mood>心情状态</GodHand.Settings.PlayerInfo.Mood>
+  <GodHand.Settings.PlayerInfo.Thoughts>当前想法/记忆</GodHand.Settings.PlayerInfo.Thoughts>
+  <GodHand.Settings.PlayerInfo.Relations>关系</GodHand.Settings.PlayerInfo.Relations>
+  <GodHand.Settings.PlayerInfo.Ideology>意识形态/宗教</GodHand.Settings.PlayerInfo.Ideology>
+  <GodHand.Settings.PlayerInfo.Equipment>装备</GodHand.Settings.PlayerInfo.Equipment>
+
+  <!-- 神之庇护 -->
+  <GodHand.ProtectionHand>神之庇护</GodHand.ProtectionHand>
+  <GodHand.ProtectionHandDesc.Simple>以至高神力展开防御场。\n右键按钮以打开介绍页面。</GodHand.ProtectionHandDesc.Simple>
+  <GodHand.ProtectionHandDesc>以至高神力展开防御场。\n\n【四种模式】\n按Q/E键循环切换：\n- 神佑穹顶：生成一个阻挡任何进入攻击的全向球形护盾，持续1天。\n- 神佑壁障：在目标位置生成一段具有方向性的拦截壁障，持续1天。\n- 圣佑之躯：点击Pawn，为其施加一层高维防护，获得极高的减伤和护甲，持续1天。\n- 护盾消除：在目标位置清除已存在的任何神佑护盾（穹顶或壁障）。\n\n【操作】\nQ/E：切换保护模式\n滚轮：调整生成半径或宽度 (按住Shift)</GodHand.ProtectionHandDesc>
+  <GodHand.Help.Protection.Label>神之庇护</GodHand.Help.Protection.Label>
+  <GodHand.Help.Protection.Desc>捏个盾盾，好凉凉。
+
+【神佑穹顶】
+生成一个阻挡任何进入攻击的全向球形护盾。
+- 拦截投射物等
+- 保护内部不受外界伤害
+
+【圣佑之躯】
+点击Pawn，为其施加一层高维防护。
+- 获得极高的减伤和护甲
+- 死不了
+- 持续1天
+
+【护盾消除】
+在目标位置清除已存在的任何神佑穹顶。
+
+【操作】
+Q/E：切换保护模式
+滚轮：调整生成半径 (按住Shift)</GodHand.Help.Protection.Desc>
+  
+  <GodHand.ProtectionMode.Dome>神佑穹顶</GodHand.ProtectionMode.Dome>
+  <GodHand.ProtectionMode.Barrier>神佑壁障</GodHand.ProtectionMode.Barrier>
+  <GodHand.ProtectionMode.Individual>圣佑之躯</GodHand.ProtectionMode.Individual>
+  <GodHand.ProtectionMode.Erase>护盾消除</GodHand.ProtectionMode.Erase>
+  
+  <GodHand.Protection.DomeSpawned>神佑穹顶已展开！</GodHand.Protection.DomeSpawned>
+  <GodHand.Protection.BarrierSpawned>神佑壁障已生成！</GodHand.Protection.BarrierSpawned>
+  <GodHand.Protection.IndividualApplied>{0} 已获得神迹庇护！</GodHand.Protection.IndividualApplied>
+  <GodHand.Protection.ShieldsErased>范围内的护盾已被抹除。</GodHand.Protection.ShieldsErased>
+
+  <GodHand.Settings.Page.Protection>神之庇护</GodHand.Settings.Page.Protection>
+  <GodHand.Settings.ProtectionDescription>这里可以配置各种防护场的效果范围与维持时长。</GodHand.Settings.ProtectionDescription>
+  <GodHand.Settings.EnableProtection>启用神之庇护</GodHand.Settings.EnableProtection>
+  <GodHand.Settings.ProtectionDomeRadius>穹顶初始半径: {0}</GodHand.Settings.ProtectionDomeRadius>
+  <GodHand.Settings.ProtectionDomeInfinite>穹顶无限时长</GodHand.Settings.ProtectionDomeInfinite>
+  <GodHand.Settings.ProtectionDomeDuration>穹顶维持时长 (小时): {0}</GodHand.Settings.ProtectionDomeDuration>
+  <GodHand.Settings.ProtectionIndividualDuration>躯体庇护时长 (小时): {0}</GodHand.Settings.ProtectionIndividualDuration>
+
+  <GodHand.Protection.InterceptedOrbital>神之庇护偏转了一次轨道打击！</GodHand.Protection.InterceptedOrbital>
+  <GodHand.Protection.InterceptedSkyfaller>神之庇护偏转了一个高空坠落物！</GodHand.Protection.InterceptedSkyfaller>
+  <GodHand.Protection.InterceptedProjectile>神之庇护拦截了一枚发射物！</GodHand.Protection.InterceptedProjectile>
+  <GodHand.Protection.RepelledHostile>神之庇护排斥了敌对单位 {0}！</GodHand.Protection.RepelledHostile>
+  <GodHand.Protection.Resurrected>神迹显现！{0} 从死亡的边缘归来！</GodHand.Protection.Resurrected>
+  <GodHand.Protection.PreventDestroy>神佑之躯阻止了 {0} 的毁灭！</GodHand.Protection.PreventDestroy>
+  <GodHand.Protection.TearSpaceReturn>{0} 撕裂空间重新回到了战场！</GodHand.Protection.TearSpaceReturn>
+  <GodHand.Protection.SpaceAnchoredLost>{0} 迷失在虚空中，正被圣佑锚定尝试拉回！</GodHand.Protection.SpaceAnchoredLost>
+  <GodHand.Protection.SpaceAnchoredReturned>{0} 在虚空中漂流后重新归位！</GodHand.Protection.SpaceAnchoredReturned>
+  <GodHand.Protection.DriftingInVoid>{0} 所在的地图已消失，其灵魂正在虚空中漂流，等待新定居点的建立...</GodHand.Protection.DriftingInVoid>
+
+  <!-- 神之助手 -->
+  <GodHand.AssistantHand>神之助手</GodHand.AssistantHand>
+  <GodHand.AssistantHandDesc.Simple>我打螺丝？真的假的？。\n点击工作台以启动。\n右键按钮以打开介绍页面。</GodHand.AssistantHandDesc.Simple>
+  <GodHand.AssistantHandDesc>我打螺丝？真的假的？
+
+
+【操作】
+Q/E：切换助手模式
+左键：开启助手 (对目标)
+Shift+左键：关闭助手
+
+【工匠之触】
+自动接管工作台，持续高速制造。
+- 点击工作台：切换接管
+
+【医师之触】
+- 点击病人或床：自动进行治疗与手术</GodHand.AssistantHandDesc>
+  <GodHand.AssistantMode.WorkTable>圣徒工匠</GodHand.AssistantMode.WorkTable>
+  <GodHand.AssistantMode.Medical>圣佑医师</GodHand.AssistantMode.Medical>
+  <GodHand.Assistant.WorkFinished>助手已协助完成工作台任务：{0}</GodHand.Assistant.WorkFinished>
+  <GodHand.Assistant.MedicalFinished>助手已协助治疗/手术：{0}</GodHand.Assistant.MedicalFinished>
+  <GodHand.Assistant.ThreadAdded>引入新的神之序列！当前并发任务: {0}</GodHand.Assistant.ThreadAdded>
+  <GodHand.Assistant.MaxLimitReached>神迹负担过重。助手总量已达上限 ({0})</GodHand.Assistant.MaxLimitReached>
+  <GodHand.Assistant.Enabled>神之助手已降临，接管工作台。</GodHand.Assistant.Enabled>
+  <GodHand.Assistant.AlreadyActive>神之助手已在为此目标服务。</GodHand.Assistant.AlreadyActive>
+  <GodHand.Assistant.Disabled>神之助手已撤离，归还控制权。</GodHand.Assistant.Disabled>
+  <GodHand.Assistant.TargetMustBeWorkTable>目标必须是一个工作台。</GodHand.Assistant.TargetMustBeWorkTable>
+  <GodHand.Assistant.TargetMustBePawn>目标必须是一个生物。</GodHand.Assistant.TargetMustBePawn>
+  <GodHand.Assistant.MedicalNotImplemented>圣佑医师功能正在重写中，暂不可用。</GodHand.Assistant.MedicalNotImplemented>
+  <GodHand.Assistant.NoActiveBill>工作台当前没有有效的清单任务。</GodHand.Assistant.NoActiveBill>
+  <GodHand.Assistant.NoInjuryToTend>该目标当前没有需要处理的伤病或手术任务。</GodHand.Assistant.NoInjuryToTend>
+  <GodHand.Assistant.IngredientsTeleported>已从地图搜寻并瞬移了所需材料：{0}。</GodHand.Assistant.IngredientsTeleported>
+  <GodHand.Assistant.Name>神之手</GodHand.Assistant.Name>
+
+  <!-- 设置 -->
+  <GodHand.Settings.EnableSurgeryQuiz>可能平衡但是平衡不太可能的平衡医疗模式</GodHand.Settings.EnableSurgeryQuiz>
+
+  <!-- 问答窗口 -->
+  <GodHand.Quiz.Title>我做手术？真的假的？</GodHand.Quiz.Title>
+  <GodHand.Quiz.Description>等下哦，我看看这个手术怎么做......</GodHand.Quiz.Description>
+  <GodHand.Quiz.Correct>嗯，好像是这么回事。</GodHand.Quiz.Correct>
+  <GodHand.Quiz.Incorrect>呃......好像不太对？</GodHand.Quiz.Incorrect>
+  <GodHand.Quiz.QuestionLabel>问题：{0}</GodHand.Quiz.QuestionLabel>
+  <GodHand.Settings.Page.Assistant>神之助手</GodHand.Settings.Page.Assistant>
+  <GodHand.Settings.Assistant.ConcurrentTasks>最大神迹并发数: {0}</GodHand.Settings.Assistant.ConcurrentTasks>
+  <GodHand.Settings.Assistant.VisualNote>注：我的建议是别开</GodHand.Settings.Assistant.VisualNote>
+
+  <!-- 神之手动发电机 -->
+  <GeneratorGodHand.Label>神之曲柄</GeneratorGodHand.Label>
+  <GeneratorGodHand.Description.Simple>我也要去摇曲柄吗？\n对</GeneratorGodHand.Description.Simple>
+  <GeneratorGodHand.Description>我也要去摇曲柄吗？\n对 \n\n【操作】\n对准任何【发电机】或【电池】，点击并开始绕圈晃动鼠标。\n晃得越快，产生的能量就越惊人！\n别把手摇断了！</GeneratorGodHand.Description>
+  <GeneratorGodHand.MustBePowerTarget>目标必须是有电缆连接的发电机或蓄电池。</GeneratorGodHand.MustBePowerTarget>
+
+  <GodHand.Settings.GeneratorParameters>== 手摇发电机参数 ==</GodHand.Settings.GeneratorParameters>
+  <GodHand.Settings.GeneratorEfficiency>整体发电功率倍率: {0}</GodHand.Settings.GeneratorEfficiency>
+  <GodHand.Settings.GeneratorExponent>发电映射指数 (1.0为线性): {0}</GodHand.Settings.GeneratorExponent>
+  <GodHand.Generator.OutputWatts>当前发电功率: {0} W</GodHand.Generator.OutputWatts>
+  <GodHand.Generator.RPM>当前转速: {0} RPM</GodHand.Generator.RPM>
+  <GodHand_HandleBlocked>发电机手柄位置被阻挡（墙壁或其它建筑）</GodHand_HandleBlocked>
+  <GodHand_HandleOutOfBounds>发电机手柄位置超出地图边界</GodHand_HandleOutOfBounds>
+  <!-- 新版发电机设置页面 -->
+  <GodHand.Settings.Page.Generator>神之曲柄</GodHand.Settings.Page.Generator>
+  <GodHand.Settings.Generator.EnableHandCrank>启用曲柄发电机建筑</GodHand.Settings.Generator.EnableHandCrank>
+  <GodHand.Settings.Generator.HandCrankSection>殖民者工作相关</GodHand.Settings.Generator.HandCrankSection>
+  <GodHand.Settings.Generator.HandCrankMultiplier>工作效率倍率: {0}</GodHand.Settings.Generator.HandCrankMultiplier>
+  <GodHand.Settings.Generator.GodHandSection>神之曲柄</GodHand.Settings.Generator.GodHandSection>
+  <GodHand.Settings.Generator.GodHandInteractionPower>玩家互动产电倍率: {0}</GodHand.Settings.Generator.GodHandInteractionPower>
+  <GodHand.Settings.Generator.Exponent>速度/角度转化指数: {0}</GodHand.Settings.Generator.Exponent>
+  <GodHand.Settings.Generator.Formula>发电功率计算公式展示:</GodHand.Settings.Generator.Formula>
+  <GodHand.Settings.Generator.FormulaText>P = lim[ε→泰南] { [(Speed / 360) ^ Exponent] * 2000 * Multiplier * 世界偏移率 / 程序稳定性 } / (P空间稳定性 ⊗ 正电子湮灭效应曲线) * log_ERROR ^ 存在酒狐的世界线概率 - ∫(遗迹 Δ dt)</GodHand.Settings.Generator.FormulaText>
+  <GodHand.Settings.Generator.ShowSimplifiedFormula>启用简化公式展示</GodHand.Settings.Generator.ShowSimplifiedFormula>
+  <GodHand.Settings.Generator.ShowSimplifiedFormula.Tooltip>数学恐惧症患者或正常人的福音。开启后将复杂的推导公式替换为人类可读的初等代数公式。</GodHand.Settings.Generator.ShowSimplifiedFormula.Tooltip>
+  <GodHand.Settings.Generator.FormulaTextSimple>P = (Speed / 360) ^ Exponent * 2000 * Multiplier</GodHand.Settings.Generator.FormulaTextSimple>
+  <GodHand.Settings.Generator.EnableFTLCrank>启用 [F-T-L] 超越光速模式</GodHand.Settings.Generator.EnableFTLCrank>
+  <GodHand.Settings.Generator.EnableFTLCrank.Tooltip>开启此开关后，当你极速晃动曲柄导致转速超越物理阈值时，系统将因现实坍缩而瞬间产出正无穷大的电能，足以在一瞬间充满联网的所有蓄电池。</GodHand.Settings.Generator.EnableFTLCrank.Tooltip>
+  <GodHand.Settings.Generator.FTLThreshold>F-T-L 触发阈值: {0} RPM</GodHand.Settings.Generator.FTLThreshold>
+  <GodHand.Settings.Generator.EnableAbsurdRotation>前轱辘不转后轱辘转</GodHand.Settings.Generator.EnableAbsurdRotation>
+  <GodHand.Settings.Generator.EnableAbsurdRotation.Tooltip>如果前轱辘转那后轱辘肯定不转。</GodHand.Settings.Generator.EnableAbsurdRotation.Tooltip>
+  <GodHand.Settings.Generator.EnableGodHandCrankTool>启用“神之曲柄”工具</GodHand.Settings.Generator.EnableGodHandCrankTool>
+  <GodHand.Settings.Generator.PhysicsSettings>== 物理与映射参数 ==</GodHand.Settings.Generator.PhysicsSettings>
+  
+  <GodHand.Generator.OnlyCleanupWhilePlaying>只能在游戏中进行清理</GodHand.Generator.OnlyCleanupWhilePlaying>
+  <GodHand.Generator.CleanupSuccess>成功清理了 {0} 个曲柄发电机并返还了材料。</GodHand.Generator.CleanupSuccess>
+  <GodHand.Generator.NoGeneratorsFound>未在地图上发现存量曲柄发电机。</GodHand.Generator.NoGeneratorsFound>
+  
+  <GodHand.Settings.EnableRimTalkEventReaction>启用事件反应</GodHand.Settings.EnableRimTalkEventReaction>
+
+  <!-- 炮塔模块安装 -->
+  <GodHand.TurretModule.NoTurretHead>{0} 没有装备炮塔头</GodHand.TurretModule.NoTurretHead>
+  <GodHand.TurretModule.NoAvailableSlot>没有可用的槽位来安装 {0}</GodHand.TurretModule.NoAvailableSlot>
+  <GodHand.TurretModule.Installed>{0} 安装了 {1}</GodHand.TurretModule.Installed>
+  <GodHand.TurretModule.SlotFull>无法安装 {0}：槽位已满</GodHand.TurretModule.SlotFull>
+  <!-- 设置默认值 -->
+  <GodHand.Settings.PlayerName.Default>玩家</GodHand.Settings.PlayerName.Default>
+  <GodHand.Settings.PlayerPersona.Default>无形无质的超凡智能，祂并不存在，祂无处不在。</GodHand.Settings.PlayerPersona.Default>
+  
+  <GodHand.Settings.PlayerInfo.AgeGender.Default>男性, 永恒</GodHand.Settings.PlayerInfo.AgeGender.Default>
+  <GodHand.Settings.PlayerInfo.Title.Default>监督者</GodHand.Settings.PlayerInfo.Title.Default>
+  <GodHand.Settings.PlayerInfo.Race.Default>高等生物</GodHand.Settings.PlayerInfo.Race.Default>
+  <GodHand.Settings.PlayerInfo.Childhood.Default>存在的概念</GodHand.Settings.PlayerInfo.Childhood.Default>
+  <GodHand.Settings.PlayerInfo.Adulthood.Default>现实的结构本身</GodHand.Settings.PlayerInfo.Adulthood.Default>
+  <GodHand.Settings.PlayerInfo.Traits.Default>全能, 无形, 心灵感应</GodHand.Settings.PlayerInfo.Traits.Default>
+  <GodHand.Settings.PlayerInfo.Skills.Default>无限，无尽，无终，全能</GodHand.Settings.PlayerInfo.Skills.Default>
+  <GodHand.Settings.PlayerInfo.Health.Default>无敌</GodHand.Settings.PlayerInfo.Health.Default>
+  <GodHand.Settings.PlayerInfo.Mood.Default>满足 (100%)</GodHand.Settings.PlayerInfo.Mood.Default>
+  <GodHand.Settings.PlayerInfo.Thoughts.Default>观察殖民地, 规划未来</GodHand.Settings.PlayerInfo.Thoughts.Default>
+  <GodHand.Settings.PlayerInfo.Relations.Default>派系的创造者</GodHand.Settings.PlayerInfo.Relations.Default>
+  <GodHand.Settings.PlayerInfo.Ideology.Default>神授旨意</GodHand.Settings.PlayerInfo.Ideology.Default>
+  <GodHand.Settings.PlayerInfo.Equipment.Default>武器: 哈基米哦南北绿豆</GodHand.Settings.PlayerInfo.Equipment.Default>
+  <GodHand.Settings.PlayerInfo.Personality.Default>超凡者</GodHand.Settings.PlayerInfo.Personality.Default>
+
+  <!-- 扩张状态阶段 -->
+  <GodHand_OrificeStretching_Stage0>紧致</GodHand_OrificeStretching_Stage0>
+  <GodHand_OrificeStretching_Stage1>适应</GodHand_OrificeStretching_Stage1>
+  <GodHand_OrificeStretching_Stage2>松弛</GodHand_OrificeStretching_Stage2>
+  <GodHand_OrificeStretching_Stage3>完全玩坏</GodHand_OrificeStretching_Stage3>
+  <GodHand_OrificeStretching_Processing>处理中</GodHand_OrificeStretching_Processing>
+  <!-- 永动机与探测器 -->
+  <GodHand.EndRod.InstallObserver>安装探测器</GodHand.EndRod.InstallObserver>
+  <GodHand.EndRod.RemoveObserver>移除探测器</GodHand.EndRod.RemoveObserver>
+  <GodHand.EndRod.ObserverDesc>警告：移除探测器将停止机器运作。</GodHand.EndRod.ObserverDesc>
+  <GodHand.EndRod.DebugPose>调试姿态</GodHand.EndRod.DebugPose>
+  <GodHand.EndRod.DebugPoseDesc>打开姿态调试窗口</GodHand.EndRod.DebugPoseDesc>
+  <GodHand.EndRod.ReleasePrisoners>释放俘虏</GodHand.EndRod.ReleasePrisoners>
+  <GodHand.EndRod.ReleasePrisonersDesc>释放当前被束缚在船上的俘虏。</GodHand.EndRod.ReleasePrisonersDesc>
+
+  <!-- 武器提示 -->
+  <GodHand.Weapon.Mode.Shooting.Hint>射击模式：左键射击！(Q键关闭)</GodHand.Weapon.Mode.Shooting.Hint>
+  <GodHand.Weapon.Mode.Melee.Hint>近战模式：拖动戳击！(E键关闭)</GodHand.Weapon.Mode.Melee.Hint>
+  <GodHand.Weapon.Mode.Hybrid.Hint>混合武器：E键近战模式 / Q键射击模式</GodHand.Weapon.Mode.Hybrid.Hint>
+  <GodHand.Weapon.Mode.MeleeOnly.Hint>近战武器：E键开启近战模式</GodHand.Weapon.Mode.MeleeOnly.Hint>
+  <GodHand.Weapon.Mode.RangedOnly.Hint>远程武器：Q键进入射击模式</GodHand.Weapon.Mode.RangedOnly.Hint>
+
+  <GodHand.Confirm>确定</GodHand.Confirm>
+  <GodHand.Remove>移除</GodHand.Remove>
+  <GodHand.Add>添加</GodHand.Add>
+</LanguageData>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <GodHand_HandCrank.description>Operate hand crank generators to produce power.</GodHand_HandCrank.description>
+  <GodHand_HandCrank.labelShort>crank</GodHand_HandCrank.labelShort>
+  <GodHand_HandCrank.pawnLabel>Cranker</GodHand_HandCrank.pawnLabel>
+  <GodHand_HandCrank.gerundLabel>cranking</GodHand_HandCrank.gerundLabel>
+  <GodHand_HandCrank.verb>crank</GodHand_HandCrank.verb>
+</LanguageData>

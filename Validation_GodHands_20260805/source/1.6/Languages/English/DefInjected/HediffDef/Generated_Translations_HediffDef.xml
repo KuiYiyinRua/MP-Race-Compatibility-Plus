@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <GodHand_StasisLock.label>Stasis Lock</GodHand_StasisLock.label>
+  <GodHand_StasisLock.description>The target's temporal phase is forcibly locked within a rift of the interference field. All vital signs and bio-currents are anchored at an absolute standstill (1%), detached from the flow of conventional time, lasting for 24 hours.</GodHand_StasisLock.description>
+  <GodHand_ProtectionIndividual.label>Protection of God Hand</GodHand_ProtectionIndividual.label>
+  <GodHand_ProtectionIndividual.description>Directly shielded by {1}, this individual is enveloped in a nearly invisible phase shield. Under this protection, they gain extreme defensive bonuses.</GodHand_ProtectionIndividual.description>
+  <GodHand_TurretHeadBonus.label>Turret Fortification</GodHand_TurretHeadBonus.label>
+  <GodHand_TurretHeadBonus.description>A turret has been welded to the head, with the metal structure reinforcing its defensive capabilities.\n\nThe turret's structural HP is proportionally distributed to the head and its sub-parts, increasing their maximum HP.</GodHand_TurretHeadBonus.description>
+  <GodHand_IsActuallyABoat.label>Actually a Boat</GodHand_IsActuallyABoat.label>
+  <GodHand_IsActuallyABoat.description>This unit is fixed to a boat and cannot move independently.</GodHand_IsActuallyABoat.description>
+  <GodHand_OrificeStretchingStatus.label>Dilation Status</GodHand_OrificeStretchingStatus.label>
+  <GodHand_OrificeStretchingStatus.description>Due to prolonged exposure to extreme physical dilation, this unit's physiological structure is undergoing deep and potentially permanent reshaping.</GodHand_OrificeStretchingStatus.description>
+  <GodHand_ForcedDowned.label>Pacified</GodHand_ForcedDowned.label>
+  <GodHand_ForcedDowned.description>Having lost all will to resist after the interaction, this individual has completely surrendered their fighting spirit.</GodHand_ForcedDowned.description>
+  <GodHand_PokedHead.label>Flicked Head</GodHand_PokedHead.label>
+  <GodHand_PokedHead.description>The head was struck by an irresistible force, causing severe dizziness and pain.</GodHand_PokedHead.description>
+  <GodHand_SevereHeadImpact.label>Severe Cranial Impact</GodHand_SevereHeadImpact.label>
+  <GodHand_SevereHeadImpact.description>A violent brain concussion caused when the God Hand forcibly resurrected the corpse. While consciousness has returned, it remains extremely fragile.</GodHand_SevereHeadImpact.description>
+</LanguageData>

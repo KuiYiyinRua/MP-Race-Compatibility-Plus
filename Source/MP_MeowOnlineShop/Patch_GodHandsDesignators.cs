@@ -122,7 +122,7 @@ namespace MP_MeowOnlineShop
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int mode = AssistantModeField?.GetValue(__instance) is int m ? m : 0;
-            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool shift = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
             foreach (Thing t in c.GetThingList(Find.CurrentMap))
             {
                 if (mode == 0 && t is Building_WorkTable)
@@ -146,7 +146,7 @@ namespace MP_MeowOnlineShop
             if (!ShouldInterceptUi() || Find.CurrentMap == null || t == null)
                 return true;
             int mode = AssistantModeField?.GetValue(__instance) is int m ? m : 0;
-            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool shift = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
             GodHandSync.SyncAssistantExecute(Find.CurrentMap.Index, t.thingIDNumber, mode, shift);
             return false;
         }
@@ -216,7 +216,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            bool mouseDown = Input.GetMouseButton(0);
+            bool mouseDown = UnityInputCompat.GetMouseButton(0);
             bool isDragging = WrenchIsDraggingField != null && (bool)(WrenchIsDraggingField.GetValue(__instance) ?? false);
             object controller = WrenchControllerField?.GetValue(__instance);
             if (controller != null && Patch_GodHands.WrenchIsActiveProperty != null &&
@@ -230,7 +230,7 @@ namespace MP_MeowOnlineShop
 
             if (mouseDown && !isDragging)
             {
-                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                bool shift = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
                 if (shift && Patch_GodHands.GetSettingsValue("godWrenchEnableBulkScoop", true))
                 {
                     float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
@@ -268,7 +268,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            bool mouseDown = Input.GetMouseButton(0);
+            bool mouseDown = UnityInputCompat.GetMouseButton(0);
             bool isDragging = WrenchIsDraggingField != null && (bool)(WrenchIsDraggingField.GetValue(__instance) ?? false);
             object controller = WrenchControllerField?.GetValue(__instance);
             if (controller != null && Patch_GodHands.WrenchIsActiveProperty != null &&
@@ -282,7 +282,7 @@ namespace MP_MeowOnlineShop
 
             if (mouseDown && !isDragging)
             {
-                bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                bool shift = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
                 if (shift && Patch_GodHands.GetSettingsValue("godWrenchEnableBulkScoop", true))
                 {
                     float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);

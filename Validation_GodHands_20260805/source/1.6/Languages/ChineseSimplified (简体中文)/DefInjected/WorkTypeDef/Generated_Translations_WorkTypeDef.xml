@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- EN: Operate hand crank generators to produce power. -->
+  <GodHand_HandCrank.description>操作手摇发电机来产生电力。</GodHand_HandCrank.description>
+  <!-- EN: crank -->
+  <GodHand_HandCrank.labelShort>摇动手柄</GodHand_HandCrank.labelShort>
+  <!-- EN: Cranker -->
+  <GodHand_HandCrank.pawnLabel>手摇工</GodHand_HandCrank.pawnLabel>
+  <!-- EN: cranking -->
+  <GodHand_HandCrank.gerundLabel>摇动手柄</GodHand_HandCrank.gerundLabel>
+  <!-- EN: crank -->
+  <GodHand_HandCrank.verb>摇动</GodHand_HandCrank.verb>
+</LanguageData>

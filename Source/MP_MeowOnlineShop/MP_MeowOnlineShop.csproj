@@ -82,10 +82,6 @@
       <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -105,6 +101,7 @@
     <Compile Include="CompMeowCommsConsole.cs" />
     <Compile Include="Patch_CommsConsole.cs" />
     <Compile Include="Patch_DefensivePositionsMp.cs" />
+    <Compile Include="UnityInputCompat.cs" />
     <Compile Include="Patch_MpConfigHotSync.cs" />
     <Compile Include="Patch_MpDesyncTraceBudget.cs" />
     <Compile Include="Patch_MpServerLagLogThrottle.cs" />

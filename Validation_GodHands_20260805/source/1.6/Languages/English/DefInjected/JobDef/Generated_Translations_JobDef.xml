@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <GodHand_ReloadTurretHead.reportString>Reloading turret ammunition.</GodHand_ReloadTurretHead.reportString>
+  <GodHand_RefuelTurretHead.reportString>Refueling turret.</GodHand_RefuelTurretHead.reportString>
+  <GodHand_MergeTurretHead.reportString>Merging turret heads.</GodHand_MergeTurretHead.reportString>
+  <GodHand_InstallTurretModule.reportString>Installing turret module.</GodHand_InstallTurretModule.reportString>
+  <GodHand_HandCrankGearbox.reportString>Operating hand crank.</GodHand_HandCrankGearbox.reportString>
+  <GodHand_BeingCrank.reportString>Being operated.</GodHand_BeingCrank.reportString>
+</LanguageData>

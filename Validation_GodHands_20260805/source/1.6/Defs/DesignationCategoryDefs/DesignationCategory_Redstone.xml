@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <DesignationCategoryDef>
+    <defName>RedstoneTech</defName>
+    <label>Redstone Tech</label>
+    <description>Mechanical technology created by the God Hand. These structures often follow mysterious and unconventional physical laws.</description>
+    <order>800</order>
+  </DesignationCategoryDef>
+</Defs>

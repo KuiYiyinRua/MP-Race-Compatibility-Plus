@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <GodHand_ReloadTurretHead.reportString>正在装填炮塔弹药</GodHand_ReloadTurretHead.reportString>
+  <GodHand_RefuelTurretHead.reportString>正在补充炮塔燃料</GodHand_RefuelTurretHead.reportString>
+  <GodHand_MergeTurretHead.reportString>正在合并炮塔头</GodHand_MergeTurretHead.reportString>
+  <GodHand_InstallTurretModule.reportString>正在安装炮塔模块</GodHand_InstallTurretModule.reportString>
+  <GodHand_HandCrankGearbox.reportString>手摇发电中...</GodHand_HandCrankGearbox.reportString>
+  <GodHand_BeingCrank.reportString>正在被操</GodHand_BeingCrank.reportString>
+</LanguageData>

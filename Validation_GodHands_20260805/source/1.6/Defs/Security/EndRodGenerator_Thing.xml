@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="BuildingBase">
+    <defName>GodHand_EndRodGenerator</defName>
+    <label>Isekai Perpetual Motion Machine Type I</label>
+    <description>A perpetual motion machine of the first kind from another world, capable of capturing biological units.</description>
+    <thingClass>GodHandMod.Building_EndRodGenerator</thingClass>
+    <graphicData>
+      <texPath>CreateAssets/Minecraft/piston_side</texPath> <!-- 预览图暂用活塞侧面 -->
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(1,1)</drawSize>
+    </graphicData>
+    <size>(1,5)</size> <!-- 占地 1x5：侦测器x2 + 活塞本体 + (活塞头/杆) + 末地烛 + 船 -->
+    <rotatable>true</rotatable>
+    <altitudeLayer>Building</altitudeLayer>
+    <passability>PassThroughOnly</passability>
+    <pathCost>70</pathCost>
+    <fillPercent>0.5</fillPercent>
+    <tickerType>Normal</tickerType>
+    <drawerType>RealtimeOnly</drawerType>
+    <castEdgeShadows>true</castEdgeShadows>
+    <statBases>
+      <MaxHitPoints>100</MaxHitPoints>
+      <WorkToBuild>1000</WorkToBuild>
+      <Flammability>0</Flammability>
+      <Beauty>10</Beauty> <!-- 奇观误国 -->
+    </statBases>
+    <costList>
+      <Steel>20</Steel>
+      <ComponentIndustrial>1</ComponentIndustrial>
+      <WoodLog>20</WoodLog> <!-- 船和活塞头 -->
+    </costList>
+    <comps>
+      <li Class="CompProperties_Glower">
+        <glowRadius>4</glowRadius> <!-- 末端烛发光 -->
+        <glowColor>(241,209,242,0)</glowColor> <!-- 末端烛那种微微的紫色/白色光 -->
+      </li>
+      <li Class="GodHandMod.CompProperties_PawnCaptureOnTouch" />
+    </comps>
+    <designationCategory>RedstoneTech</designationCategory>
+    <researchPrerequisites>
+      <li>Electricity</li>
+    </researchPrerequisites>
+    <placeWorkers>
+      <li>GodHandMod.PlaceWorker_EndRodGeneratorGhost</li>
+    </placeWorkers>
+  </ThingDef>
+</Defs>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>PA's God Hands</name>
+  <packageId>Palpha.godhands</packageId>
+  <author>P-alpha</author>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <modVersion>2.0</modVersion>
+  <description>神之手的力量是无限的。
+  
+  版本：风声，雨声，十四行诗</description>
+
+  <modDependencies>
+
+  </modDependencies>
+</ModMetaData>

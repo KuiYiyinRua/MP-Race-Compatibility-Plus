@@ -572,6 +572,11 @@ namespace MP_MeowOnlineShop
             public int WeaponThingId;
             public Vector3 FixedWeaponPos;
             public int LastDragTick = -999;
+            public bool WaitForRelease;
+            public int BurstLeft;
+            public int NextShotTick;
+            public int CooldownUntilTick;
+            public LocalTargetInfo BurstTarget;
         }
 
         private sealed class GodWrenchSession
@@ -643,6 +648,7 @@ namespace MP_MeowOnlineShop
             RegisterMethod(nameof(SyncGodHandToggleShooting));
             RegisterMethod(nameof(SyncGodHandToggleMelee));
             RegisterMethod(nameof(SyncGodHandShoot));
+            RegisterMethod(nameof(SyncGodHandResetMouseRelease));
             RegisterMethod(nameof(SyncGodHandMeleeHit));
             RegisterMethod(nameof(SyncWrenchStartGrab));
             RegisterMethod(nameof(SyncWrenchDrag));
@@ -1099,6 +1105,10 @@ namespace MP_MeowOnlineShop
                 return;
             session.WeaponThingId = weaponThingId;
             session.FixedWeaponPos = new Vector3(fixedX, 0, fixedZ);
+            session.WaitForRelease = true;
+            session.BurstLeft = 0;
+            session.NextShotTick = 0;
+            session.CooldownUntilTick = 0;
         }
 
         public static void SyncGodHandToggleMelee(int playerId, int mapIndex, int weaponThingId)
@@ -1106,6 +1116,10 @@ namespace MP_MeowOnlineShop
             if (playerId < 0 || !GodHandSessions.TryGetValue(new SessionKey(mapIndex, playerId), out GodHandDragSession session))
                 return;
             session.WeaponThingId = weaponThingId;
+            session.WaitForRelease = false;
+            session.BurstLeft = 0;
+            session.NextShotTick = 0;
+            session.CooldownUntilTick = 0;
         }
 
         public static void SyncGodHandShoot(int playerId, int mapIndex, int targetThingId, int cellX, int cellZ)
@@ -1121,16 +1135,43 @@ namespace MP_MeowOnlineShop
             Verb verb = comp?.AllVerbs.FirstOrDefault(v => v != null && !v.verbProps.IsMeleeAttack);
             if (verb?.verbProps?.defaultProjectile == null)
                 return;
-            LocalTargetInfo target = targetThingId != 0
-                ? new LocalTargetInfo(Patch_GodHands.FindThingById(map, targetThingId))
-                : new LocalTargetInfo(new IntVec3(cellX, 0, cellZ));
-            int shots = Mathf.Max(1, verb.verbProps.burstShotCount);
-            IntVec3 launchCell = session.FixedWeaponPos.ToIntVec3();
-            for (int i = 0; i < shots; i++)
+
+            int now = Find.TickManager.TicksGame;
+            if (session.WaitForRelease || now < session.CooldownUntilTick)
+                return;
+
+            // Mirrors GodHandWeaponHandler.TryShoot + ProcessBurst: each accepted
+            // command arms one burst, releases at most one projectile per burst
+            // interval, then enters the verb cooldown on all peers.
+            if (session.BurstLeft <= 0)
             {
-                Projectile projectile = (Projectile)GenSpawn.Spawn(verb.verbProps.defaultProjectile, launchCell, map);
-                projectile.Launch(weapon, session.FixedWeaponPos, target, target, ProjectileHitFlags.All);
+                session.BurstTarget = targetThingId != 0
+                    ? new LocalTargetInfo(Patch_GodHands.FindThingById(map, targetThingId))
+                    : new LocalTargetInfo(new IntVec3(cellX, 0, cellZ));
+                session.BurstLeft = Mathf.Max(1, verb.verbProps.burstShotCount);
+                session.NextShotTick = now;
             }
+
+            if (session.BurstLeft > 0 && now >= session.NextShotTick)
+            {
+                Projectile projectile = (Projectile)GenSpawn.Spawn(
+                    verb.verbProps.defaultProjectile,
+                    session.FixedWeaponPos.ToIntVec3(),
+                    map);
+                projectile.Launch(weapon, session.FixedWeaponPos, session.BurstTarget, session.BurstTarget, ProjectileHitFlags.All);
+                session.BurstLeft--;
+                if (session.BurstLeft > 0)
+                    session.NextShotTick = now + verb.verbProps.ticksBetweenBurstShots;
+                else
+                    session.CooldownUntilTick = now + (int)(verb.verbProps.AdjustedCooldown(verb, null) * 60f);
+            }
+        }
+
+        public static void SyncGodHandResetMouseRelease(int playerId, int mapIndex)
+        {
+            if (playerId < 0 || !GodHandSessions.TryGetValue(new SessionKey(mapIndex, playerId), out GodHandDragSession session))
+                return;
+            session.WaitForRelease = false;
         }
 
         public static void SyncGodHandMeleeHit(int playerId, int mapIndex, int weaponThingId, int targetThingId)

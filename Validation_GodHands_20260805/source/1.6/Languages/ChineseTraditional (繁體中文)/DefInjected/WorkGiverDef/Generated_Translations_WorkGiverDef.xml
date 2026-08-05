@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- EN: Reload turret ammunition -->
+  <GodHand_RefuelTurretHead.label>补充炮塔头弹药</GodHand_RefuelTurretHead.label>
+  <!-- EN: operate hand crank generator -->
+  <GodHand_HandCrankGearbox.label>操作手摇發電機</GodHand_HandCrankGearbox.label>
+  <!-- EN: hand crank -->
+  <GodHand_HandCrankGearbox.verb>摇动手柄</GodHand_HandCrankGearbox.verb>
+  <!-- EN: cranking -->
+  <GodHand_HandCrankGearbox.gerund>摇动手柄中</GodHand_HandCrankGearbox.gerund>
+</LanguageData>

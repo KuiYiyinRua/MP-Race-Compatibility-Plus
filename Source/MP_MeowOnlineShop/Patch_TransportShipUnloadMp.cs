@@ -25,24 +25,24 @@ namespace MP_MeowOnlineShop
     /// reported as a home map, so one peer defers the draft while the other
     /// lets the pawn tick through its job naturally. Queueing now happens at
     /// UnloadThingFromShuttle itself, from the method's own arguments, so every
-    /// peer schedules the same pawns regardless of local draft state. The home
-    /// map guard is applied when the deferred setter actually runs.
+    /// peer schedules the same pawns regardless of local draft state. No
+    /// home-map guard is applied when the deferred setter actually runs.
     ///
-    /// The setter is deferred to the destination map's next MapPreTick. All
+    /// The setter is deferred to the pawn's actual map's next MapPreTick. All
     /// peers then run the vanilla draft side effects in the same per-map
     /// context and stable pawn-ID order before that map's tick lists execute.
+    /// The queue is keyed by pawn, not by the shuttle's local map, and the
+    /// home-map guard is removed so one peer cannot skip the replay while the
+    /// other runs it (Desync-259).
     /// </summary>
     internal static class Patch_TransportShipUnloadMp
     {
-        private const string AsyncTimeTypeName = "Multiplayer.Client.AsyncTimeComp";
-
         private static readonly FieldInfo DraftedField =
             AccessTools.Field(typeof(Pawn_DraftController), "draftedInt");
-        private static readonly FieldInfo AsyncTickingMapField =
-            AccessTools.Field(AccessTools.TypeByName(AsyncTimeTypeName), "tickingMap");
-
-        private static readonly Dictionary<int, List<Pawn>> PendingDraftsByMap =
-            new Dictionary<int, List<Pawn>>();
+        private static readonly HashSet<Pawn> PendingDrafts =
+            new HashSet<Pawn>();
+        private static readonly HashSet<int> LoggedDeferredDraftMaps =
+            new HashSet<int>();
 
         private static bool _applied;
         private static bool _processingDeferred;
@@ -89,14 +89,13 @@ namespace MP_MeowOnlineShop
                 if (unloadThingFromShuttle == null || draftedSetter == null ||
                     mapPreTick == null || unloadPrefix == null ||
                     unloadFinalizer == null || draftedPrefix == null ||
-                    mapPreTickPostfix == null || DraftedField == null ||
-                    AsyncTickingMapField == null)
+                    mapPreTickPostfix == null || DraftedField == null)
                 {
                     Log.Warning(
                         "[MP-MeowOnlineShop] Transport-ship unload draft guard " +
                         $"targets unresolved; skipped unload={unloadThingFromShuttle != null}, " +
                         $"setter={draftedSetter != null}, mapPreTick={mapPreTick != null}, " +
-                        $"fields={DraftedField != null}/{AsyncTickingMapField != null}.");
+                        $"field={DraftedField != null}.");
                     return;
                 }
 
@@ -151,18 +150,7 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            Map map = ship?.shipThing?.Map;
-            if (map == null)
-                return;
-
-            int mapId = map.uniqueID;
-            if (!PendingDraftsByMap.TryGetValue(mapId, out List<Pawn> pending))
-            {
-                pending = new List<Pawn>();
-                PendingDraftsByMap[mapId] = pending;
-            }
-            if (!pending.Contains(pawn))
-                pending.Add(pawn);
+            PendingDrafts.Add(pawn);
         }
 
         private static Exception UnloadFinalizer(
@@ -179,12 +167,8 @@ namespace MP_MeowOnlineShop
                 return __exception;
             }
 
-            Map map = ship?.shipThing?.Map;
-            if (map == null || pawn.Destroyed || !pawn.Spawned ||
-                pawn.Map != map)
-            {
-                RemovePendingDraft(map, pawn);
-            }
+            if (pawn.Destroyed || !pawn.Spawned)
+                PendingDrafts.Remove(pawn);
 
             return __exception;
         }
@@ -228,34 +212,27 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            object tickingObject = AsyncTickingMapField?.GetValue(null);
-            if (!(tickingObject is Map tickingMap) ||
-                tickingMap != __instance)
+            List<Pawn> valid = null;
+            foreach (Pawn pawn in PendingDrafts)
             {
-                return;
+                if (pawn == null || pawn.Destroyed || !pawn.Spawned ||
+                    pawn.Map != __instance || pawn.drafter == null ||
+                    !pawn.IsPlayerControlled)
+                {
+                    continue;
+                }
+
+                if (valid == null)
+                    valid = new List<Pawn>();
+                valid.Add(pawn);
             }
 
-            if (!PendingDraftsByMap.TryGetValue(
-                    __instance.uniqueID,
-                    out List<Pawn> pending) ||
-                pending.Count == 0)
-            {
-                return;
-            }
-
-            PendingDraftsByMap.Remove(__instance.uniqueID);
-            List<Pawn> valid = pending
-                .Where(pawn =>
-                    pawn != null && !pawn.Destroyed && pawn.Spawned &&
-                    pawn.Map == __instance && pawn.drafter != null &&
-                    pawn.IsPlayerControlled)
-                .OrderBy(pawn => pawn.thingIDNumber)
-                .ToList();
-            if (valid.Count == 0)
+            if (valid == null || valid.Count == 0)
                 return;
 
-            if (__instance.IsPlayerHome)
-                return;
+            valid.Sort((a, b) => a.thingIDNumber.CompareTo(b.thingIDNumber));
+            for (int i = 0; i < valid.Count; i++)
+                PendingDrafts.Remove(valid[i]);
 
             _processingDeferred = true;
             try
@@ -267,28 +244,20 @@ namespace MP_MeowOnlineShop
                     DraftedField.SetValue(pawn.drafter, false);
                     pawn.drafter.Drafted = true;
                 }
+
+                if (LoggedDeferredDraftMaps.Add(__instance.uniqueID))
+                {
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Replayed deferred transport-ship " +
+                        $"auto-draft at MapPreTick: map={__instance.uniqueID}, " +
+                        $"count={valid.Count}, ids=" +
+                        string.Join(",", valid.ConvertAll(p => p.ThingID)));
+                }
             }
             finally
             {
                 _processingDeferred = false;
             }
-        }
-
-        private static void RemovePendingDraft(Map map, Pawn pawn)
-        {
-            if (map == null || pawn == null)
-                return;
-
-            if (!PendingDraftsByMap.TryGetValue(
-                    map.uniqueID,
-                    out List<Pawn> pending))
-            {
-                return;
-            }
-
-            pending.Remove(pawn);
-            if (pending.Count == 0)
-                PendingDraftsByMap.Remove(map.uniqueID);
         }
     }
 }

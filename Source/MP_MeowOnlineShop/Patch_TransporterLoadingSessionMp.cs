@@ -18,13 +18,17 @@ namespace MP_MeowOnlineShop
     /// left on one peer makes that peer reuse it while the other peer creates a
     /// new session and consumes another session unique ID.
     ///
-    /// Fix: in multiplayer, pin the session faction to the transport map's
-    /// parent player faction, and before creating/reusing a session remove any
-    /// existing TransporterLoading session that is invalid, belongs to another
-    /// faction, or targets a different transporter set. The session ID is
-    /// derived deterministically from map/faction/transporter IDs and does not
-    /// advance the shared unique-ID stream, so one-sided create/reuse cannot
-    /// shift later IDs.
+    /// Fix: keep the session faction that Multiplayer passes in. The call
+    /// happens inside the synced Command_LoadToTransporter.ProcessInput, so
+    /// Faction.OfPlayer there is the issuing player's faction on every peer.
+    /// Pinning it to the transport map's parent faction instead hands loading
+    /// control to the map owner in multifaction and disables the shuttle
+    /// owner's UI when the shuttle stands on another player's map. Before
+    /// creating/reusing a session, remove any existing TransporterLoading
+    /// session that is invalid, belongs to another faction, or targets a
+    /// different transporter set. The session ID is derived deterministically
+    /// from map/faction/transporter IDs and does not advance the shared
+    /// unique-ID stream, so one-sided create/reuse cannot shift later IDs.
     /// </summary>
     internal static class Patch_TransporterLoadingSessionMp
     {
@@ -142,8 +146,8 @@ namespace MP_MeowOnlineShop
                     });
 
                 Log.Message(
-                    LogTag + " active: session faction is pinned to the " +
-                    "transport map; stale sessions are removed; session IDs " +
+                    LogTag + " active: session faction stays with the " +
+                    "issuing player; stale sessions are removed; session IDs " +
                     "are deterministic and do not advance the shared ID stream.");
             }
             catch (Exception e)
@@ -164,8 +168,11 @@ namespace MP_MeowOnlineShop
                 return;
 
             Map map = _mapField?.GetValue(__instance) as Map;
-            if (map?.ParentFaction?.def?.isPlayer == true)
-                faction = map.ParentFaction;
+
+            // Keep Multiplayer's faction argument. It is Faction.OfPlayer under
+            // the synced ProcessInput command, i.e. the issuing player's
+            // faction; the map's parent faction is only the map owner and must
+            // not replace it in multifaction.
 
             object sessionManager = _sessionManagerField?.GetValue(__instance);
             if (sessionManager == null || faction == null ||

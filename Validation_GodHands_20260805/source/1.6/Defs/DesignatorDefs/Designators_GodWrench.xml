@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <DesignationCategoryDef>
+    <defName>GodTools</defName>
+    <label>God Power</label>
+    <description>Because the power of the God Hand is absolute.</description>
+    <order>100</order>
+    <specialDesignatorClasses>
+      <li>GodHandMod.Designator_GodHand</li>
+      <li>GodHandMod.Designator_GodWrench</li>
+      <li>GodHandMod.Designator_CaressGodHand</li>
+      <li>GodHandMod.Designator_CleaningGodHand</li>
+      <li>GodHandMod.Designator_JudgmentGodHand</li>
+      <li>GodHandMod.Designator_PokeGodHand</li>
+      <li>GodHandMod.Designator_ProtectionGodHand</li>
+      <li>GodHandMod.Designator_GodAssistant</li>
+      <li>GodHandMod.Designator_GeneratorGodHand</li>
+    </specialDesignatorClasses>
+  </DesignationCategoryDef>
+
+</Defs>

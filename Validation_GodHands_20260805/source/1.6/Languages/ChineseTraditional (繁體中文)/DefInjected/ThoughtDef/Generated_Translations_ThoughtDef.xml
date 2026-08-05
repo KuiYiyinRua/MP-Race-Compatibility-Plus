@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- GodHand_BoatFilling -->
+  <GodHand_BoatFilling.stages.0.label>被末地烛充填(紧致)</GodHand_BoatFilling.stages.0.label>
+  <GodHand_BoatFilling.stages.0.description>这种粗暴的活塞运动简直是酷刑...身体要被撕裂了...这种痛苦让我只想哀嚎咆哮...</GodHand_BoatFilling.stages.0.description>
+  <GodHand_BoatFilling.stages.1.label>被末地烛充填(适应)</GodHand_BoatFilling.stages.1.label>
+  <GodHand_BoatFilling.stages.1.description>这种持续的肿胀感...竟然没那么难以忍受了。我的理智正在被这种异物感一点点磨灭...</GodHand_BoatFilling.stages.1.description>
+  <GodHand_BoatFilling.stages.2.label>被末地烛充填(松弛)</GodHand_BoatFilling.stages.2.label>
+  <GodHand_BoatFilling.stages.2.description>内部已经完全被撑开了...只要活塞还在推进，我就能感到一种扭曲的安心感...</GodHand_BoatFilling.stages.2.description>
+  <GodHand_BoatFilling.stages.3.label>被末地烛充填(玩坏)</GodHand_BoatFilling.stages.3.label>
+  <GodHand_BoatFilling.stages.3.description>啊...身体已经彻底变成了末地烛的形状。就这样一直动下去吧，让我永远被填满。这种极乐...无法自拔...</GodHand_BoatFilling.stages.3.description>
+
+  <!-- GodHand_BoatEmptying -->
+  <GodHand_BoatEmptying.stages.0.label>异物缺失(空虚)</GodHand_BoatEmptying.stages.0.label>
+  <GodHand_BoatEmptying.stages.0.description>那种充盈的感觉消失了...身体内部现在冷冰冰的，好想再被填满...快让我回去...</GodHand_BoatEmptying.stages.0.description>
+</LanguageData>

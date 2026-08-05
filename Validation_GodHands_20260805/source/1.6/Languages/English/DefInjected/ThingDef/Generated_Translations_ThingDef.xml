@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <GodHand_GearboxGenerator.label>Hand Crank Gearbox Generator</GodHand_GearboxGenerator.label>
+  <GodHand_GearboxGenerator.description>A complex mechanical device that converts hand crank power into industrial electricity. Consists of a cross gearbox and a large cantilever.</GodHand_GearboxGenerator.description>
+  <GodHand_EndRodGenerator.label>Otherworld's Perpetual Motion Machine</GodHand_EndRodGenerator.label>
+  <GodHand_EndRodGenerator.description>An advanced generator from another world, which can be used to anchor biological entities.</GodHand_EndRodGenerator.description>
+  <GodHand_TurretHead.label>Turret Headwear</GodHand_TurretHead.label>
+  <GodHand_TurretHead.description>The top section of a turret, now repurposed as a defensive headwear through advanced manipulation.\n\nWarning: Wearing this provides significant protection but may cause others to mistake you for a mobile bunker.</GodHand_TurretHead.description>
+  <GodHand_TurretBase.label>Unstable Turret Base</GodHand_TurretBase.label>
+  <GodHand_TurretBase.description>The remains of a turret base after its upper section was forcibly detached. The structure is critically unstable and nearing collapse.</GodHand_TurretBase.description>
+  <GodHand_PawnFlyer.label>God Hand Flight Container</GodHand_PawnFlyer.label>
+</LanguageData>

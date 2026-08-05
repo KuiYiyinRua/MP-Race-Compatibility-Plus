@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- 自动装填炮塔头弹药 -->
+  <WorkGiverDef>
+    <defName>GodHand_RefuelTurretHead</defName>
+    <label>refuel turret head ammo</label>
+    <giverClass>GodHandMod.WorkGiver_RefuelTurretHead</giverClass>
+    <workType>Hauling</workType>
+    <verb>refuel</verb>
+    <gerund>refueling turret ammo</gerund>
+    <priorityInType>60</priorityInType>
+  </WorkGiverDef>
+</Defs>

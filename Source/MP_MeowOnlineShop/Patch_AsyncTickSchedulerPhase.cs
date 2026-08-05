@@ -16,11 +16,14 @@ namespace MP_MeowOnlineShop
     /// but the existing ones are equal" bundle followed by
     /// "Wrong random state on map X" (Desync-257, map 21).
     ///
-    /// Fix: on every multiplayer scheduler pass, normalize the accumulator to
-    /// `-timePerTick` before the vanilla loop. TickPatch.DoTick then adds 1,
-    /// the loop runs exactly 1/timePerTick map ticks, and every peer returns
-    /// to the same phase. Scheduling no longer depends on process-local
-    /// accumulator history.
+    /// Fix: on every multiplayer scheduler pass, including join/rejoin
+    /// catch-up simulation, normalize the accumulator to `1f - timePerTick`.
+    /// TickPatch.DoTick has already added 1f before TickTickable runs, so
+    /// this yields the phase the original patch intended before that +1: the
+    /// loop runs exactly 1/timePerTick map ticks and every peer returns to
+    /// the same phase. Using `-timePerTick` here made the loop see a negative
+    /// accumulator and skip all map/world ticks, which froze multiplayer at
+    /// TPS 0 regardless of time speed.
     /// </summary>
     internal static class Patch_AsyncTickSchedulerPhase
     {
@@ -51,10 +54,6 @@ namespace MP_MeowOnlineShop
             AccessTools.Property(
                 AccessTools.TypeByName("Multiplayer.Client.Multiplayer"),
                 "IsReplay");
-        private static readonly PropertyInfo SimulatingProperty =
-            TickPatchType == null
-                ? null
-                : AccessTools.Property(TickPatchType, "Simulating");
 
         private static bool _applied;
         private static bool _loggedFailure;
@@ -68,7 +67,7 @@ namespace MP_MeowOnlineShop
             if (TickTickableMethod == null || TickableType == null ||
                 TimeToTickThroughProperty == null ||
                 DesiredTimeSpeedProperty == null || TimePerTickMethod == null ||
-                IsReplayProperty == null || SimulatingProperty == null)
+                IsReplayProperty == null)
             {
                 Log.Warning(
                     "[MP-MeowOnlineShop] Async tick scheduler phase guard " +
@@ -110,8 +109,6 @@ namespace MP_MeowOnlineShop
 
             if (IsReplay())
                 return true;
-            if (Simulating())
-                return true;
 
             try
             {
@@ -123,7 +120,7 @@ namespace MP_MeowOnlineShop
                 if (timePerTick <= 0f)
                     return true;
 
-                TimeToTickThroughProperty.SetValue(tickable, -timePerTick);
+                TimeToTickThroughProperty.SetValue(tickable, 1f - timePerTick);
             }
             catch (Exception e)
             {
@@ -145,19 +142,6 @@ namespace MP_MeowOnlineShop
             {
                 return IsReplayProperty != null &&
                        (bool)IsReplayProperty.GetValue(null);
-            }
-            catch
-            {
-                return true;
-            }
-        }
-
-        private static bool Simulating()
-        {
-            try
-            {
-                return SimulatingProperty != null &&
-                       (bool)SimulatingProperty.GetValue(null);
             }
             catch
             {

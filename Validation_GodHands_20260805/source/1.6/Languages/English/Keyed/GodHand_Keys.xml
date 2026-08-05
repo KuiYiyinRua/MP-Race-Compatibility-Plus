@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <GodHand_PawnCapturedByMachine>{0} has been captured by the machine and restrained on the boat!</GodHand_PawnCapturedByMachine>
+  
+  <!-- Settings Pages -->
+  <GodHand.Settings.Page.General>General Settings</GodHand.Settings.Page.General>
+  <GodHand.Settings.Page.GodHand>God Hand</GodHand.Settings.Page.GodHand>
+  <GodHand.Settings.Page.GodWrench>God Wrench</GodHand.Settings.Page.GodWrench>
+  <GodHand.Settings.Page.Poke>God Poke</GodHand.Settings.Page.Poke>
+  <GodHand.Settings.Page.Caress>God Caress</GodHand.Settings.Page.Caress>
+  <GodHand.Settings.Page.Cleaning>God Cleaning</GodHand.Settings.Page.Cleaning>
+  <GodHand.Settings.Page.Judgment>God Judgment</GodHand.Settings.Page.Judgment>
+  
+  <GodHand.Settings.FunctionSwitches>Master Switches</GodHand.Settings.FunctionSwitches>
+  <GodHand.Settings.EnableGodHand>Enable God Hand</GodHand.Settings.EnableGodHand>
+  <GodHand.Settings.EnableGodHand.Tooltip>When disabled, you cannot use God Hand to grab or move pawns/items.</GodHand.Settings.EnableGodHand.Tooltip>
+  
+  <GodHand.Settings.GodHandSubFunctions>== God Hand Sub-functions ==</GodHand.Settings.GodHandSubFunctions>
+  <GodHand.Settings.GodHandEnableShake>Enable Shake</GodHand.Settings.GodHandEnableShake>
+  <GodHand.Settings.GodHandEnableShake.Tooltip>Allows grabbing units and rapidly shaking them to make them vomit.</GodHand.Settings.GodHandEnableShake.Tooltip>
+  <GodHand.Settings.GodHandEnableMeleeMode>Enable Melee Mode</GodHand.Settings.GodHandEnableMeleeMode>
+  <GodHand.Settings.GodHandEnableMeleeMode.Tooltip>Allows using grabbed melee weapons to attack.</GodHand.Settings.GodHandEnableMeleeMode.Tooltip>
+  <GodHand.Settings.GodHandEnableShootingMode>Enable Shooting Mode</GodHand.Settings.GodHandEnableShootingMode>
+  <GodHand.Settings.GodHandEnableShootingMode.Tooltip>Allows using grabbed ranged weapons to shoot.</GodHand.Settings.GodHandEnableShootingMode.Tooltip>
+  <GodHand.Settings.GodHandEnableForceIngest>Enable Force Ingest</GodHand.Settings.GodHandEnableForceIngest>
+  <GodHand.Settings.GodHandEnableForceIngest.Tooltip>Allows dragging food or drugs onto pawns to force ingestion.</GodHand.Settings.GodHandEnableForceIngest.Tooltip>
+
+  <GodHand.Settings.EnableDebugLog>Enable Debug Log</GodHand.Settings.EnableDebugLog>
+  <GodHand.Settings.EnableDebugLog.Tooltip>When enabled, detailed debug logs will be output to the console.</GodHand.Settings.EnableDebugLog.Tooltip>
+  <GodHand.Settings.DisableNSFW>Disable NSFW Content</GodHand.Settings.DisableNSFW>
+  <GodHand.Settings.DisableNSFW.Tooltip>When checked, all strange interaction logic of the perpetual motion machine will be disabled.</GodHand.Settings.DisableNSFW.Tooltip>
+  <GodHand.Settings.DisableEndRodGenerator>Disable Perpetual Motion Machine</GodHand.Settings.DisableEndRodGenerator>
+  <GodHand.Settings.DisableEndRodGenerator.Tooltip>When checked, construction of this building will be disabled, and existing buildings on the map will be automatically dismantled upon loading, returning materials.</GodHand.Settings.DisableEndRodGenerator.Tooltip>
+  <GodHand.Settings.EnableGodWrench>Enable God Wrench</GodHand.Settings.EnableGodWrench>
+  <GodHand.Settings.EnableGodWrench.Tooltip>When disabled, you cannot use God Wrench to move buildings.</GodHand.Settings.EnableGodWrench.Tooltip>
+  <GodHand.Settings.EnableCaress>Enable God Caress</GodHand.Settings.EnableCaress>
+  <GodHand.Settings.EnableCaress.Tooltip>When disabled, God Caress function will be unavailable.</GodHand.Settings.EnableCaress.Tooltip>
+  <GodHand.Settings.EnableCleaning>Enable God Cleaning</GodHand.Settings.EnableCleaning>
+  <GodHand.Settings.EnableCleaning.Tooltip>When disabled, God Cleaning function will be unavailable.</GodHand.Settings.EnableCleaning.Tooltip>
+  <GodHand.Settings.EnableJudgment>Enable God Judgment</GodHand.Settings.EnableJudgment>
+  <GodHand.Settings.EnableJudgment.Tooltip>When disabled, God Judgment function will be unavailable.</GodHand.Settings.EnableJudgment.Tooltip>
+  <GodHand.Settings.EnablePoke>Enable God Poke</GodHand.Settings.EnablePoke>
+  <GodHand.Settings.EnablePoke.Tooltip>When disabled, God Poke function will be unavailable.</GodHand.Settings.EnablePoke.Tooltip>
+  <GodHand.Settings.EnableAssistant>Enable God Assistant</GodHand.Settings.EnableAssistant>
+  <GodHand.Settings.EnableAssistant.Tooltip>When disabled, God Assistant function will be unavailable.</GodHand.Settings.EnableAssistant.Tooltip>
+  
+  <GodHand.Settings.Page.GodWrench>God Wrench Configuration</GodHand.Settings.Page.GodWrench>
+  <GodHand.Settings.GodWrenchSubFunctions>== Wrench Sub-functions ==</GodHand.Settings.GodWrenchSubFunctions>
+  <GodHand.Settings.GodWrenchEnableBulkScoop>Bulk Scoop Mode</GodHand.Settings.GodWrenchEnableBulkScoop>
+  <GodHand.Settings.GodWrenchEnableBulkScoop.Tooltip>Allows picking up all buildings within range at once. Be careful of the weight... just kidding, you're a god, there's no weight.</GodHand.Settings.GodWrenchEnableBulkScoop.Tooltip>
+  <GodHand.Settings.GodWrenchEnablePrecisionMode>Ultra Precision Mode</GodHand.Settings.GodWrenchEnablePrecisionMode>
+  <GodHand.Settings.GodWrenchEnablePrecisionMode.Tooltip>When enabled, you can fine-tune buildings at a sub-grid level using Q/E keys when picked up with the wrench. A perfectionist's boon.</GodHand.Settings.GodWrenchEnablePrecisionMode.Tooltip>
+  <GodHand.Settings.TurretHeadMaxTurrets>Max Turrets per Base: {0}</GodHand.Settings.TurretHeadMaxTurrets>
+  <GodHand.Settings.GodWrenchDescription>God Wrench allows you to move buildings in your base as you wish, even heavy defense turrets, like building blocks.</GodHand.Settings.GodWrenchDescription>
+  
+  <GodHand.Settings.PokeSubFunctions>== Poke Sub-functions ==</GodHand.Settings.PokeSubFunctions>
+  <GodHand.Settings.PokeEnableResurrection>Enable Divine Resurrection</GodHand.Settings.PokeEnableResurrection>
+  <GodHand.Settings.PokeEnableResurrection.Tooltip>Allows resurrecting recently deceased units with a poke.</GodHand.Settings.PokeEnableResurrection.Tooltip>
+  <GodHand.Settings.PokeEnableMentalBreakInterrupt>Enable Mental Break Interruption</GodHand.Settings.PokeEnableMentalBreakInterrupt>
+  <GodHand.Settings.PokeEnableMentalBreakInterrupt.Tooltip>Allows interrupting ongoing mental breaks with a poke.</GodHand.Settings.PokeEnableMentalBreakInterrupt.Tooltip>
+  <GodHand.Settings.PokeEnableInspiration>Enable Divine Inspiration</GodHand.Settings.PokeEnableInspiration>
+  <GodHand.Settings.PokeEnableInspiration.Tooltip>Poking has a chance to grant units inspiration.</GodHand.Settings.PokeEnableInspiration.Tooltip>
+  <GodHand.Settings.PokeEnableFlick>Enable Flick Function</GodHand.Settings.PokeEnableFlick>
+  <GodHand.Settings.PokeEnableFlick.Tooltip>Allows flicking units away like insects.</GodHand.Settings.PokeEnableFlick.Tooltip>
+  
+  <GodHand.Settings.EnableThrow>Enable Throwing</GodHand.Settings.EnableThrow>
+  <GodHand.Settings.EnableThrow.Tooltip>When disabled, you can only drag units, not throw them to cause damage.</GodHand.Settings.EnableThrow.Tooltip>
+  <GodHand.Settings.MaxThrowCells.Tooltip>If the distance exceeds this during a throw, the movement will be forcibly truncated.</GodHand.Settings.MaxThrowCells.Tooltip>
+  <GodHand.Settings.EnableRimTalkIntegration>Enable RimTalk Integration (Experimental)</GodHand.Settings.EnableRimTalkIntegration>
+  <GodHand.Settings.EnableRimTalkIntegration.Tooltip>May lead to additional resource consumption.</GodHand.Settings.EnableRimTalkIntegration.Tooltip>
+
+  <GodHand.Settings.JudgmentCrushDamage>Judgment Crush Damage Multiplier: {0} ({1}x)</GodHand.Settings.JudgmentCrushDamage>
+  <GodHand.Settings.JudgmentCrushRadiusValue>Crush Effective Radius Multiplier: {0}x</GodHand.Settings.JudgmentCrushRadiusValue>
+  <GodHand.Settings.JudgmentShockwaveDamage>Shockwave Damage Multiplier: {0} ({1}x)</GodHand.Settings.JudgmentShockwaveDamage>
+  <GodHand.Settings.JudgmentShockwaveRadiusValue>Shockwave Spread Multiplier: {0}x</GodHand.Settings.JudgmentShockwaveRadiusValue>
+
+  <GodHand.Settings.JudgmentReviewMode>Censorship Mode</GodHand.Settings.JudgmentReviewMode>
+  <GodHand.Settings.JudgmentReviewMode.Tooltip>When enabled, enters censorship mode and no longer displays the middle finger.</GodHand.Settings.JudgmentReviewMode.Tooltip>
+  <GodHand.Settings.RimTalkDetected>RimTalk Integration Detected</GodHand.Settings.RimTalkDetected>
+  <GodHand.Settings.RimTalkNotDetected>RimTalk Not Detected</GodHand.Settings.RimTalkNotDetected>
+  <GodHand.Settings.RimTalk.ControlledByGodHand>[ This option has been redirected for processing by God Hand ]</GodHand.Settings.RimTalk.ControlledByGodHand>
+  <GodHand.Settings.PlayerName>Player Name</GodHand.Settings.PlayerName>
+  <GodHand.Settings.PlayerPersona>Player Persona Description</GodHand.Settings.PlayerPersona>
+  
+  <GodHand.Settings.Page.RimTalk>RimTalk Integration</GodHand.Settings.Page.RimTalk>
+  <GodHand.Settings.Page.PlayerInfo>Player Identity</GodHand.Settings.Page.PlayerInfo>
+  <GodHand.Settings.PlayerInfo.Basic>== Basic Info ==</GodHand.Settings.PlayerInfo.Basic>
+  <GodHand.Settings.PlayerInfo.AgeGender>Gender and Age</GodHand.Settings.PlayerInfo.AgeGender>
+  <GodHand.Settings.PlayerInfo.Title>Title</GodHand.Settings.PlayerInfo.Title>
+  <GodHand.Settings.PlayerInfo.Race>Race/Xenotype</GodHand.Settings.PlayerInfo.Race>
+  
+  <GodHand.Settings.PlayerInfo.Backstory>== Backstory ==</GodHand.Settings.PlayerInfo.Backstory>
+  <GodHand.Settings.PlayerInfo.Childhood>Childhood</GodHand.Settings.PlayerInfo.Childhood>
+  <GodHand.Settings.PlayerInfo.BackstoryChildhood>Backstory Childhood</GodHand.Settings.PlayerInfo.BackstoryChildhood>
+  <GodHand.Settings.PlayerInfo.Adulthood>Adulthood</GodHand.Settings.PlayerInfo.Adulthood>
+  <GodHand.Settings.PlayerInfo.BackstoryAdulthood>Backstory Adulthood</GodHand.Settings.PlayerInfo.BackstoryAdulthood>
+  
+  <GodHand.Settings.PlayerInfo.Attributes>== Attributes and Status ==</GodHand.Settings.PlayerInfo.Attributes>
+  <GodHand.Settings.PlayerInfo.Traits>Traits</GodHand.Settings.PlayerInfo.Traits>
+  <GodHand.Settings.PlayerInfo.Skills>Skills</GodHand.Settings.PlayerInfo.Skills>
+  <GodHand.Settings.PlayerInfo.Health>Health Status</GodHand.Settings.PlayerInfo.Health>
+  <GodHand.Settings.PlayerInfo.Mood>Mood Status</GodHand.Settings.PlayerInfo.Mood>
+  <GodHand.Settings.PlayerInfo.Thoughts>Current Thoughts/Memories</GodHand.Settings.PlayerInfo.Thoughts>
+  
+  <GodHand.Settings.PlayerInfo.Social>== Social Relations ==</GodHand.Settings.PlayerInfo.Social>
+  <GodHand.Settings.PlayerInfo.Relations>Relations</GodHand.Settings.PlayerInfo.Relations>
+  <GodHand.Settings.PlayerInfo.Ideology>Culture/Ideology</GodHand.Settings.PlayerInfo.Ideology>
+  
+  <GodHand.Settings.PlayerInfo.Misc>== Misc ==</GodHand.Settings.PlayerInfo.Misc>
+  <GodHand.Settings.PlayerInfo.Equipment>Equipment</GodHand.Settings.PlayerInfo.Equipment>
+  <GodHand.Settings.PlayerInfo.Personality>Personality</GodHand.Settings.PlayerInfo.Personality>
+  
+  <GodHand.Settings.PlayerIdentity.Tooltip>Set your name and identity for AI conversations. The AI will use this information to address you and understand your role (e.g., Name: "Divine Envoy", Identity: "Avatar of the Archotech").</GodHand.Settings.PlayerIdentity.Tooltip>
+  
+  <!-- Memory Items -->
+  <GodHand.Memory.Grabbed>I was just grabbed by {1} and moved to a new position.</GodHand.Memory.Grabbed>
+  <GodHand.Memory.Thrown>I was just grabbed by {1} and thrown away with great force.</GodHand.Memory.Thrown>
+  <GodHand.Memory.ForcedIngest>I was just forced by {1} to ingest {0}.</GodHand.Memory.ForcedIngest>
+  <GodHand.Memory.Vomited>I was just shaken violently by {1}, making me feel so sick that I vomited.</GodHand.Memory.Vomited>
+  <GodHand.Memory.Poked>I was just poked by {1}, and I still feel dizzy.</GodHand.Memory.Poked>
+  <GodHand.Memory.PokedOut>My madness was just poked away by {1}, it's unbelievable.</GodHand.Memory.PokedOut>
+  <GodHand.Memory.Epiphany>I was just poked by {1}, and I suddenly had an epiphany: {0}</GodHand.Memory.Epiphany>
+  <GodHand.Memory.Resurrected>I was actually brought back from the realm of the dead by {1}... I'm resurrected!</GodHand.Memory.Resurrected>
+  <GodHand.Memory.Flicked>I was just flicked away like an insect by {1}!</GodHand.Memory.Flicked>
+  <GodHand.Memory.Caressed>I was just gently caressed by {1}, a feeling like never before...</GodHand.Memory.Caressed>
+  <GodHand.Memory.ResistanceReduced>By the influence of {1}, I feel my resistance crumbling.</GodHand.Memory.ResistanceReduced>
+  <GodHand.Memory.NoLongerLoyal>After being caressed by {1}, my previous thoughts seem meaningless. I am no longer blindly loyal.</GodHand.Memory.NoLongerLoyal>
+  <GodHand.Memory.Surrendered>I completely surrender to the presence of {1}. I won't run anymore, I give up.</GodHand.Memory.Surrendered>
+  <GodHand.Memory.Healed>{1} completely healed my wounds, I feel reborn.</GodHand.Memory.Healed>
+  <GodHand.Memory.AddictionCured>By the intervention of {1}, I feel my addiction swept away.</GodHand.Memory.AddictionCured>
+  <GodHand.Memory.BeingHealed>I am bathing in the healing light of {1}.</GodHand.Memory.BeingHealed>
+  <GodHand.Memory.JudgmentKilled>I was obliterated by {1}...</GodHand.Memory.JudgmentKilled>
+  <GodHand.Memory.JudgmentCrushed>I endured the terrifying crushing of {1}.</GodHand.Memory.JudgmentCrushed>
+  <GodHand.Memory.JudgmentShockwave>I was hit by the shockwave of {1}.</GodHand.Memory.JudgmentShockwave>
+  <GodHand.Memory.JudgmentStasis>My perception and body were forcibly suspended by {1}.</GodHand.Memory.JudgmentStasis>
+  <GodHand.Memory.JudgmentWitnessed>{1} released a God Judgment.</GodHand.Memory.JudgmentWitnessed>
+  <GodHand.Memory.BodySizeChanged>I feel my body size undergoing a supernatural change... My size is now {0} times the original.</GodHand.Memory.BodySizeChanged>
+  <GodHand.Memory.ContextPrefix>Recent interactions with God Hand:</GodHand.Memory.ContextPrefix>
+  
+  <GodHand.Time.JustNow>Just now</GodHand.Time.JustNow>
+  <GodHand.Time.Recently>Recently</GodHand.Time.Recently>
+  <GodHand.Time.Today>Earlier today</GodHand.Time.Today>
+  <GodHand.Time.Yesterday>Yesterday</GodHand.Time.Yesterday>
+  <GodHand.Time.LongAgo>A few days ago</GodHand.Time.LongAgo>
+  <GodHand.Memory.LastTimeWas>Last time was</GodHand.Memory.LastTimeWas>
+  <GodHand.Memory.HighPriorityPrompt>[IMPORTANT: The following are recent interactions between this character and the player. These are direct player impacts on the world. Please prioritize these experiences when generating dialogue.]</GodHand.Memory.HighPriorityPrompt>
+  <GodHand.RimTalk.Prompt.Thrown>[Inner Monologue] I was actually grabbed by {1} and thrown away! Express my shock and complaints about this mysterious power.</GodHand.RimTalk.Prompt.Thrown>
+  <GodHand.RimTalk.Prompt.Poked>[Inner Monologue] I was just poked by {1}! This was so sudden, express my dizziness and dissatisfaction (or gratitude after being poked awake).</GodHand.RimTalk.Prompt.Poked>
+  <GodHand.RimTalk.Prompt.Caressed>[Inner Monologue] The feeling of being gently caressed by {1} just now... it's really hard to describe in words. Express my intoxication and feeling flattered.</GodHand.RimTalk.Prompt.Caressed>
+  <GodHand.RimTalk.Prompt.Grabbed>[Inner Monologue] I was just grabbed by {1} and moved elsewhere. This feeling of being completely dominated makes me feel...</GodHand.RimTalk.Prompt.Grabbed>
+  <GodHand.RimTalk.Prompt.Healed>[Inner Monologue] A miracle happened! My wound was instantly healed by {1}. Grateful for the favor of the deity.</GodHand.RimTalk.Prompt.Healed>
+  <GodHand.RimTalk.Prompt.Resurrected>[Inner Monologue] I... didn't I die? A flick of the finger from {1} just now actually resurrected me... discussing the miracle of this rebirth.</GodHand.RimTalk.Prompt.Resurrected>
+  <GodHand.RimTalk.Prompt.ForcedIngest>[Inner Monologue] Just now, an irresistible force made me swallow that thing... is this the will of {1}? Express my confusion and helplessness.</GodHand.RimTalk.Prompt.ForcedIngest>
+  <GodHand.RimTalk.System.Background>[IMPORTANT BACKGROUND] You (Pawn) have just experienced direct intervention from a transcendent power (Player).</GodHand.RimTalk.System.Background>
+  <GodHand.RimTalk.System.Persona>[Player Persona] {0}</GodHand.RimTalk.System.Persona>
+  <GodHand.RimTalk.System.Content>[Interaction Content] {0}</GodHand.RimTalk.System.Content>
+  <GodHand.RimTalk.System.Instruction>[INSTRUCTION] Please conduct an inner monologue in the first person. Do not engage in social interactions with other pawns, only express your most true feelings, shock, or realizations at this moment.</GodHand.RimTalk.System.Instruction>
+  <GodHand.RimTalk.Prompt.JudgmentShockwave>[Inner Monologue] A huge explosion just happened near me! I'm dizzy from the shockwave, this is definitely not a mortal power... could it be the wrath of {1}? Express my fear and relief after surviving.</GodHand.RimTalk.Prompt.JudgmentShockwave>
+  <GodHand.RimTalk.Prompt.JudgmentStasis>[Inner Monologue] My whole body is locked! I can't move, it feels like time itself has stopped on me. This feeling of being dominated by absolute stasis by {1} is terrifying...</GodHand.RimTalk.Prompt.JudgmentStasis>
+  
+  <GodHand.Settings.PlayMemeSound>Play "God Hand Power is Infinite" MEME</GodHand.Settings.PlayMemeSound>
+  <GodHand.Settings.PlayMemeSound.Tooltip>Play preset MEME sound effects when grabbing units.</GodHand.Settings.PlayMemeSound.Tooltip>
+  <GodHand.Settings.ShowFlavorError>Show Flavor Error</GodHand.Settings.ShowFlavorError>
+  <GodHand.Settings.ShowFlavorError.Tooltip>Show a humorous "fake error" message when entering the game.</GodHand.Settings.ShowFlavorError.Tooltip>
+  
+  <GodHand.Settings.GrabFilters>== Grab Filters ==</GodHand.Settings.GrabFilters>
+  <GodHand.Settings.CanGrabFriendly>Can Grab Friendly</GodHand.Settings.CanGrabFriendly>
+  <GodHand.Settings.CanGrabFriendly.Tooltip>Includes colonists, friendly factions, and tamed animals.</GodHand.Settings.CanGrabFriendly.Tooltip>
+  <GodHand.Settings.CanGrabHostile>Can Grab Hostile</GodHand.Settings.CanGrabHostile>
+  <GodHand.Settings.CanGrabHostile.Tooltip>Includes hostile factions, raiders, and hostile mechanoids.</GodHand.Settings.CanGrabHostile.Tooltip>
+  <GodHand.Settings.CanGrabNeutral>Can Grab Neutral</GodHand.Settings.CanGrabNeutral>
+  <GodHand.Settings.CanGrabNeutral.Tooltip>Includes neutral factions, visitors, wild men, and wild animals.</GodHand.Settings.CanGrabNeutral.Tooltip>
+  
+  <GodHand.Settings.RimTalkCooldowns>== Smart Frequency Control (Save Tokens) ==</GodHand.Settings.RimTalkCooldowns>
+  <GodHand.Settings.RimTalkGlobalCooldown>Global Generation Cooldown (sec): {0}</GodHand.Settings.RimTalkGlobalCooldown>
+  <GodHand.Settings.RimTalkGlobalCooldown.Tooltip>Minimum interval between all inner monologues triggered by God Hand. Increase this to prevent spam.</GodHand.Settings.RimTalkGlobalCooldown.Tooltip>
+  <GodHand.Settings.RimTalkIndividualCooldown>Individual Generation Cooldown (sec): {0}</GodHand.Settings.RimTalkIndividualCooldown>
+  <GodHand.Settings.RimTalkIndividualCooldown.Tooltip>The same character will not respond twice to God Hand intervention in a short period.</GodHand.Settings.RimTalkIndividualCooldown.Tooltip>
+  
+  <GodHand.Settings.RimTalkChances>== Interaction Trigger Probabilities ==</GodHand.Settings.RimTalkChances>
+  <GodHand.Settings.RimTalkChance.Thrown>Throw Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.Thrown>
+  <GodHand.Settings.RimTalkChance.Poked>Poke Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.Poked>
+  <GodHand.Settings.RimTalkChance.Caressed>Caress Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.Caressed>
+  <GodHand.Settings.RimTalkChance.Grabbed>Grab Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.Grabbed>
+  <GodHand.Settings.RimTalkChance.Healed>Heal/Cure Addiction Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.Healed>
+  <GodHand.Settings.RimTalkChance.Resurrected>Resurrection Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.Resurrected>
+  <GodHand.Settings.RimTalkChance.ForcedIngest>Force Ingest Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.ForcedIngest>
+  <GodHand.Settings.RimTalkChance.JudgmentShockwave>Judgment Shockwave Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.JudgmentShockwave>
+  <GodHand.Settings.RimTalkChance.JudgmentStasis>Eternal Stasis Reaction Chance: {0}%</GodHand.Settings.RimTalkChance.JudgmentStasis>
+  
+  <GodHand.Settings.RimTalkCustomization>== Response Content Customization ==</GodHand.Settings.RimTalkCustomization>
+  <GodHand.Settings.RimTalkCustomPrompts>Inner Monologue Template Overrides</GodHand.Settings.RimTalkCustomPrompts>
+  <GodHand.Settings.RimTalkCustomMemories>Character Memory Template Overrides</GodHand.Settings.RimTalkCustomMemories>
+  <GodHand.Settings.RimTalkCustomHint>Leave empty to use default text. Supports placeholders: {0} (Character Name), {1} (Player Name).</GodHand.Settings.RimTalkCustomHint>
+  
+  <GodHand.Settings.ThrowParameters>== Throw Parameters ==</GodHand.Settings.ThrowParameters>
+  <GodHand.Settings.ThrowDistanceFactor>Throw Distance Factor: {0}</GodHand.Settings.ThrowDistanceFactor>
+  <GodHand.Settings.BaseDamage>Base Damage: {0}</GodHand.Settings.BaseDamage>
+  <GodHand.Settings.DamagePerCell>Extra Damage Per Cell: {0}</GodHand.Settings.DamagePerCell>
+  <GodHand.Settings.MaxThrowCells>Max Throw Distance: {0} Cells</GodHand.Settings.MaxThrowCells>
+  <GodHand.Settings.MinThrowSpeed>Min Throw Speed: {0} (Cells/sec)</GodHand.Settings.MinThrowSpeed>
+  <GodHand.Settings.ThrowDistanceHint>Tip: Fast movement speed during throw increases damage; throw distance is affected by power factor.</GodHand.Settings.ThrowDistanceHint>
+  
+  <GodHand.Settings.ThrowDisabled>== Throwing Disabled ==</GodHand.Settings.ThrowDisabled>
+  <GodHand.ThrowDisabledReason>(Throwing function has been disabled)</GodHand.ThrowDisabledReason>
+  <GodHand.Settings.ResetThisPage>Reset Page Settings</GodHand.Settings.ResetThisPage>
+  <GodHand.Settings.ResetToDefaults>Reset All Settings</GodHand.Settings.ResetToDefaults>
+  
+  <!-- God Caress Params -->
+  <GodHand.Settings.CaressParameters>== God Caress Parameters ==</GodHand.Settings.CaressParameters>
+  <GodHand.Settings.CaressMoodBonus>Mood Bonus: {0}</GodHand.Settings.CaressMoodBonus>
+  <GodHand.Settings.CaressMaxStages>Max Stack Count: {0}</GodHand.Settings.CaressMaxStages>
+  <GodHand.Settings.CaressEnablePrisonerResistanceReduction>Enable Resistance Reduction</GodHand.Settings.CaressEnablePrisonerResistanceReduction>
+  <GodHand.Settings.CaressEnablePrisonerResistanceReduction.Tooltip>Allows reducing prisoner resistance through caressing.</GodHand.Settings.CaressEnablePrisonerResistanceReduction.Tooltip>
+  <GodHand.Settings.CaressPrisonerResistance>Prisoner Resistance Reduction: {0}%</GodHand.Settings.CaressPrisonerResistance>
+  <GodHand.Settings.CaressEnableEnemySurrender>Enable Enemy Conversion</GodHand.Settings.CaressEnableEnemySurrender>
+  <GodHand.Settings.CaressEnableEnemySurrender.Tooltip>Allows converting enemies to surrender through caressing.</GodHand.Settings.CaressEnableEnemySurrender.Tooltip>
+  <GodHand.Settings.CaressEnemySurrender>Enemy Surrender Probability: {0}%</GodHand.Settings.CaressEnemySurrender>
+  <GodHand.Settings.CaressEnableRemoveLoyalty>Enable Unwavering Loyalty Removal</GodHand.Settings.CaressEnableRemoveLoyalty>
+  <GodHand.Settings.CaressEnableRemoveLoyalty.Tooltip>Allows removing unwavering loyalty state from prisoners through caressing.</GodHand.Settings.CaressEnableRemoveLoyalty.Tooltip>
+  <GodHand.Settings.CaressRemoveLoyalty>Unwavering Loyalty Removal Probability: {0}%</GodHand.Settings.CaressRemoveLoyalty>
+  
+  <!-- God Hand -->
+  <GodHand.Label>God Hand</GodHand.Label>
+  <GodHand.Description>The power of the God Hand is absolute!\n\n[Basic Controls]\nLeft Click: Grab/drag target, rapid movement can "throw" it.\nRight Click: Immediately release grab/cancel current task.\n\n[Assisted Shortcuts]\nQ / E: Switch grab mode (Pawn ⇄ Item).\nShift + Scroll: Dynamically adjust grab influence radius.\nTab: Cycle through bottom overlapping items.\n\n[Advanced Modes]\nEnable Shooting Mode: Press Q when grabbing a ranged weapon.\nEnable Melee Mode: Press E when grabbing a melee weapon.</GodHand.Description>
+  <GodHand.Description.Simple>Because the power of the God Hand is absolute!\nRight-click the icon to view the operation manual.</GodHand.Description.Simple>
+  <GodHand.Help.View>View Function Manual</GodHand.Help.View>
+  
+  <!-- God Wrench -->
+  <GodWrench.Label>God Wrench</GodWrench.Label>
+  <GodWrench.Description>Reshape layouts as you wish.
+
+[Core Functions]
+Left Click: Drag buildings, plants, or resources.
+Right Click: Release building/cancel drag.
+
+[Mode Switching]
+Cycle through modes with Q / E keys:
+- Building Mode: Normal movement.
+- Precision Mode: Pixel-level placement (click building to open panel).
+- Roof Mode: Relocate roofs and thick rock roofs.
+- Mineral Deposit Mode: Relocate deep mineral deposits.
+- Turret Head Mode: Lossless dismantling/merging of turrets.
+
+[Advanced Operations]
+Shift + Left Click: Bulk attract/move.
+Shift+Scroll: Adjust bulk attraction radius.
+Tab: Cycle through overlapping buildings/resources.</GodWrench.Description>
+  <GodWrench.Description.Simple>Carry everything!\nRight-click the icon to view the operation manual.</GodWrench.Description.Simple>
+  
+  <!-- God Caress -->
+  <CaressGodHand_Label>God Caress</CaressGodHand_Label>
+  <CaressGodHand_Desc>Caress your pawns with divine warmth.
+
+[Mood Effects]
+Caress a pawn to grant a +{0} mood bonus, stacks up to {1} times.
+
+[Prisoner Interactions]
+Reduces resistance by {2}%, with a {3}% chance to remove unwavering loyalty, making them recruitable.
+
+[Enemy Interactions]
+{4}% chance to convert an enemy, causing them to surrender immediately.</CaressGodHand_Desc>
+  <CaressGodHand_Desc.Simple>Caress your pawns!\nRight-click button to open introduction page.</CaressGodHand_Desc.Simple>
+  <CaressGodHand_MustBePawn>Must be a Pawn</CaressGodHand_MustBePawn>
+  <CaressGodHand_Dead>Target is dead</CaressGodHand_Dead>
+  <CaressGodHand_NotHumanlike>{0} is not a humanlike pawn, cannot be caressed.</CaressGodHand_NotHumanlike>
+  <CaressGodHand_Caressed>{1} reaches out and caresses {0}</CaressGodHand_Caressed>
+  
+  <!-- God Cleaning -->
+  <CleaningGodHand.Label>God Cleaning</CleaningGodHand.Label>
+  <CleaningGodHand.Description>Purify all filth in the world.
+
+[Three Modes]
+Cycle modes with Q/E keys:
+- Cleaning Only: Only clears filth, no drainage.
+- Pumping: Cleaning + moisture pumping.
+- Water Erasing: Cleaning + absolute drainage.
+
+[Cleaning Only]
+Removes all filth, debris, and toxic pollution (Biotech).
+
+[Pumping]
+Cleans while draining marshes, shallow water, mud, and other drainable terrain.
+Follows vanilla moisture pump logic.
+
+[Water Erasing]
+Cleans while forcibly erasing all water terrain.
+Can clear deep water, ocean, and other water bodies that vanilla moisture pumps cannot handle.
+
+[Bonus]
+Heals wounds of creatures in range ({0} points/time), cures permanent injuries and addictions.
+Boosts plant growth ({1}% bonus), repairs item durability.
+
+[Controls]
+Q/E: Cycle modes
+Shift+Scroll: Adjust cleaning range.</CleaningGodHand.Description>
+  <CleaningGodHand.Description.Simple>Sweep away all filth!\nRight-click button to open introduction page.</CleaningGodHand.Description.Simple>
+  
+  <!-- God Cleaning Settings -->
+  <GodHand.Settings.CleaningParameters>God Cleaning Parameters</GodHand.Settings.CleaningParameters>
+  <GodHand.Settings.CleaningEnableHealing>Enable Healing</GodHand.Settings.CleaningEnableHealing>
+  <GodHand.Settings.CleaningEnableHealing.Tooltip>Slowly heals pawns in range when cleaning.</GodHand.Settings.CleaningEnableHealing.Tooltip>
+  <GodHand.Settings.CleaningHealAmount>Heal Amount: {0}</GodHand.Settings.CleaningHealAmount>
+  <GodHand.Settings.CleaningEnablePlantGrowth>Enable Plant Growth</GodHand.Settings.CleaningEnablePlantGrowth>
+  <GodHand.Settings.CleaningEnablePlantGrowth.Tooltip>Accelerates plant growth in range when cleaning.</GodHand.Settings.CleaningEnablePlantGrowth.Tooltip>
+  <GodHand.Settings.CleaningPlantGrowthBonus>Growth Bonus: {0}%</GodHand.Settings.CleaningPlantGrowthBonus>
+  <GodHand.Settings.CleaningPlayMusic>Play Cleaning Music</GodHand.Settings.CleaningPlayMusic>
+  <GodHand.Settings.CleaningPlayMusic.Tooltip>Play background music when using God Cleaning.</GodHand.Settings.CleaningPlayMusic.Tooltip>
+  <GodHand.Settings.CleaningEnableRepair>Enable Item Repair</GodHand.Settings.CleaningEnableRepair>
+  <GodHand.Settings.CleaningEnableRepair.Tooltip>Repairs item durability within range when cleaning.</GodHand.Settings.CleaningEnableRepair.Tooltip>
+  <GodHand.Settings.CleaningRemoveScars>Heal Scars &amp; Permanent Injuries</GodHand.Settings.CleaningRemoveScars>
+  <GodHand.Settings.CleaningRemoveScars.Tooltip>Heals permanent injuries (scars) when healing.</GodHand.Settings.CleaningRemoveScars.Tooltip>
+  <GodHand.Settings.CleaningCureAddiction>Cure Addictions</GodHand.Settings.CleaningCureAddiction>
+  <GodHand.Settings.CleaningCureAddiction.Tooltip>Cures drug addictions when healing.</GodHand.Settings.CleaningCureAddiction.Tooltip>
+  <GodHand.Settings.CleaningEnableTending>Tend Wounds Automatically</GodHand.Settings.CleaningEnableTending>
+  <GodHand.Settings.CleaningEnableTending.Tooltip>Automatically tends to wounded creatures when cleaning.</GodHand.Settings.CleaningEnableTending.Tooltip>
+  <GodHand.Settings.CleaningEnableRegrowth>Regenerate Missing Parts</GodHand.Settings.CleaningEnableRegrowth>
+  <GodHand.Settings.CleaningEnableRegrowth.Tooltip>Regenerates missing limbs or organs of creatures when cleaning.</GodHand.Settings.CleaningEnableRegrowth.Tooltip>
+  <GodHand.Settings.CleaningEnableFoodPreservation>Restore Food Freshness</GodHand.Settings.CleaningEnableFoodPreservation>
+  <GodHand.Settings.CleaningEnableFoodPreservation.Tooltip>Resets food freshness to prevent rotting when cleaning.</GodHand.Settings.CleaningEnableFoodPreservation.Tooltip>
+  <GodHand.Cleaning.RadiusMsg>Cleaning range adjusted to: {0}x{0}</GodHand.Cleaning.RadiusMsg>
+  <GodHand.Cleaning.Mode.Cleaning>Cleaning Mode</GodHand.Cleaning.Mode.Cleaning>
+  <GodHand.Cleaning.Mode.Pumping>Moisture Pumping Mode</GodHand.Cleaning.Mode.Pumping>
+  <GodHand.Cleaning.Mode.WaterErase>Absolute Drainage Mode</GodHand.Cleaning.Mode.WaterErase>
+  <GodHand.Settings.MaxGodAssistantTasks>Max Concurrent Assistant Tasks: {0}</GodHand.Settings.MaxGodAssistantTasks>
+  
+  <!-- God Judgment -->
+  <JudgmentGodHand.Label>God Judgment</JudgmentGodHand.Label>
+  <JudgmentGodHand.Description>Invoke the final judgment upon the disobedient.\n\n[Divine Punishment]\nDescend an infinitely powerful strike from the clouds, triggering local physical collapse. The central area will suffer devastating pressure, followed by high-energy shockwaves sufficient to shatter various advanced armors.\n\n[Sudden Death Field]\nDeploy a sustained 10-second high-dimensional interference field in the target area. Causal laws will be corrected in real-time; any target with biological characteristics will have its consciousness and life cycle rapidly terminated.\n\n[Eternal Stasis]\nForcibly lock the target's temporal phase. The existence of the target will be maintained at a point of absolute stasis. In this state, the target is detached from linear time flow, and any external conventional interference cannot cause substantial changes.\n\n[Forgiveness Mode]\nRelease the target's temporal phase lock. The locked target will return to reality's time flow and immediately resume biological characteristics, perception, and normal physical metabolism.</JudgmentGodHand.Description>
+  <JudgmentGodHand.Description.Simple>Grant them terminal judgment!\nCycle modes with Q/E keys, right-click to view detailed introduction.</JudgmentGodHand.Description.Simple>
+  <JudgmentGodHand.CannotTargetFogged>Cannot target locations in foggy areas.</JudgmentGodHand.CannotTargetFogged>
+  <GodHand.Judgment.Mode.Catastrophic>Divine Punishment</GodHand.Judgment.Mode.Catastrophic>
+  <GodHand.Judgment.Mode.SuddenDeathField>Sudden Death Field</GodHand.Judgment.Mode.SuddenDeathField>
+  <GodHand.Judgment.Mode.StasisLock>Eternal Stasis</GodHand.Judgment.Mode.StasisLock>
+  <GodHand.Judgment.Mode.Forgiveness>Forgiveness Mode</GodHand.Judgment.Mode.Forgiveness>
+  <GodHand.Judgment.ModeSwitch>Judgment mode switched to: {0}</GodHand.Judgment.ModeSwitch>
+  
+  <!-- God Judgment Settings -->
+  <GodHand.Settings.Page.Judgment>God Judgment</GodHand.Settings.Page.Judgment>
+  <GodHand.Settings.JudgmentParameters>God Judgment Parameters</GodHand.Settings.JudgmentParameters>
+  
+  <!-- Flavor Error -->
+  <GodHand.FlavorError.Message>I fixed most of the errors, but I kept a few, because I feel that without some red text, you wouldn't know you're playing RIMWORLD.\n\nOf course, you can turn off this error message in the settings.\n\n          ——&lt;God Hand&gt;Pa</GodHand.FlavorError.Message>
+
+  <!-- Dynamic Mood Stages -->
+  <GodHand.Mood.Label>Caressed by {1} +{0}</GodHand.Mood.Label>
+  <GodHand.Mood.Desc>Ohhh... haaa... hnnng... it's breaking... ohhh... ❤</GodHand.Mood.Desc>
+  
+  <!-- Caress Feedback -->
+  <GodHand.Caress.NoLongerLoyal>{0} is no longer unwaveringly loyal and can now be recruited.</GodHand.Caress.NoLongerLoyal>
+  <GodHand.Caress.ResistanceReduced>{0}'s resistance was reduced by {1} (from {2} to {3}).</GodHand.Caress.ResistanceReduced>
+  <GodHand.Caress.Soothed>{0} was soothed; though they haven't surrendered, they've calmed down for now.</GodHand.Caress.Soothed>
+  <GodHand.Caress.Surrender>{0} surrendered under the charm of the God Caress!</GodHand.Caress.Surrender>
+  <GodHand.Caress.Hesitate>{0} feels shaken but refuses to surrender yet.</GodHand.Caress.Hesitate>
+  
+  <!-- God Poke & Shake -->
+  <GodHand.Poke.Label>God Poke</GodHand.Poke.Label>
+  <GodHand.Poke.Desc>Give them a small divine shock.\n\n[Poke]\nLeft-click a pawn to cause strong stun and headache, but it won't cause substantial damage.\n\n[Flick]\nHold left-click and drag to flick a pawn away like an insect!\nThe further you drag, the further they fly.\n\n[Head Knock]\nIf the target is having a mental break, poking has a chance to snap them out of it (interrupting the break state).\n\n[Divine Resurrection]\nLeft-click a corpse to have a 50% chance of resurrecting it.\nThe resurrected will suffer from [extreme cranial shock], and their consciousness will be very fragile for 1 day.</GodHand.Poke.Desc>
+  <GodHand.Poke.Desc.Simple>Give these naughty pawns a poke!\nRight-click button to open introduction page.</GodHand.Poke.Desc.Simple>
+  <GodHand.Poke.Mote>Poke!</GodHand.Poke.Mote>
+  <GodHand.Poke.MentalBreakInterrupted>{0} was poked awake and stopped their madness!</GodHand.Poke.MentalBreakInterrupted>
+  <GodHand.Poke.MentalBreakFailed>{0} has no reaction to the poke and continues their madness.</GodHand.Poke.MentalBreakFailed>
+  <GodHand.Poke.Flicked>{0} was flicked away by God's finger!</GodHand.Poke.Flicked>
+  <GodHand.Poke.Epiphany>Sudden Epiphany!</GodHand.Poke.Epiphany>
+  <GodHand.Poke.EpiphanyMessage>{0} was poked and suddenly had an epiphany! Gained inspiration: {1}</GodHand.Poke.EpiphanyMessage>
+  <GodHand.Poke.EpiphanyMote>Epiphany!</GodHand.Poke.EpiphanyMote>
+  <GodHand.Poke.ResurrectedMote>Resurrected!</GodHand.Poke.ResurrectedMote>
+  <GodHand.Poke.FailedMote>Failed</GodHand.Poke.FailedMote>
+  <GodHand.Shake.Vomit>{0} was made to vomit by violent shaking.</GodHand.Shake.Vomit>
+  
+  <!-- Item Grabbing & Force Interaction -->
+  <GodHand.ModeSwitch>Grab mode switched to: {0}</GodHand.ModeSwitch>
+  <GodHand.Mode.Pawn>Pawn Mode</GodHand.Mode.Pawn>
+  <GodHand.Mode.Item>Item Mode</GodHand.Mode.Item>
+  <GodHand.Item.ForceIngest>Forced {0} to ingest {1}.</GodHand.Item.ForceIngest>
+  <GodHand.Item.CannotEat>{0} cannot ingest {1}.</GodHand.Item.CannotEat>
+  <GodHand.Item.SelectionHint>\n(Tab: {0}/{1})</GodHand.Item.SelectionHint>
+  <GodHand.ThrowDisabledReason>(Throwing function is disabled)</GodHand.ThrowDisabledReason>
+  <GodHand.Cleaning.RadiusDisplay>Cleaning Range: {0}x{0}</GodHand.Cleaning.RadiusDisplay>
+  
+  <!-- Weapon Attacks -->
+  <GodHand.Weapon.MeleeHint>Melee Weapon: Drag onto target to poke</GodHand.Weapon.MeleeHint>
+  <GodHand.Weapon.RangedHint>Ranged Weapon: Right-click to aim and shoot</GodHand.Weapon.RangedHint>
+  <GodHand.Weapon.MeleeAttack>God Hand poked {1} with {0}!</GodHand.Weapon.MeleeAttack>
+  <GodHand.Weapon.RangedAttack>God Hand shot at target position with {0}!</GodHand.Weapon.RangedAttack>
+  <GodHand.Weapon.NoTarget>No target to attack</GodHand.Weapon.NoTarget>
+  <GodHand.Weapon.OutOfRange>Target is {0:F1} cells away, exceeding range of {1} cells</GodHand.Weapon.OutOfRange>
+  <GodHand.Weapon.NotAvailable>Weapon currently unavailable (may need reloading)</GodHand.Weapon.NotAvailable>
+  <GodHand.Weapon.ShootFailed>Shooting failed</GodHand.Weapon.ShootFailed>
+  <GodHand.Weapon.NotMeleeWeapon>This is not a melee weapon</GodHand.Weapon.NotMeleeWeapon>
+  <GodHand.Weapon.NotRangedWeapon>This is not a ranged weapon</GodHand.Weapon.NotRangedWeapon>
+  <GodHand.Weapon.MeleeModeOn>Melee Mode ON! Drag weapon to poke enemies!</GodHand.Weapon.MeleeModeOn>
+  <GodHand.Weapon.MeleeModeOff>Melee Mode OFF</GodHand.Weapon.MeleeModeOff>
+  <GodHand.Weapon.ShootingModeOn>Shooting Mode ON! Weapon fixed, Left Click to shoot, press Q to exit!</GodHand.Weapon.ShootingModeOn>
+  <GodHand.Weapon.ShootingModeOff>Shooting Mode OFF</GodHand.Weapon.ShootingModeOff>
+  
+  <!-- God Wrench - Modes -->
+  <GodHand.Wrench.PrecisionMode>God Wrench: Precision Mode</GodHand.Wrench.PrecisionMode>
+  <GodHand.Wrench.NormalMode>God Wrench: Normal Mode</GodHand.Wrench.NormalMode>
+  <GodHand.Wrench.Mode.Building>Building Mode</GodHand.Wrench.Mode.Building>
+  <GodHand.Wrench.Mode.Precision>Precision Mode</GodHand.Wrench.Mode.Precision>
+  <GodHand.Wrench.Mode.Roof>Roof Mode</GodHand.Wrench.Mode.Roof>
+  <GodHand.Wrench.Mode.DeepResource>Mineral Deposit Mode</GodHand.Wrench.Mode.DeepResource>
+  <GodHand.Wrench.ClickToAdjust>Click to adjust</GodHand.Wrench.ClickToAdjust>
+  <GodHand.Wrench.PrecisionDialogOpened>Adjusting: {0}</GodHand.Wrench.PrecisionDialogOpened>
+  
+  <!-- Precision Adjustment Dialog -->
+  <GodHand.Wrench.PrecisionAdjustTitle>Ultra Precision Adjustment: {0}</GodHand.Wrench.PrecisionAdjustTitle>
+  <GodHand.Wrench.Offset>Position Offset</GodHand.Wrench.Offset>
+  <GodHand.Wrench.Rotation>Rotation Angle</GodHand.Wrench.Rotation>
+  <GodHand.Wrench.Scale>Scale Ratio</GodHand.Wrench.Scale>
+  <GodHand.Wrench.DrawLayer>Render Layer</GodHand.Wrench.DrawLayer>
+  <GodHand.Wrench.TextureOrientation>Texture Orientation (Lock display face)</GodHand.Wrench.TextureOrientation>
+  <GodHand.Wrench.ResetAll>Reset All</GodHand.Wrench.ResetAll>
+  <GodHand.Wrench.EnterValue>Enter Value ({0} - {1})</GodHand.Wrench.EnterValue>
+  <GodHand.Wrench.EnterValueUnlimited>Enter Value (Unlimited)</GodHand.Wrench.EnterValueUnlimited>
+  <GodHand.Wrench.EnterValueFor>Enter Value for {0} (Unlimited)</GodHand.Wrench.EnterValueFor>
+  <GodHand.Wrench.StepHint>Step: {0} (Hold Shift for fine tuning)</GodHand.Wrench.StepHint>
+  <GodHand.Wrench.Auto>Auto</GodHand.Wrench.Auto>
+  
+  <!-- Precision Wrench Advanced Functions -->
+  <GodHand.Wrench.TurretSettings>Turret Special Settings</GodHand.Wrench.TurretSettings>
+  <GodHand.Wrench.TurretRotation>Turret Rotation: {0}°</GodHand.Wrench.TurretRotation>
+  <GodHand.Wrench.OpenRenderTreeEditor>Open Render Tree Editor (Plastic Surgery)</GodHand.Wrench.OpenRenderTreeEditor>
+  <GodHand.Wrench.RenderTreeEditorHint>Provide more precise node-level adjustments for Pawns</GodHand.Wrench.RenderTreeEditorHint>
+  
+  <!-- God Plastic Surgery -->
+  <GodHand.PlasticSurgery.ToolLabel>God Plastic Surgery</GodHand.PlasticSurgery.ToolLabel>
+  <GodHand.PlasticSurgery.ToolDesc>Precisely adjust Pawn rendering effects, supporting position, rotation, scale, layer, and other all-round adjustments.\nClick a Pawn to open the editor.</GodHand.PlasticSurgery.ToolDesc>
+  <GodHand.PlasticSurgery.Help.Content>dont work,cant work</GodHand.PlasticSurgery.Help.Content>
+  
+  <!-- Plastic Surgery Dialog Translations -->
+  <GodHand.PlasticSurgery.Title>{0} ({1})</GodHand.PlasticSurgery.Title>
+  <GodHand.PlasticSurgery.Alpha>Transparency {0}</GodHand.PlasticSurgery.Alpha>
+  <GodHand.PlasticSurgery.Animation>Animation</GodHand.PlasticSurgery.Animation>
+  <GodHand.PlasticSurgery.None>None</GodHand.PlasticSurgery.None>
+  <GodHand.PlasticSurgery.ShowAllNodes>Show All Nodes</GodHand.PlasticSurgery.ShowAllNodes>
+  <GodHand.PlasticSurgery.NoNodeSelected>No node selected</GodHand.PlasticSurgery.NoNodeSelected>
+  <GodHand.PlasticSurgery.Enabled>Enabled</GodHand.PlasticSurgery.Enabled>
+  <GodHand.PlasticSurgery.OffsetLayer>Offset {0} Layer {1}</GodHand.PlasticSurgery.OffsetLayer>
+  <GodHand.PlasticSurgery.OffsetX>X (Left/Right): {0}</GodHand.PlasticSurgery.OffsetX>
+  <GodHand.PlasticSurgery.OffsetZ>Z (Up/Down): {0}</GodHand.PlasticSurgery.OffsetZ>
+  <GodHand.PlasticSurgery.Layer>Y (Layer): {0}</GodHand.PlasticSurgery.Layer>
+  <GodHand.PlasticSurgery.Pivot>Pivot ({0}, {1})</GodHand.PlasticSurgery.Pivot>
+  <GodHand.PlasticSurgery.PivotX>X (Left/Right): {0}</GodHand.PlasticSurgery.PivotX>
+  <GodHand.PlasticSurgery.PivotY>Z (Up/Down): {0}</GodHand.PlasticSurgery.PivotY>
+  <GodHand.PlasticSurgery.Rotation>Rotate {0}°</GodHand.PlasticSurgery.Rotation>
+  <GodHand.PlasticSurgery.Angle>Angle: {0}°</GodHand.PlasticSurgery.Angle>
+  <GodHand.PlasticSurgery.Scale>Scale {0}</GodHand.PlasticSurgery.Scale>
+  <GodHand.PlasticSurgery.ScaleX>Scale X (Width): {0}</GodHand.PlasticSurgery.ScaleX>
+  <GodHand.PlasticSurgery.ScaleZ>Scale Z (Height): {0}</GodHand.PlasticSurgery.ScaleZ>
+  <GodHand.PlasticSurgery.ScaleValue>Scale: {0}</GodHand.PlasticSurgery.ScaleValue>
+  <GodHand.PlasticSurgery.Flip>Flip ({0})</GodHand.PlasticSurgery.Flip>
+  <GodHand.PlasticSurgery.Reset>Reset</GodHand.PlasticSurgery.Reset>
+  <GodHand.PlasticSurgery.ForcedFacing>Forced Facing: </GodHand.PlasticSurgery.ForcedFacing>
+  <GodHand.PlasticSurgery.Auto>Auto</GodHand.PlasticSurgery.Auto>
+  <GodHand.PlasticSurgery.CopyConfig>Copy Config</GodHand.PlasticSurgery.CopyConfig>
+  <GodHand.PlasticSurgery.PasteConfig>Paste to Selected</GodHand.PlasticSurgery.PasteConfig>
+  <GodHand.PlasticSurgery.ClearMulti>Clear Multi-selection</GodHand.PlasticSurgery.ClearMulti>
+  <GodHand.PlasticSurgery.SelectedCount>{0} nodes selected</GodHand.PlasticSurgery.SelectedCount>
+  <GodHand.PlasticSurgery.PasteSuccess>Successfully pasted config to {0} nodes</GodHand.PlasticSurgery.PasteSuccess>
+  <GodHand.PlasticSurgery.ConfigCopied>Config copied</GodHand.PlasticSurgery.ConfigCopied>
+  <GodHand.PlasticSurgery.TextureFacing>Texture Face: </GodHand.PlasticSurgery.TextureFacing>
+  <GodHand.PlasticSurgery.TabGlobal>Global</GodHand.PlasticSurgery.TabGlobal>
+  <GodHand.PlasticSurgery.TabNorth>North (N)</GodHand.PlasticSurgery.TabNorth>
+  <GodHand.PlasticSurgery.TabEast>East (E)</GodHand.PlasticSurgery.TabEast>
+  <GodHand.PlasticSurgery.TabSouth>South (S)</GodHand.PlasticSurgery.TabSouth>
+  <GodHand.PlasticSurgery.TabWest>West (W)</GodHand.PlasticSurgery.TabWest>
+  
+  <!-- Dropdown Options -->
+  <Rot_North>North</Rot_North>
+  <Rot_East>East</Rot_East>
+  <Rot_South>South</Rot_South>
+  <Rot_West>West</Rot_West>
+  
+  <!-- Old magnifier translations retained in case referenced elsewhere -->
+  <GodHand.Magnifier.NoPawn>No Pawn at this location.</GodHand.Magnifier.NoPawn>
+  <GodHand.Magnifier.PawnDead>Pawn is dead.</GodHand.Magnifier.PawnDead>
+  <GodHand.Magnifier.InvalidTarget>Invalid target.</GodHand.Magnifier.InvalidTarget>
+  <GodHand.Magnifier.Started>Started adjusting {0}'s size ({1}).</GodHand.Magnifier.Started>
+  <GodHand.Magnifier.VisualMode>Visual Scale Mode</GodHand.Magnifier.VisualMode>
+  <GodHand.Magnifier.RealMode>Real Body Size Mode</GodHand.Magnifier.RealMode>
+  <GodHand.Magnifier.ModeChanged>Switched to {0}.</GodHand.Magnifier.ModeChanged>
+  <GodHand.Magnifier.VisualScaleChanged>{0}'s visual size adjusted to {1}x.</GodHand.Magnifier.VisualScaleChanged>
+  <GodHand.Magnifier.RealScaleChanged>{0}'s real body size adjusted to {1}x.</GodHand.Magnifier.RealScaleChanged>
+  <GodHand.Magnifier.ScrollToScale>Scroll wheel to scale | Q/E to switch | Right-click to finish.</GodHand.Magnifier.ScrollToScale>
+  <GodHand.Magnifier.Cancelled>Cancelled adjusting {0}.</GodHand.Magnifier.Cancelled>
+  
+  <!-- Turret Headwear - Fuel System -->
+  <GodHand.TurretHead.LabelFormat>{0} Turret Head</GodHand.TurretHead.LabelFormat>
+  <GodHand.TurretHead.LabelSingle>{0} Turret Head</GodHand.TurretHead.LabelSingle>
+  <GodHand.TurretHead.LabelMultipleTurrets>Turret Head (x{0}: {1}...)</GodHand.TurretHead.LabelMultipleTurrets>
+  <GodHand.TurretHead.TurretList>Installed Turrets:</GodHand.TurretHead.TurretList>
+  <GodHand.TurretHead.InspectTurretCount>Turret Count: {0}</GodHand.TurretHead.InspectTurretCount>
+  <GodHand.TurretHead.ShotsLeft>[{0} shots]</GodHand.TurretHead.ShotsLeft>
+  <GodHand.TurretHead.Aiming>[Aiming]</GodHand.TurretHead.Aiming>
+  <GodHand.TurretHead.FuelLabel>Shots remaining: {0}/{1}</GodHand.TurretHead.FuelLabel>
+  <GodHand.TurretHead.FuelLabelWithType>Shots: {0}/{1} ({2})</GodHand.TurretHead.FuelLabelWithType>
+  <GodHand.TurretHead.FuelDesc>Fuel: {0}/{1}\nRemaining shots: {2}\n\nClick to refuel ({3})</GodHand.TurretHead.FuelDesc>
+  <GodHand.TurretHead.FuelLow>Fuel low!</GodHand.TurretHead.FuelLow>
+  <GodHand.TurretHead.FuelCritical>Fuel critical!</GodHand.TurretHead.FuelCritical>
+  <GodHand.TurretHead.OutOfFuel>{0}'s fuel is exhausted!</GodHand.TurretHead.OutOfFuel>
+  <GodHand.TurretHead.NoFuelType>This turret head does not need refueling.</GodHand.TurretHead.NoFuelType>
+  <GodHand.TurretHead.FuelFull>Fuel full.</GodHand.TurretHead.FuelFull>
+  <GodHand.TurretHead.NoFuelAvailable>Cannot find available {0}.</GodHand.TurretHead.NoFuelAvailable>
+  <GodHand.TurretHead.Refueled>{0} replenished {1} units of fuel.</GodHand.TurretHead.Refueled>
+  <GodHand.TurretHead.InspectFuel>Fuel: {0}/{1} (Remaining shots: {2})</GodHand.TurretHead.InspectFuel>
+  <GodHand.TurretHead.LabelMultiple>Turret Head (x{0})</GodHand.TurretHead.LabelMultiple>
+  <GodHand.TurretHead.MaxTurretsReached>Max turret count reached ({0}).</GodHand.TurretHead.MaxTurretsReached>
+  
+  <!-- Turret Headwear - Wrench Mode -->
+  <GodHand.Wrench.Mode.TurretHead>Turret Head Mode</GodHand.Wrench.Mode.TurretHead>
+  <GodHand.Wrench.SnatchTurret>Snatch Turret</GodHand.Wrench.SnatchTurret>
+  <GodHand.Wrench.TurretSnatched>Turret Snatched!</GodHand.Wrench.TurretSnatched>
+  <GodHand.Wrench.TurretAdded>+{0} Turret</GodHand.Wrench.TurretAdded>
+  <GodHand.Wrench.TurretAddedToHead>Turret added to headwear ({0}/{1})</GodHand.Wrench.TurretAddedToHead>
+  <GodHand.Wrench.NotATurret>This is not a turret.</GodHand.Wrench.NotATurret>
+  <GodHand.Wrench.TurretRemoved>-1 {0}</GodHand.Wrench.TurretRemoved>
+  <GodHand.Wrench.NoTurretsToRemove>No turrets to remove.</GodHand.Wrench.NoTurretsToRemove>
+  <GodHand.Wrench.ModulesExtracted>Extracted {0} turret modules.</GodHand.Wrench.ModulesExtracted>
+  
+  <!-- Turret Head - Right Click Menu -->
+  <GodHand.TurretHead.CannotReach>Cannot reach turret head.</GodHand.TurretHead.CannotReach>
+  <GodHand.TurretHead.CannotWearApparel>Cannot wear apparel.</GodHand.TurretHead.CannotWearApparel>
+  <GodHand.TurretHead.Equip>Equip {0}</GodHand.TurretHead.Equip>
+  <GodHand.TurretHead.MergeTurrets>Merge Turrets (+{0}, {1} total)</GodHand.TurretHead.MergeTurrets>
+  <GodHand.TurretHead.Equipped>{0} equipped {1}.</GodHand.TurretHead.Equipped>
+  <GodHand.TurretHead.CannotWear>Cannot wear this apparel.</GodHand.TurretHead.CannotWear>
+  <GodHand.TurretHead.Merged>{0} merged {1} turrets ({2} total).</GodHand.TurretHead.Merged>
+  <GodHand.TurretHead.MergeFailed>Merge failed.</GodHand.TurretHead.MergeFailed>
+  <GodHand.TurretHead.HeadHPBonus>Head HP Bonus: +{0}</GodHand.TurretHead.HeadHPBonus>
+  
+  <!-- Turret Power Hediff -->
+  <GodHand.Hediff.TurretPower>Turret Power</GodHand.Hediff.TurretPower>
+  <GodHand.Hediff.TurretPowerBracket>{0} turrets, +{1} HP</GodHand.Hediff.TurretPowerBracket>
+  <GodHand.Hediff.InstalledTurrets>Installed Turrets:</GodHand.Hediff.InstalledTurrets>
+  <GodHand.Hediff.TotalTurretHP>Total Turret HP: {0}</GodHand.Hediff.TotalTurretHP>
+  <GodHand.Hediff.HeadHPBonus>Head HP Bonus: +{0} (half of total turret HP)</GodHand.Hediff.HeadHPBonus>
+  <GodHand.Hediff.PartBonusDetail>HP bonus per part:</GodHand.Hediff.PartBonusDetail>
+  
+  <!-- Releasing outside map boundary -->
+  <GodHand.ExitMap.JoinedCaravan>{0} was sent into a caravan by the God Hand!</GodHand.ExitMap.JoinedCaravan>
+  <GodHand.ExitMap.Evacuated>{0} was thrown out of the map by the God Hand!</GodHand.ExitMap.Evacuated>
+  <GodHand.Memory.ThrownToCaravan>Thrown out of the map by the God Hand and joined a caravan.</GodHand.Memory.ThrownToCaravan>
+  <GodHand.Memory.ThrownOutOfMap>Thrown out of the map boundary by the God Hand.</GodHand.Memory.ThrownOutOfMap>
+
+  <!-- Enhanced Settings Page Text -->
+  <GodHand.Settings.GlobalMisc>Global Misc</GodHand.Settings.GlobalMisc>
+  <GodHand.Settings.GodHandGrabRadius>Grab Radius: {0}</GodHand.Settings.GodHandGrabRadius>
+  <GodHand.Settings.ThrowMaxCellsValue>Max Flight Distance: {0} Cells</GodHand.Settings.ThrowMaxCellsValue>
+  <GodHand.Settings.ThrowBaseDamageValue>Collision Base Damage: {0}</GodHand.Settings.ThrowBaseDamageValue>
+  <GodHand.Settings.CaressMoodBonusValue>Mood Bonus: {0}</GodHand.Settings.CaressMoodBonusValue>
+  <GodHand.Settings.CaressResistanceReductionPerTickValue>Resistance Reduction per tick: {0}</GodHand.Settings.CaressResistanceReductionPerTickValue>
+  <GodHand.Settings.CaressSurrenderChanceValue>Enemy Surrender Chance (per tick): {0}</GodHand.Settings.CaressSurrenderChanceValue>
+  <GodHand.Settings.CaressRemoveLoyaltyChanceValue>Unwavering Loyalty Removal Chance (per tick): {0}</GodHand.Settings.CaressRemoveLoyaltyChanceValue>
+  <GodHand.Settings.CleaningHealAmountValue>Heal Amount: {0}</GodHand.Settings.CleaningHealAmountValue>
+  <GodHand.Settings.CleaningPlantGrowthBonusValue>Plant Growth Bonus: {0}</GodHand.Settings.CleaningPlantGrowthBonusValue>
+  <GodHand.Settings.JudgmentCrushRadiusValue>Crush Radius Mult: {0}</GodHand.Settings.JudgmentCrushRadiusValue>
+
+  <GodHand.Settings.Page.GodWrench>God Wrench Configuration</GodHand.Settings.Page.GodWrench>
+
+  <GodHand.Settings.CleaningDescription>God Cleaning not only removes dirt but also heals mind and body.</GodHand.Settings.CleaningDescription>
+  <GodHand.Settings.CaressDescription>Change the status of colonists and captives through caressing.</GodHand.Settings.CaressDescription>
+  <GodHand.Settings.GodHandDescription>Grab, throw, and God Wrench harvesting configuration.</GodHand.Settings.GodHandDescription>
+  <GodHand.Settings.RimTalkDescription>RimTalk integration configuration.</GodHand.Settings.RimTalkDescription>
+  <GodHand.Settings.PokeDescription>God Poke and Flick function settings.</GodHand.Settings.PokeDescription>
+  <GodHand.Settings.PlayerInfoDescription>Setup your virtual identity in the game.</GodHand.Settings.PlayerInfoDescription>
+
+  <GodHand.Settings.PlayerInfo.AgeGender>Gender and Age</GodHand.Settings.PlayerInfo.AgeGender>
+  <GodHand.Settings.PlayerInfo.Title>Title</GodHand.Settings.PlayerInfo.Title>
+  <GodHand.Settings.PlayerInfo.Race>Race/Xenotype</GodHand.Settings.PlayerInfo.Race>
+  <GodHand.Settings.PlayerInfo.Traits>Traits</GodHand.Settings.PlayerInfo.Traits>
+  <GodHand.Settings.PlayerInfo.Skills>Skills</GodHand.Settings.PlayerInfo.Skills>
+  <GodHand.Settings.PlayerInfo.Health>Health Status</GodHand.Settings.PlayerInfo.Health>
+  <GodHand.Settings.PlayerInfo.Mood>Mood Status</GodHand.Settings.PlayerInfo.Mood>
+  <GodHand.Settings.PlayerInfo.Thoughts>Current Thoughts/Memories</GodHand.Settings.PlayerInfo.Thoughts>
+  <GodHand.Settings.PlayerInfo.Relations>Relations</GodHand.Settings.PlayerInfo.Relations>
+  <GodHand.Settings.PlayerInfo.Ideology>Ideology/Religion</GodHand.Settings.PlayerInfo.Ideology>
+  <GodHand.Settings.PlayerInfo.Equipment>Equipment</GodHand.Settings.PlayerInfo.Equipment>
+
+  <!-- God Protection -->
+  <GodHand.ProtectionHand>God Protection</GodHand.ProtectionHand>
+  <GodHand.ProtectionHandDesc.Simple>Deploy a defense field with supreme divine power.\nRight-click button to open introduction page.</GodHand.ProtectionHandDesc.Simple>
+  <GodHand.ProtectionHandDesc>Deploy a defense field with supreme divine power.\n\n[Four Modes]\nCycle modes with Q/E keys:\n- Divine Dome: Generates an omnidirectional spherical shield that blocks any incoming attacks, lasting 1 day.\n- Divine Barrier: Generates a directional intercepting barrier at the target location, lasting 1 day.\n- Saintly Body: Click a Pawn to apply a high-dimensional protection, granting extremely high damage reduction and armor, lasting 1 day.\n- Shield Eraser: Clear any existing Divine shields (Dome or Barrier) at the target location.\n\n[Controls]\nQ/E: Switch protection mode\nScroll Wheel: Adjust generation radius or width (Hold Shift)</GodHand.ProtectionHandDesc>
+  <GodHand.Help.Protection.Label>God Protection</GodHand.Help.Protection.Label>
+  <GodHand.Help.Protection.Desc>Create a high-dimensional shield to ensure absolute safety.
+
+[Divine Dome]
+Generates an omnidirectional spherical shield blocking any incoming projectiles.
+- Intercepts all ranged attacks.
+- Protects the interior from external threats.
+
+[Saintly Body]
+Apply high-dimensional protection to a single unit.
+- Grants extremely high damage reduction and armor.
+- Prevents death from health-related causes.
+- Lasts 1 day.
+
+[Shield Eraser]
+Removes any existing Divine Dome or Barrier at the target location.
+
+[Controls]
+Q/E: Switch protection mode
+Shift+Scroll: Adjust shield radius</GodHand.Help.Protection.Desc>
+  
+  <GodHand.ProtectionMode.Dome>Divine Dome</GodHand.ProtectionMode.Dome>
+  <GodHand.ProtectionMode.Barrier>Divine Barrier</GodHand.ProtectionMode.Barrier>
+  <GodHand.ProtectionMode.Individual>Saintly Body</GodHand.ProtectionMode.Individual>
+  <GodHand.ProtectionMode.Erase>Shield Eraser</GodHand.ProtectionMode.Erase>
+  
+  <GodHand.Protection.DomeSpawned>Divine Dome deployed!</GodHand.Protection.DomeSpawned>
+  <GodHand.Protection.BarrierSpawned>Divine Barrier generated!</GodHand.Protection.BarrierSpawned>
+  <GodHand.Protection.IndividualApplied>{0} has received divine protection!</GodHand.Protection.IndividualApplied>
+  <GodHand.Protection.ShieldsErased>Shields in range have been erased.</GodHand.Protection.ShieldsErased>
+
+  <GodHand.Settings.Page.Protection>God Protection</GodHand.Settings.Page.Protection>
+  <GodHand.Settings.ProtectionDescription>Configure the effective range and duration of various protection fields here.</GodHand.Settings.ProtectionDescription>
+  <GodHand.Settings.EnableProtection>Enable God Protection</GodHand.Settings.EnableProtection>
+  <GodHand.Settings.ProtectionDomeRadius>Dome Initial Radius: {0}</GodHand.Settings.ProtectionDomeRadius>
+  <GodHand.Settings.ProtectionDomeInfinite>Infinite Dome Duration</GodHand.Settings.ProtectionDomeInfinite>
+  <GodHand.Settings.ProtectionDomeDuration>Dome Duration (Hours): {0}</GodHand.Settings.ProtectionDomeDuration>
+  <GodHand.Settings.ProtectionIndividualDuration>Individual Body Protection Duration (Hours): {0}</GodHand.Settings.ProtectionIndividualDuration>
+
+  <GodHand.Protection.InterceptedOrbital>God Protection deflected an orbital strike!</GodHand.Protection.InterceptedOrbital>
+  <GodHand.Protection.InterceptedSkyfaller>God Protection deflected a falling object!</GodHand.Protection.InterceptedSkyfaller>
+  <GodHand.Protection.InterceptedProjectile>God Protection intercepted a projectile!</GodHand.Protection.InterceptedProjectile>
+  <GodHand.Protection.RepelledHostile>God Protection repelled hostile unit {0}!</GodHand.Protection.RepelledHostile>
+  <GodHand.Protection.Resurrected>Divine Miracle! {0} returns from the brink of death!</GodHand.Protection.Resurrected>
+  <GodHand.Protection.PreventDestroy>Saintly Body prevented the destruction of {0}!</GodHand.Protection.PreventDestroy>
+  <GodHand.Protection.TearSpaceReturn>{0} tore through space and returned to the battlefield!</GodHand.Protection.TearSpaceReturn>
+  <GodHand.Protection.SpaceAnchoredLost>{0} is lost in the void, being anchored by Saintly protection and attempting to pull back!</GodHand.Protection.SpaceAnchoredLost>
+  <GodHand.Protection.SpaceAnchoredReturned>{0} has returned after drifting in the void!</GodHand.Protection.SpaceAnchoredReturned>
+  <GodHand.Protection.DriftingInVoid>{0}'s map has disappeared, their soul is drifting in the void, waiting for a new settlement...</GodHand.Protection.DriftingInVoid>
+
+  <!-- God Assistant -->
+  <GodHand.AssistantHand>God Assistant</GodHand.AssistantHand>
+  <GodHand.AssistantHandDesc.Simple>Me, tightening screws? Seriously?\nClick a workbench to start.\nRight-click button to open introduction page.</GodHand.AssistantHandDesc.Simple>
+  <GodHand.AssistantHandDesc>Me, tightening screws? Seriously?\n\n[Controls]\nQ/E: Switch assistant mode\nLeft Click: Enable assistant (on target)\nShift+Left Click: Disable assistant\n\n[Artisan's Touch]\nAutomatically takes over a workbench for high-speed production.\n- Click Workbench: Toggle takeover\n\n[Healer's Touch]\n- Click Patient or Bed: Automatically perform treatment and surgery</GodHand.AssistantHandDesc>
+  <GodHand.AssistantMode.WorkTable>Divine Artisan</GodHand.AssistantMode.WorkTable>
+  <GodHand.AssistantMode.Medical>Divine Healer</GodHand.AssistantMode.Medical>
+  <GodHand.Assistant.WorkFinished>Assistant has assisted in completing workbench task: {0}</GodHand.Assistant.WorkFinished>
+  <GodHand.Assistant.MedicalFinished>Assistant has assisted in treatment/surgery: {0}</GodHand.Assistant.MedicalFinished>
+  <GodHand.Assistant.ThreadAdded>Introducing a new Divine sequence! Current concurrent tasks: {0}</GodHand.Assistant.ThreadAdded>
+  <GodHand.Assistant.MaxLimitReached>Divine burden is too heavy. Assistant total has reached the limit ({0})</GodHand.Assistant.MaxLimitReached>
+  <GodHand.Assistant.Enabled>God Assistant has descended and taken over the workbench.</GodHand.Assistant.Enabled>
+  <GodHand.Assistant.AlreadyActive>God Assistant is already serving this target.</GodHand.Assistant.AlreadyActive>
+  <GodHand.Assistant.Disabled>God Assistant has withdrawn, returning control.</GodHand.Assistant.Disabled>
+  <GodHand.Assistant.TargetMustBeWorkTable>Target must be a workbench.</GodHand.Assistant.TargetMustBeWorkTable>
+  <GodHand.Assistant.TargetMustBePawn>Target must be a pawn.</GodHand.Assistant.TargetMustBePawn>
+  <GodHand.Assistant.MedicalNotImplemented>Healer's Touch functionality is currently being rewritten and is temporarily unavailable.</GodHand.Assistant.MedicalNotImplemented>
+  <GodHand.Assistant.NoActiveBill>The workbench currently has no active bill tasks.</GodHand.Assistant.NoActiveBill>
+  <GodHand.Assistant.NoInjuryToTend>This target currently has no injuries to treat or surgical tasks.</GodHand.Assistant.NoInjuryToTend>
+  <GodHand.Assistant.IngredientsTeleported>Required materials have been sourced from the map and teleported: {0}.</GodHand.Assistant.IngredientsTeleported>
+  <GodHand.Assistant.Name>God Hand</GodHand.Assistant.Name>
+
+  <!-- Settings -->
+  <GodHand.Settings.EnableSurgeryQuiz>Somewhat balanced but likely unbalanced medical mode</GodHand.Settings.EnableSurgeryQuiz>
+
+  <!-- Quiz Dialog -->
+  <GodHand.Quiz.Title>Me, performing surgery? Seriously?</GodHand.Quiz.Title>
+  <GodHand.Quiz.Description>Wait a sec, let me see how this surgery is done......</GodHand.Quiz.Description>
+  <GodHand.Quiz.Correct>Hmm, seems like that's how it is.</GodHand.Quiz.Correct>
+  <GodHand.Quiz.Incorrect>Uh...... that doesn't seem right?</GodHand.Quiz.Incorrect>
+  <GodHand.Quiz.QuestionLabel>Question: {0}</GodHand.Quiz.QuestionLabel>
+  <GodHand.Settings.Page.Assistant>God Assistant</GodHand.Settings.Page.Assistant>
+  <GodHand.Settings.Assistant.ConcurrentTasks>Max concurrent Divine tasks: {0}</GodHand.Settings.Assistant.ConcurrentTasks>
+  <GodHand.Settings.Assistant.VisualNote>Note: My advice is don't enable this.</GodHand.Settings.Assistant.VisualNote>
+
+  <!-- God Hand Generator -->
+  <GeneratorGodHand.Label>God Crank</GeneratorGodHand.Label>
+  <GeneratorGodHand.Description.Simple>Do I have to turn the crank, too?\nYes.</GeneratorGodHand.Description.Simple>
+  <GeneratorGodHand.Description>Do I have to turn the crank, too?\nYes. \n\n[Controls]\nAim at any [Generator] or [Battery], click and start moving your mouse in circles.\nThe faster you move, the more amazing the energy produced!\nDon't break your wrist!</GeneratorGodHand.Description>
+  <GeneratorGodHand.MustBePowerTarget>Target must be a generator or battery connected to power.</GeneratorGodHand.MustBePowerTarget>
+
+  <GodHand.Settings.GeneratorParameters>== Hand Crank Generator Parameters ==</GodHand.Settings.GeneratorParameters>
+  <GodHand.Settings.GeneratorEfficiency>Global Power Output Multiplier: {0}</GodHand.Settings.GeneratorEfficiency>
+  <GodHand.Settings.GeneratorExponent>Power Mapping Exponent (1.0 is linear): {0}</GodHand.Settings.GeneratorExponent>
+  <GodHand.Generator.OutputWatts>Current Power: {0} W</GodHand.Generator.OutputWatts>
+  <GodHand.Generator.RPM>Current Speed: {0} RPM</GodHand.Generator.RPM>
+  <GodHand_HandleBlocked>Generator handle position blocked (wall or other building)</GodHand_HandleBlocked>
+  <GodHand_HandleOutOfBounds>Generator handle position outside map boundary</GodHand_HandleOutOfBounds>
+  <!-- New Generator Settings Page -->
+  <GodHand.Settings.Page.Generator>God Crank</GodHand.Settings.Page.Generator>
+  <GodHand.Settings.Generator.EnableHandCrank>Enable Hand Crank Generator Building</GodHand.Settings.Generator.EnableHandCrank>
+  <GodHand.Settings.Generator.HandCrankSection>Colonist Work Related</GodHand.Settings.Generator.HandCrankSection>
+  <GodHand.Settings.Generator.HandCrankMultiplier>Work Efficiency Multiplier: {0}</GodHand.Settings.Generator.HandCrankMultiplier>
+  <GodHand.Settings.Generator.GodHandSection>God Crank</GodHand.Settings.Generator.GodHandSection>
+  <GodHand.Settings.Generator.GodHandInteractionPower>Player Interaction Power Mult: {0}</GodHand.Settings.Generator.GodHandInteractionPower>
+  <GodHand.Settings.Generator.Exponent>Speed/Angle Transformation Exponent: {0}</GodHand.Settings.Generator.Exponent>
+  <GodHand.Settings.Generator.Formula>Power Calculation Formula Display:</GodHand.Settings.Generator.Formula>
+  <GodHand.Settings.Generator.FormulaText>P = lim[ε→Tynan] { [(Speed / 360) ^ Exponent] * 2000 * Multiplier * World Offset / Stability } / (Space Stability ⊗ Positron Annihilation) * log_ERROR ^ Probability of 酒狐 Existence - ∫(Relic Δ dt)</GodHand.Settings.Generator.FormulaText>
+  <GodHand.Settings.Generator.ShowSimplifiedFormula>Enable Simplified Formula Display</GodHand.Settings.Generator.ShowSimplifiedFormula>
+  <GodHand.Settings.Generator.ShowSimplifiedFormula.Tooltip>A boon for math-phobes or normal people. Replaces the complex derivation formula with a human-readable elementary algebra formula.</GodHand.Settings.Generator.ShowSimplifiedFormula.Tooltip>
+  <GodHand.Settings.Generator.FormulaTextSimple>P = (Speed / 360) ^ Exponent * 2000 * Multiplier</GodHand.Settings.Generator.FormulaTextSimple>
+  <GodHand.Settings.Generator.EnableFTLCrank>Enable [F-T-L] Faster-Than-Light Mode</GodHand.Settings.Generator.EnableFTLCrank>
+  <GodHand.Settings.Generator.EnableFTLCrank.Tooltip>When enabled, if you shake the crank so fast that rotation exceeds physical thresholds, the system will collapse reality and instantly output infinite power, enough to fill all connected batteries.</GodHand.Settings.Generator.EnableFTLCrank.Tooltip>
+  <GodHand.Settings.Generator.FTLThreshold>F-T-L Trigger Threshold: {0} RPM</GodHand.Settings.Generator.FTLThreshold>
+  <GodHand.Settings.Generator.EnableAbsurdRotation>Front wheel doesn't turn, back wheel does</GodHand.Settings.Generator.EnableAbsurdRotation>
+  <GodHand.Settings.Generator.EnableAbsurdRotation.Tooltip>If the front wheel turns, the back wheel definitely won't.</GodHand.Settings.Generator.EnableAbsurdRotation.Tooltip>
+  <GodHand.Settings.Generator.EnableGodHandCrankTool>Enable "God Crank" Tool</GodHand.Settings.Generator.EnableGodHandCrankTool>
+  <GodHand.Settings.Generator.PhysicsSettings>== Physics &amp; Mapping Parameters ==</GodHand.Settings.Generator.PhysicsSettings>
+  
+  <GodHand.Generator.OnlyCleanupWhilePlaying>Cleanup can only be performed while in-game.</GodHand.Generator.OnlyCleanupWhilePlaying>
+  <GodHand.Generator.CleanupSuccess>Successfully cleaned up {0} hand crank generators and returned materials.</GodHand.Generator.CleanupSuccess>
+  <GodHand.Generator.NoGeneratorsFound>No existing hand crank generators found on the map.</GodHand.Generator.NoGeneratorsFound>
+  
+  <GodHand.Settings.EnableRimTalkEventReaction>Enable Event Reactions</GodHand.Settings.EnableRimTalkEventReaction>
+
+  <!-- Turret Module Installation -->
+  <GodHand.TurretModule.NoTurretHead>{0} does not have a turret head equipped</GodHand.TurretModule.NoTurretHead>
+  <GodHand.TurretModule.NoAvailableSlot>No available slot to install {0}</GodHand.TurretModule.NoAvailableSlot>
+  <GodHand.TurretModule.Installed>{0} installed {1}</GodHand.TurretModule.Installed>
+  <GodHand.TurretModule.SlotFull>Cannot install {0}: Slot is full</GodHand.TurretModule.SlotFull>
+  
+  <!-- Setting Defaults -->
+  <GodHand.Settings.PlayerName.Default>Player</GodHand.Settings.PlayerName.Default>
+  <GodHand.Settings.PlayerPersona.Default>A formless Archotech; It does not exist, yet it is everywhere.</GodHand.Settings.PlayerPersona.Default>
+  
+  <GodHand.Settings.PlayerInfo.AgeGender.Default>Male, Eternal</GodHand.Settings.PlayerInfo.AgeGender.Default>
+  <GodHand.Settings.PlayerInfo.Title.Default>Overseer</GodHand.Settings.PlayerInfo.Title.Default>
+  <GodHand.Settings.PlayerInfo.Race.Default>Higher Being</GodHand.Settings.PlayerInfo.Race.Default>
+  <GodHand.Settings.PlayerInfo.Childhood.Default>Concept of Existence</GodHand.Settings.PlayerInfo.Childhood.Default>
+  <GodHand.Settings.PlayerInfo.Adulthood.Default>The Structure of Reality Itself</GodHand.Settings.PlayerInfo.Adulthood.Default>
+  <GodHand.Settings.PlayerInfo.Traits.Default>Omnipotent, Formless, Telepathic</GodHand.Settings.PlayerInfo.Traits.Default>
+  <GodHand.Settings.PlayerInfo.Skills.Default>Infinite, Endless, Final, All-powerful</GodHand.Settings.PlayerInfo.Skills.Default>
+  <GodHand.Settings.PlayerInfo.Health.Default>Invincible</GodHand.Settings.PlayerInfo.Health.Default>
+  <GodHand.Settings.PlayerInfo.Mood.Default>Satisfied (100%)</GodHand.Settings.PlayerInfo.Mood.Default>
+  <GodHand.Settings.PlayerInfo.Thoughts.Default>Observing the colony, planning the future</GodHand.Settings.PlayerInfo.Thoughts.Default>
+  <GodHand.Settings.PlayerInfo.Relations.Default>Creator of Factions</GodHand.Settings.PlayerInfo.Relations.Default>
+  <GodHand.Settings.PlayerInfo.Ideology.Default>Divine Mandate</GodHand.Settings.PlayerInfo.Ideology.Default>
+  <GodHand.Settings.PlayerInfo.Equipment.Default>Weapon: Hakimi's Green Beans</GodHand.Settings.PlayerInfo.Equipment.Default>
+  <GodHand.Settings.PlayerInfo.Personality.Default>Transcendent</GodHand.Settings.PlayerInfo.Personality.Default>
+
+  <!-- Expansion Status Stages -->
+  <GodHand_OrificeStretching_Stage0>Tight</GodHand_OrificeStretching_Stage0>
+  <GodHand_OrificeStretching_Stage1>Adapted</GodHand_OrificeStretching_Stage1>
+  <GodHand_OrificeStretching_Stage2>Loose</GodHand_OrificeStretching_Stage2>
+  <GodHand_OrificeStretching_Stage3>Completely Broken</GodHand_OrificeStretching_Stage3>
+  <GodHand_OrificeStretching_Processing>Processing</GodHand_OrificeStretching_Processing>
+  <!-- End Rod Generator & Observer -->
+  <GodHand.EndRod.InstallObserver>Install Observer</GodHand.EndRod.InstallObserver>
+  <GodHand.EndRod.RemoveObserver>Remove Observer</GodHand.EndRod.RemoveObserver>
+  <GodHand.EndRod.ObserverDesc>Warning: Removing the observer will stop the machine.</GodHand.EndRod.ObserverDesc>
+  <GodHand.EndRod.DebugPose>Debug Pose</GodHand.EndRod.DebugPose>
+  <GodHand.EndRod.DebugPoseDesc>Open pose debugging window</GodHand.EndRod.DebugPoseDesc>
+  <GodHand.EndRod.ReleasePrisoners>Release Prisoners</GodHand.EndRod.ReleasePrisoners>
+  <GodHand.EndRod.ReleasePrisonersDesc>Release prisoners currently bound on the boat.</GodHand.EndRod.ReleasePrisonersDesc>
+
+  <!-- Weapon Hints -->
+  <GodHand.Weapon.Mode.Shooting.Hint>Shooting Mode: Left-Click to shoot! (Q to turn off)</GodHand.Weapon.Mode.Shooting.Hint>
+  <GodHand.Weapon.Mode.Melee.Hint>Melee Mode: Drag to poke! (E to turn off)</GodHand.Weapon.Mode.Melee.Hint>
+  <GodHand.Weapon.Mode.Hybrid.Hint>Hybrid Weapon: E for Melee Mode / Q for Shooting Mode</GodHand.Weapon.Mode.Hybrid.Hint>
+  <GodHand.Weapon.Mode.MeleeOnly.Hint>Melee Weapon: E to enable Melee Mode</GodHand.Weapon.Mode.MeleeOnly.Hint>
+  <GodHand.Weapon.Mode.RangedOnly.Hint>Ranged Weapon: Q to enter Shooting Mode</GodHand.Weapon.Mode.RangedOnly.Hint>
+
+  <GodHand.Confirm>Confirm</GodHand.Confirm>
+  <GodHand.Remove>Remove</GodHand.Remove>
+  <GodHand.Add>Add</GodHand.Add>
+</LanguageData>

@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 4081519914
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: godhand_visuals
+      Dependencies: {}

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Medicine</defName>
+    <label>Pharmaceutical Knowledge</label>
+    <question>In vanilla RimWorld, which medicine has the highest medical potency?</question>
+    <options>
+      <li>Herbal medicine</li>
+      <li>Medicine</li>
+      <li>Glitterworld medicine</li>
+      <li>Ambrosia</li>
+    </options>
+    <correctIndex>2</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Terrain</defName>
+    <label>Environmental Knowledge</label>
+    <question>In the absence of a bed, what is the most ideal terrain for surgery?</question>
+    <options>
+      <li>Dirt</li>
+      <li>Carpet</li>
+      <li>Sterile tile</li>
+      <li>Grass</li>
+    </options>
+    <correctIndex>2</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Necrosis</defName>
+    <label>Pathological Knowledge</label>
+    <question>What is the primary purpose of amputating a rotting limb?</question>
+    <options>
+      <li>Prevent infection spread</li>
+      <li>Prevent mood drop</li>
+      <li>Prevent beauty decrease</li>
+      <li>Prevent infestation</li>
+    </options>
+    <correctIndex>0</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Skill</defName>
+    <label>Skill Knowledge</label>
+    <question>Which skill directly determines the medical success chance?</question>
+    <options>
+      <li>Intellectual</li>
+      <li>Social</li>
+      <li>Medical</li>
+      <li>Crafting</li>
+    </options>
+    <correctIndex>2</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Factors</defName>
+    <label>General Knowledge</label>
+    <question>Which of the following factors does NOT affect medical success chance?</question>
+    <options>
+      <li>Light intensity</li>
+      <li>Room temperature</li>
+      <li>Bed quality</li>
+      <li>Surgeon's trait</li>
+    </options>
+    <correctIndex>3</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_BloodLoss</defName>
+    <label>Physiological Common Sense</label>
+    <question>At what percentage of blood loss will a colonist die immediately?</question>
+    <options>
+      <li>60%</li>
+      <li>80%</li>
+      <li>100%</li>
+      <li>120%</li>
+    </options>
+    <correctIndex>2</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Cleanliness</defName>
+    <label>Environmental Common Sense</label>
+    <question>In vanilla, what is the maximum cleanliness provided by sterile tiles?</question>
+    <options>
+      <li>0.1</li>
+      <li>0.3</li>
+      <li>0.6</li>
+      <li>1.0</li>
+    </options>
+    <correctIndex>2</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Immunity</defName>
+    <label>Physiological Common Sense</label>
+    <question>Which body capacity attribute directly affects the immunity gain speed?</question>
+    <options>
+      <li>Eating</li>
+      <li>Blood filtration</li>
+      <li>Moving</li>
+      <li>Breathing</li>
+    </options>
+    <correctIndex>1</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_Luciferium</defName>
+    <label>Addiction Common Sense</label>
+    <question>Which drug, often called 'a deal with the devil', must never be stopped once started, or death is certain?</question>
+    <options>
+      <li>Yayo</li>
+      <li>Psychoid tea</li>
+      <li>Luciferium</li>
+      <li>Smokeleaf joint</li>
+    </options>
+    <correctIndex>2</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+
+  <GodHandMod.GodHandQuizDef>
+    <defName>SurgeryQuiz_FailResult</defName>
+    <label>Surgical Practice</label>
+    <question>In vanilla code, if a surgery is determined as a 'Catastrophic Failure', what is the most typical consequence?</question>
+    <options>
+      <li>Amputate the wrong body part with widespread damage</li>
+      <li>Only waste the medicine, no extra damage</li>
+      <li>Patient immediately heals all wounds</li>
+      <li>Surgeon gets a 'Genius Surgeon' mood bonus</li>
+    </options>
+    <correctIndex>0</correctIndex>
+  </GodHandMod.GodHandQuizDef>
+</Defs>

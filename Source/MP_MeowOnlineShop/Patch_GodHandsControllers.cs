@@ -41,6 +41,7 @@ namespace MP_MeowOnlineShop
             TryPatch(harmony, Patch_GodHands.WeaponHandlerType, "ToggleShootingMode", nameof(ToggleShootingPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WeaponHandlerType, "ToggleMeleeMode", nameof(ToggleMeleePrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.ControllerType, "ShootInShootingMode", nameof(ShootPrefix), Priority.First + 2);
+            TryPatch(harmony, Patch_GodHands.ControllerType, "ResetMouseRelease", nameof(ResetMouseReleasePrefix), Priority.First + 2);
 
             TryPatch(harmony, Patch_GodHands.WrenchControllerType, "TryStartGrab", nameof(WrenchStartGrabPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WrenchControllerType, "UpdateDraggedThing", nameof(WrenchDragPrefix), Priority.First + 2);
@@ -84,7 +85,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            bool rangeMode = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool rangeMode = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
             GodHandSync.SyncGodHandStartGrab(
                 playerId,
@@ -106,7 +107,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            bool rangeMode = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            bool rangeMode = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
             GodHandSync.SyncGodHandStartGrab(
                 playerId,
@@ -290,6 +291,22 @@ namespace MP_MeowOnlineShop
             if (playerId < 0)
                 return true;
             GodHandSync.SyncGodHandShoot(playerId, map.Index, 0, target.x, target.z);
+            return false;
+        }
+
+        private static bool ResetMouseReleasePrefix(object __instance)
+        {
+            if (!ShouldInterceptUi() || __instance == null || Find.CurrentMap == null)
+                return true;
+            object weaponHandler = Patch_GodHands.ControllerWeaponHandlerField?.GetValue(__instance);
+            if (weaponHandler == null ||
+                !(bool)(Patch_GodHands.WeaponWaitForReleaseField?.GetValue(weaponHandler) ?? false))
+                return true;
+            int playerId = Patch_GodHands.GetLocalPlayerId();
+            if (playerId < 0)
+                return true;
+            GodHandSync.SyncGodHandResetMouseRelease(playerId, Find.CurrentMap.Index);
+            Patch_GodHands.SetField(weaponHandler, Patch_GodHands.WeaponWaitForReleaseField, false);
             return false;
         }
 

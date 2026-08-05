@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<LanguageData>
+  <GodHand_StasisLock.label>永恒停滞</GodHand_StasisLock.label>
+  <GodHand_StasisLock.description>目标的时间相位被强制锁定在干涉领域的裂缝中。其所有的生命体征与生物电流将被锚定在绝对停滞的临界点（1%），脱离常规时间维度的流动，效果持续24小时。</GodHand_StasisLock.description>
+  <GodHand_ProtectionIndividual.label>神佑之护</GodHand_ProtectionIndividual.label>
+  <GodHand_ProtectionIndividual.description>受神之手的直接庇护，该个体的周身笼罩着一层肉眼几乎不可见的相位护盾。处于该状态下时，个体将获得极高的防御加成。</GodHand_ProtectionIndividual.description>
+  <GodHand_TurretHeadBonus.label>炮塔之力</GodHand_TurretHeadBonus.label>
+  <GodHand_TurretHeadBonus.description>头部被焊接了炮塔，金属结构加强了头部的防护能力。\n\n炮塔的结构HP会按比例分摊到头部及其子部位，提升它们的HP上限。</GodHand_TurretHeadBonus.description>
+  <GodHand_IsActuallyABoat.label>居然是船</GodHand_IsActuallyABoat.label>
+  <GodHand_IsActuallyABoat.description>这个单位被固定在一艘船上，无法自主移动。</GodHand_IsActuallyABoat.description>
+  <GodHand_OrificeStretchingStatus.label>扩张状态</GodHand_OrificeStretchingStatus.label>
+  <GodHand_OrificeStretchingStatus.description>由于长时间承受极端尺寸物体的物理充填，该单位的生理结构正在发生深度的、甚至是永久性的重塑。</GodHand_OrificeStretchingStatus.description>
+  <GodHand_ForcedDowned.label>我投降喵</GodHand_ForcedDowned.label>
+  <GodHand_ForcedDowned.description>大手太舒服，我投降了喵。 被神之手爱抚后完全失去了抵抗意志，只想趴在地上喵喵叫。</GodHand_ForcedDowned.description>
+  <GodHand_PokedHead.label>脑瓜崩</GodHand_PokedHead.label>
+  <GodHand_PokedHead.description>头部受到了某种不可抗力的弹击，引起了剧烈的眩晕和疼痛。</GodHand_PokedHead.description>
+  <GodHand_SevereHeadImpact.label>严重的头部冲击</GodHand_SevereHeadImpact.label>
+  <GodHand_SevereHeadImpact.description>神之手强行复活尸体时造成的剧烈脑部震荡。意识虽然恢复，但极其脆弱。</GodHand_SevereHeadImpact.description>
+</LanguageData>
