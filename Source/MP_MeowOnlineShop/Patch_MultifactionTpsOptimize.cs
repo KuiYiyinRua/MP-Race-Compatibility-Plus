@@ -54,6 +54,7 @@ namespace MP_MeowOnlineShop
         private const bool EnableTelemetry = true;
         private const int TelemetryIntervalTicks = 300;
         private const int DefaultAsyncFallbackCooldownTicks = 420;
+        private const int SchedulerGatesCacheIntervalTicks = 240;
         private const int MinAsyncFallbackCooldownTicks = 120;
         private const int MaxAsyncFallbackCooldownTicks = 2400;
         private const int MultifactionProbeIntervalTicks = 240;
@@ -98,6 +99,10 @@ namespace MP_MeowOnlineShop
         private static int _lastModeTransitionLogTick = int.MinValue;
         private static bool _optimizationConflictWarningShown;
         private static bool _lastOptimizationEnabledState = true;
+        private static bool _schedulerGatesCacheValid;
+        private static bool _cachedTpsOptimizationEnabled = true;
+        private static bool _cachedExperimentalSchedulerEnabled;
+        private static int _schedulerGatesCacheTick = int.MinValue;
         private static int _nextMultifactionProbeTick = int.MinValue;
         private static int _cachedPlayerFactionIdsTick = int.MinValue;
         private static int _lastObservedMapCount = -1;
@@ -179,7 +184,16 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                bool optimizationEnabled = IsTpsOptimizationEnabled();
+                if (!_schedulerGatesCacheValid ||
+                    currentTick - _schedulerGatesCacheTick >= SchedulerGatesCacheIntervalTicks)
+                {
+                    _cachedTpsOptimizationEnabled = IsTpsOptimizationEnabled();
+                    _cachedExperimentalSchedulerEnabled = IsExperimentalTickSchedulerEnabled();
+                    _schedulerGatesCacheTick = currentTick;
+                    _schedulerGatesCacheValid = true;
+                }
+
+                bool optimizationEnabled = _cachedTpsOptimizationEnabled;
                 if (!optimizationEnabled)
                 {
                     if (_lastOptimizationEnabledState)
@@ -194,7 +208,7 @@ namespace MP_MeowOnlineShop
                 _lastOptimizationEnabledState = true;
                 MaybeShowOptimizationConflictWarning();
 
-                if (!IsExperimentalTickSchedulerEnabled())
+                if (!_cachedExperimentalSchedulerEnabled)
                 {
                     LogGateDecisionOnce(
                         ref _loggedExperimentalSchedulerDisabledOnce,
@@ -277,6 +291,7 @@ namespace MP_MeowOnlineShop
 
         internal static void NotifyModSettingsUpdated()
         {
+            _schedulerGatesCacheValid = false;
             SyncAuthoritativeTpsSwitchWithHost(forceLog: true);
         }
 

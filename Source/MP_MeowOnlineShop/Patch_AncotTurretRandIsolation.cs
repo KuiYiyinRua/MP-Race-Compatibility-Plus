@@ -26,6 +26,7 @@ namespace MP_MeowOnlineShop
 
         private static bool _applied;
         private static FieldInfo _parentTurretField;
+        private static AccessTools.FieldRef<object, Thing> _parentTurretRef;
 
         [ThreadStatic]
         private static Map _mapForRandPop;
@@ -52,6 +53,7 @@ namespace MP_MeowOnlineShop
                 _parentTurretField = topType == null
                     ? null
                     : AccessTools.Field(topType, "parentTurret");
+                _parentTurretRef = TryGetInstanceFieldRef<Thing>(topType, "parentTurret");
 
                 int patched = 0;
                 if (tryFindNewTarget != null)
@@ -132,7 +134,9 @@ namespace MP_MeowOnlineShop
             Thing turret = null;
             try
             {
-                turret = _parentTurretField?.GetValue(__instance) as Thing;
+                turret = _parentTurretRef != null
+                    ? _parentTurretRef(__instance)
+                    : _parentTurretField?.GetValue(__instance) as Thing;
             }
             catch
             {
@@ -143,6 +147,22 @@ namespace MP_MeowOnlineShop
                 return;
 
             BeginScope(turret, "TurretTopTick", ref __state);
+        }
+
+        private static AccessTools.FieldRef<object, T> TryGetInstanceFieldRef<T>(
+            Type type,
+            string name) where T : class
+        {
+            if (type == null)
+                return null;
+            try
+            {
+                return AccessTools.FieldRefAccess<T>(type, name);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static void BeginScope(

@@ -294,7 +294,7 @@ namespace MP_MeowOnlineShop
                 if (!MP.IsInMultiplayer) return;
                 int tick = Find.TickManager?.TicksGame ?? 0;
                 if (tick < 0) return; // 未同步时不动 World.rand，防止加入即 desync
-                if (PushWorldRand(tick + WorldSeedOffset))
+                if (DeterministicRandScope.TryPushWorldRand(tick + WorldSeedOffset))
                 {
                     __state = 1;
                     TraceRandScopePush("World.Tick", tick + WorldSeedOffset, __state, null);
@@ -304,7 +304,7 @@ namespace MP_MeowOnlineShop
             public static void Finalizer(int __state)
             {
                 if (__state == 0) return;
-                try { PopWorldRand(); } catch { /* 确保不因 Pop 异常导致栈错乱 */ }
+                try { DeterministicRandScope.TryPopWorldRand(); } catch { /* 确保不因 Pop 异常导致栈错乱 */ }
                 TraceRandScopePop("World.Tick", __state, null);
             }
         }

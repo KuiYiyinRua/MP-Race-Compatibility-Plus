@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
@@ -54,6 +55,14 @@ namespace MP_MeowOnlineShop
             AccessTools.Property(
                 AccessTools.TypeByName("Multiplayer.Client.Multiplayer"),
                 "IsReplay");
+        private static readonly Func<object, object> DesiredTimeSpeedGetter =
+            TryCompilePropertyGetter(DesiredTimeSpeedProperty);
+        private static readonly Action<object, float> TimeToTickThroughSetter =
+            TryCompilePropertySetter(TimeToTickThroughProperty);
+        private static readonly Func<object, object, float> TimePerTickFunc =
+            TryCompileTimePerTick();
+        private static readonly Func<bool> IsReplayFunc =
+            TryCompileIsReplay();
 
         private static bool _applied;
         private static bool _loggedFailure;
@@ -107,20 +116,25 @@ namespace MP_MeowOnlineShop
                 return true;
             }
 
-            if (IsReplay())
+            if (IsReplayFunc != null ? IsReplayFunc() : IsReplay())
                 return true;
 
             try
             {
                 object tickable = __args[0];
-                object speed = DesiredTimeSpeedProperty.GetValue(tickable);
-                float timePerTick = (float)TimePerTickMethod.Invoke(
-                    null,
-                    new[] { tickable, speed });
+                object speed = DesiredTimeSpeedGetter != null
+                    ? DesiredTimeSpeedGetter(tickable)
+                    : DesiredTimeSpeedProperty.GetValue(tickable);
+                float timePerTick = TimePerTickFunc != null
+                    ? TimePerTickFunc(tickable, speed)
+                    : (float)TimePerTickMethod.Invoke(null, new[] { tickable, speed });
                 if (timePerTick <= 0f)
                     return true;
 
-                TimeToTickThroughProperty.SetValue(tickable, 1f - timePerTick);
+                if (TimeToTickThroughSetter != null)
+                    TimeToTickThroughSetter(tickable, 1f - timePerTick);
+                else
+                    TimeToTickThroughProperty.SetValue(tickable, 1f - timePerTick);
             }
             catch (Exception e)
             {
@@ -134,6 +148,90 @@ namespace MP_MeowOnlineShop
             }
 
             return true;
+        }
+
+        private static Func<object, object> TryCompilePropertyGetter(PropertyInfo property)
+        {
+            if (property == null)
+                return null;
+            var getter = property.GetGetMethod(true);
+            if (getter == null)
+                return null;
+            try
+            {
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var body = Expression.Convert(
+                    Expression.Call(Expression.Convert(instance, property.DeclaringType), getter),
+                    typeof(object));
+                return Expression.Lambda<Func<object, object>>(body, instance).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Action<object, float> TryCompilePropertySetter(PropertyInfo property)
+        {
+            if (property == null)
+                return null;
+            var setter = property.GetSetMethod(true);
+            if (setter == null)
+                return null;
+            try
+            {
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var value = Expression.Parameter(typeof(float), "value");
+                var body = Expression.Call(
+                    Expression.Convert(instance, property.DeclaringType),
+                    setter,
+                    Expression.Convert(value, property.PropertyType));
+                return Expression.Lambda<Action<object, float>>(body, instance, value).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object, object, float> TryCompileTimePerTick()
+        {
+            if (TimePerTickMethod == null)
+                return null;
+            var parameters = TimePerTickMethod.GetParameters();
+            if (parameters.Length != 2)
+                return null;
+            try
+            {
+                var tickable = Expression.Parameter(typeof(object), "tickable");
+                var speed = Expression.Parameter(typeof(object), "speed");
+                var body = Expression.Call(
+                    TimePerTickMethod,
+                    Expression.Convert(tickable, parameters[0].ParameterType),
+                    Expression.Convert(speed, parameters[1].ParameterType));
+                return Expression.Lambda<Func<object, object, float>>(body, tickable, speed).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<bool> TryCompileIsReplay()
+        {
+            if (IsReplayProperty == null)
+                return null;
+            var getter = IsReplayProperty.GetGetMethod(true);
+            if (getter == null)
+                return null;
+            try
+            {
+                return Expression.Lambda<Func<bool>>(Expression.Call(getter)).Compile();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static bool IsReplay()

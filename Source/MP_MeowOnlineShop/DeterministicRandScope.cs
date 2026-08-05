@@ -84,7 +84,7 @@ namespace MP_MeowOnlineShop
             }
         }
 
-        private static bool TryPushWorldRand(int seed)
+        internal static bool TryPushWorldRand(int seed)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace MP_MeowOnlineShop
             }
         }
 
-        private static void TryPopWorldRand()
+        internal static void TryPopWorldRand()
         {
             try
             {

@@ -236,21 +236,32 @@ namespace MP_MeowOnlineShop
             __state = 0;
             _questMapForPop = null;
 
-            if (__0 != null && !(__0 is Quest[]))
-                __0 = __0.ToArray();
+            Quest[] snapshot = __0 as Quest[];
+            if (snapshot == null && __0 != null)
+                snapshot = __0.ToArray();
 
             // Desync-137: two quests (shuttle completion vs ritual-quest
             // refresh) consumed world Rand/letter IDs in a different order on
             // the two peers during the same world tick. Sort by stable Quest id
             // so every peer ticks the same quests in the same order regardless
             // of cache/list insertion order, then isolate the batch Rand.
-            if (__0 != null)
+            if (snapshot != null && snapshot.Length > 1)
             {
-                __0 = __0
-                    .OrderBy(quest => quest?.id ?? 0)
-                    .ThenBy(quest => quest?.GetUniqueLoadID() ?? string.Empty)
-                    .ToArray();
+                bool sorted = true;
+                for (int i = 1; i < snapshot.Length; i++)
+                {
+                    if ((snapshot[i - 1]?.id ?? 0) > (snapshot[i]?.id ?? 0))
+                    {
+                        sorted = false;
+                        break;
+                    }
+                }
+
+                if (!sorted)
+                    Array.Sort(snapshot, CompareQuestById);
             }
+
+            __0 = snapshot;
 
             if (!MP.IsInMultiplayer)
                 return;
@@ -276,6 +287,13 @@ namespace MP_MeowOnlineShop
                 __state = 0;
                 _questMapForPop = null;
             }
+        }
+
+        private static int CompareQuestById(Quest left, Quest right)
+        {
+            int leftId = left?.id ?? 0;
+            int rightId = right?.id ?? 0;
+            return leftId.CompareTo(rightId);
         }
 
         private static Exception TickQuestsFinalizer(
