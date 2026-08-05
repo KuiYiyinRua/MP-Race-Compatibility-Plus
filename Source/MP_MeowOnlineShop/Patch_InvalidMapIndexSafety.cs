@@ -18,15 +18,31 @@ namespace MP_MeowOnlineShop
     /// "not spawned", resets the thing to the unspawned state once, and returns
     /// null for Map so the stale object cannot break other callers. The reset
     /// is deterministic and local; it does not add sync commands.
+    ///
+    /// Thing.Spawned is left untouched: vanilla already returns false for an
+    /// out-of-range map index. Only Thing.Map needs a guard because the vanilla
+    /// getter indexes Find.Maps directly and can throw.
     /// </summary>
     internal static class Patch_InvalidMapIndexSafety
     {
-        private static readonly FieldInfo MapIndexOrStateField =
-            AccessTools.Field(typeof(Thing), "mapIndexOrState");
+        private static readonly AccessTools.FieldRef<Thing, sbyte> MapIndexRef =
+            TryGetMapIndexRef();
         private static readonly HashSet<int> LoggedHeals =
             new HashSet<int>();
         private static int _healCount;
         private static bool _applied;
+
+        private static AccessTools.FieldRef<Thing, sbyte> TryGetMapIndexRef()
+        {
+            try
+            {
+                return AccessTools.FieldRefAccess<Thing, sbyte>("mapIndexOrState");
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         internal static void Apply(Harmony harmony)
         {
@@ -34,31 +50,18 @@ namespace MP_MeowOnlineShop
                 return;
             _applied = true;
 
-            MethodInfo spawnedGetter = AccessTools.PropertyGetter(
-                typeof(Thing),
-                nameof(Thing.Spawned));
             MethodInfo mapGetter = AccessTools.PropertyGetter(
                 typeof(Thing),
                 nameof(Thing.Map));
 
-            if (spawnedGetter == null || mapGetter == null ||
-                MapIndexOrStateField == null)
+            if (mapGetter == null || MapIndexRef == null)
             {
                 Log.Warning(
                     "[MP-MeowOnlineShop] Invalid map index safety skipped: " +
-                    $"spawned={spawnedGetter != null} map={mapGetter != null} " +
-                    $"field={MapIndexOrStateField != null}.");
+                    $"map={mapGetter != null} fieldRef={MapIndexRef != null}.");
                 return;
             }
 
-            harmony.Patch(
-                spawnedGetter,
-                prefix: new HarmonyMethod(
-                    typeof(Patch_InvalidMapIndexSafety),
-                    nameof(SpawnedPrefix))
-                {
-                    priority = Priority.First
-                });
             harmony.Patch(
                 mapGetter,
                 prefix: new HarmonyMethod(
@@ -70,21 +73,8 @@ namespace MP_MeowOnlineShop
 
             Log.Message(
                 "[MP-MeowOnlineShop] Invalid map index safety active: stale " +
-                "mapIndexOrState is reset to unspawned without error spam.");
-        }
-
-        private static bool SpawnedPrefix(Thing __instance, ref bool __result)
-        {
-            if (__instance == null)
-                return true;
-
-            if (TryResetStaleIndex(__instance))
-            {
-                __result = false;
-                return false;
-            }
-
-            return true;
+                "mapIndexOrState is reset from the Thing.Map hot path only; " +
+                "Thing.Spawned keeps the vanilla fast path.");
         }
 
         private static bool MapPrefix(Thing __instance, ref Map __result)
@@ -92,7 +82,11 @@ namespace MP_MeowOnlineShop
             if (__instance == null)
                 return true;
 
-            if (TryResetStaleIndex(__instance))
+            sbyte mapIndex = MapIndexRef(__instance);
+            if (mapIndex < 0)
+                return true;
+
+            if (TryResetStaleIndex(__instance, mapIndex))
             {
                 __result = null;
                 return false;
@@ -101,22 +95,10 @@ namespace MP_MeowOnlineShop
             return true;
         }
 
-        private static bool TryResetStaleIndex(Thing thing)
+        private static bool TryResetStaleIndex(Thing thing, sbyte mapIndex)
         {
-            if (thing == null || MapIndexOrStateField == null)
-                return false;
-
-            sbyte mapIndex;
-            try
-            {
-                mapIndex = (sbyte)MapIndexOrStateField.GetValue(thing);
-            }
-            catch
-            {
-                return false;
-            }
-
-            if (mapIndex < 0 || Find.Maps == null ||
+            if (thing == null || MapIndexRef == null ||
+                mapIndex < 0 || Find.Maps == null ||
                 mapIndex < Find.Maps.Count)
             {
                 return false;

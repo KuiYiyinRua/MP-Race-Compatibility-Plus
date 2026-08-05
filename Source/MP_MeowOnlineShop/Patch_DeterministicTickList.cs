@@ -23,18 +23,23 @@ namespace MP_MeowOnlineShop
     /// </summary>
     internal static class Patch_DeterministicTickList
     {
-        private static readonly FieldInfo ThingListsField =
-            AccessTools.Field(typeof(TickList), "thingLists");
-        private static readonly FieldInfo ThingsToRegisterField =
-            AccessTools.Field(typeof(TickList), "thingsToRegister");
-        private static readonly FieldInfo ThingsToDeregisterField =
-            AccessTools.Field(typeof(TickList), "thingsToDeregister");
-        private static readonly FieldInfo TickTypeField =
-            AccessTools.Field(typeof(TickList), "tickType");
+        private static readonly AccessTools.FieldRef<TickList, List<List<Thing>>> ThingListsRef =
+            TryGetThingListsRef();
+        private static readonly AccessTools.FieldRef<TickList, List<Thing>> ThingsToRegisterRef =
+            TryGetThingsToRegisterRef();
+        private static readonly AccessTools.FieldRef<TickList, List<Thing>> ThingsToDeregisterRef =
+            TryGetThingsToDeregisterRef();
+        private static readonly AccessTools.FieldRef<TickList, TickerType> TickTypeRef =
+            TryGetTickTypeRef();
         private static readonly HashSet<TickList> InitializedLists =
             new HashSet<TickList>();
         private static readonly Dictionary<TickList, Map> ListOwners =
             new Dictionary<TickList, Map>();
+        private static readonly HashSet<TickList> DirtyTickLists =
+            new HashSet<TickList>();
+        private static readonly Dictionary<TickList, int> LastReconcileTickByList =
+            new Dictionary<TickList, int>();
+        private const int ReconcileSafetyInterval = 600;
         private static readonly HashSet<int> LoggedStaleMemberMaps =
             new HashSet<int>();
         private static readonly HashSet<int> LoggedMissingPawnMaps =
@@ -47,15 +52,64 @@ namespace MP_MeowOnlineShop
             NormalTickerCandidates =
                 new Dictionary<Map, NormalTickerCandidateCache>();
         private const int NormalTickerCacheRefreshInterval = 600;
-        private static readonly HashSet<int> LoggedRuntimeOwnerMaps =
-            new HashSet<int>();
         private static bool _loggedComplexMapCoverage;
-        private static bool _loggedOwnerFallback;
+        private static bool _asyncTickPatchActive;
         private static FieldInfo _asyncMapField;
-        private static FieldInfo _asyncTickingMapField;
         private static FieldInfo _asyncNormalField;
         private static FieldInfo _asyncRareField;
         private static FieldInfo _asyncLongField;
+        private static AccessTools.FieldRef<object, Map> _asyncMapRef;
+        private static AccessTools.FieldRef<object, TickList> _asyncNormalRef;
+        private static AccessTools.FieldRef<object, TickList> _asyncRareRef;
+        private static AccessTools.FieldRef<object, TickList> _asyncLongRef;
+
+        private static AccessTools.FieldRef<TickList, List<List<Thing>>> TryGetThingListsRef()
+        {
+            try
+            {
+                return AccessTools.FieldRefAccess<TickList, List<List<Thing>>>("thingLists");
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AccessTools.FieldRef<TickList, List<Thing>> TryGetThingsToRegisterRef()
+        {
+            try
+            {
+                return AccessTools.FieldRefAccess<TickList, List<Thing>>("thingsToRegister");
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AccessTools.FieldRef<TickList, List<Thing>> TryGetThingsToDeregisterRef()
+        {
+            try
+            {
+                return AccessTools.FieldRefAccess<TickList, List<Thing>>("thingsToDeregister");
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AccessTools.FieldRef<TickList, TickerType> TryGetTickTypeRef()
+        {
+            try
+            {
+                return AccessTools.FieldRefAccess<TickList, TickerType>("tickType");
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         internal static void Apply(Harmony harmony)
         {
@@ -64,8 +118,8 @@ namespace MP_MeowOnlineShop
                 typeof(Patch_DeterministicTickList),
                 nameof(TickPrefix));
             if (target == null || prefix == null ||
-                ThingListsField == null || ThingsToRegisterField == null ||
-                ThingsToDeregisterField == null || TickTypeField == null)
+                ThingListsRef == null || ThingsToRegisterRef == null ||
+                ThingsToDeregisterRef == null || TickTypeRef == null)
             {
                 Log.Warning(
                     "[MP-MeowOnlineShop] Deterministic TickList guard could not " +
@@ -96,16 +150,7 @@ namespace MP_MeowOnlineShop
                 typeof(Patch_DeterministicTickList),
                 nameof(AsyncTimeFinalizeInitPostfix));
 
-            if (target == null || postfix == null)
-            {
-                Log.Warning(
-                    "[MP-MeowOnlineShop] Async-time TickList membership rebuild skipped: " +
-                    "Multiplayer.Client.AsyncTimeComp.FinalizeInit was not resolved.");
-                return;
-            }
-
             _asyncMapField = AccessTools.Field(asyncTimeType, "map");
-            _asyncTickingMapField = AccessTools.Field(asyncTimeType, "tickingMap");
             _asyncNormalField = AccessTools.Field(asyncTimeType, "tickListNormal");
             _asyncRareField = AccessTools.Field(asyncTimeType, "tickListRare");
             _asyncLongField = AccessTools.Field(asyncTimeType, "tickListLong");
@@ -118,15 +163,123 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            harmony.Patch(
-                target,
-                postfix: new HarmonyMethod(postfix)
-                {
-                    priority = Priority.Last
-                });
+            _asyncMapRef = TryGetInstanceFieldRef<Map>(asyncTimeType, "map");
+            _asyncNormalRef = TryGetInstanceFieldRef<TickList>(asyncTimeType, "tickListNormal");
+            _asyncRareRef = TryGetInstanceFieldRef<TickList>(asyncTimeType, "tickListRare");
+            _asyncLongRef = TryGetInstanceFieldRef<TickList>(asyncTimeType, "tickListLong");
+
+            if (target != null && postfix != null)
+            {
+                harmony.Patch(
+                    target,
+                    postfix: new HarmonyMethod(postfix)
+                    {
+                        priority = Priority.Last
+                    });
+            }
+
+            MethodInfo tick = AccessTools.Method(asyncTimeType, "Tick", Type.EmptyTypes);
+            MethodInfo tickPrefix = AccessTools.Method(
+                typeof(Patch_DeterministicTickList),
+                nameof(AsyncTimeTickPrefix));
+            if (tick != null && tickPrefix != null)
+            {
+                harmony.Patch(
+                    tick,
+                    prefix: new HarmonyMethod(tickPrefix)
+                    {
+                        priority = Priority.First
+                    });
+                _asyncTickPatchActive = true;
+            }
 
             Log.Message(
-                "[MP-MeowOnlineShop] Async-time TickList snapshot membership rebuild active.");
+                "[MP-MeowOnlineShop] Async-time TickList snapshot membership rebuild active: " +
+                $"finalizeInit={target != null}, tickBinding={_asyncTickPatchActive}.");
+        }
+
+        private static AccessTools.FieldRef<object, T> TryGetInstanceFieldRef<T>(
+            Type type,
+            string name) where T : class
+        {
+            try
+            {
+                return AccessTools.FieldRefAccess<T>(type, name);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static void AsyncTimeTickPrefix(object __instance)
+        {
+            if (!MP.IsInMultiplayer || __instance == null ||
+                _asyncMapRef == null || _asyncNormalRef == null ||
+                _asyncRareRef == null || _asyncLongRef == null)
+            {
+                return;
+            }
+
+            try
+            {
+                Map map = _asyncMapRef(__instance);
+                TickList normal = _asyncNormalRef(__instance);
+                TickList rare = _asyncRareRef(__instance);
+                TickList longTicks = _asyncLongRef(__instance);
+                if (map == null || normal == null || rare == null || longTicks == null)
+                    return;
+
+                BindAsyncTickList(normal, map);
+                BindAsyncTickList(rare, map);
+                BindAsyncTickList(longTicks, map);
+            }
+            catch
+            {
+                // Binding is best-effort; TickPrefix still has a fallback path.
+            }
+        }
+
+        private static void BindAsyncTickList(TickList tickList, Map map)
+        {
+            if (tickList == null || map == null)
+                return;
+
+            if (ListOwners.TryGetValue(tickList, out Map existing) && existing == map)
+                return;
+
+            ListOwners[tickList] = map;
+            InitializedLists.Add(tickList);
+            MarkTickListDirty(tickList);
+        }
+
+        private static void MarkTickListDirty(TickList tickList)
+        {
+            if (tickList != null)
+                DirtyTickLists.Add(tickList);
+        }
+
+        private static bool ShouldReconcile(TickList tickList, int tick)
+        {
+            if (DirtyTickLists.Remove(tickList))
+            {
+                LastReconcileTickByList[tickList] = tick;
+                return true;
+            }
+
+            if (!LastReconcileTickByList.TryGetValue(tickList, out int lastTick))
+            {
+                LastReconcileTickByList[tickList] = tick;
+                return true;
+            }
+
+            if (tick - lastTick >= ReconcileSafetyInterval)
+            {
+                LastReconcileTickByList[tickList] = tick;
+                return true;
+            }
+
+            return false;
         }
 
         private static void AsyncTimeFinalizeInitPostfix(object __instance)
@@ -136,19 +289,27 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                var map = _asyncMapField.GetValue(__instance) as Map;
-                var normal = _asyncNormalField.GetValue(__instance) as TickList;
-                var rare = _asyncRareField.GetValue(__instance) as TickList;
-                var longTicks = _asyncLongField.GetValue(__instance) as TickList;
+                var map = _asyncMapRef != null
+                    ? _asyncMapRef(__instance)
+                    : _asyncMapField.GetValue(__instance) as Map;
+                var normal = _asyncNormalRef != null
+                    ? _asyncNormalRef(__instance)
+                    : _asyncNormalField.GetValue(__instance) as TickList;
+                var rare = _asyncRareRef != null
+                    ? _asyncRareRef(__instance)
+                    : _asyncRareField.GetValue(__instance) as TickList;
+                var longTicks = _asyncLongRef != null
+                    ? _asyncLongRef(__instance)
+                    : _asyncLongField.GetValue(__instance) as TickList;
                 if (map == null || normal == null || rare == null || longTicks == null)
                     return;
 
                 ResetTickList(normal);
                 ResetTickList(rare);
                 ResetTickList(longTicks);
-                ListOwners[normal] = map;
-                ListOwners[rare] = map;
-                ListOwners[longTicks] = map;
+                BindAsyncTickList(normal, map);
+                BindAsyncTickList(rare, map);
+                BindAsyncTickList(longTicks, map);
 
                 var things = new List<Thing>(map.listerThings.AllThings);
                 things.Sort(CompareStableThings);
@@ -293,27 +454,28 @@ namespace MP_MeowOnlineShop
 
         private static void RebuildLifecycleTickList(TickList tickList, Map map)
         {
-            ListOwners[tickList] = map;
+            BindAsyncTickList(tickList, map);
             RebuildSingleTickList(tickList, map, out _);
             InitializedLists.Add(tickList);
+            MarkTickListDirty(tickList);
         }
 
         private static void ResetTickList(TickList tickList)
         {
-            var buckets = ThingListsField.GetValue(tickList) as List<List<Thing>>;
+            var buckets = ThingListsRef(tickList);
             if (buckets != null)
             {
                 for (int i = 0; i < buckets.Count; i++)
                     buckets[i].Clear();
             }
 
-            (ThingsToRegisterField.GetValue(tickList) as List<Thing>)?.Clear();
-            (ThingsToDeregisterField?.GetValue(tickList) as List<Thing>)?.Clear();
+            ThingsToRegisterRef(tickList)?.Clear();
+            ThingsToDeregisterRef(tickList)?.Clear();
         }
 
         private static void AddDirect(TickList tickList, Thing thing)
         {
-            var buckets = ThingListsField.GetValue(tickList) as List<List<Thing>>;
+            var buckets = ThingListsRef(tickList);
             if (buckets == null || buckets.Count == 0)
                 return;
 
@@ -326,8 +488,8 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || __instance == null)
                 return;
 
-            if (MpRuntimeInfo.RequiresVanillaPerMapPipelines(out string reason) &&
-                !_loggedComplexMapCoverage)
+            if (!_loggedComplexMapCoverage &&
+                MpRuntimeInfo.RequiresVanillaPerMapPipelines(out string reason))
             {
                 _loggedComplexMapCoverage = true;
                 Log.Message(
@@ -336,54 +498,30 @@ namespace MP_MeowOnlineShop
                     "and stable thing-ID order is restored before the first map tick.");
             }
 
-            var buckets = ThingListsField.GetValue(__instance) as List<List<Thing>>;
-            var pending = ThingsToRegisterField.GetValue(__instance) as List<Thing>;
+            if (!_asyncTickPatchActive &&
+                !MpRuntimeInfo.RequiresVanillaPerMapPipelines(out _))
+            {
+                return;
+            }
+
+            if (!ListOwners.TryGetValue(__instance, out Map ownerMap))
+            {
+                if (_asyncTickPatchActive)
+                    return;
+
+                Map runtimeOwner = ResolveTickListOwner(__instance);
+                if (runtimeOwner == null)
+                    return;
+                BindAsyncTickList(__instance, runtimeOwner);
+                ownerMap = runtimeOwner;
+            }
+
+            var buckets = ThingListsRef(__instance);
+            var pending = ThingsToRegisterRef(__instance);
             if (buckets == null || pending == null || buckets.Count == 0)
                 return;
 
             bool firstTick = InitializedLists.Add(__instance);
-            ListOwners.TryGetValue(__instance, out Map ownerMap);
-
-            // FinalizeInit is guaranteed for a cold-loading client, but a
-            // long-running host can retain or replace an AsyncTimeComp/TickList
-            // without this compatibility patch observing that initialization.
-            // AsyncTimeComp sets its static tickingMap immediately before all
-            // three per-map TickLists execute, so it is the authoritative owner
-            // at this boundary. If that field is unavailable, fall back to
-            // matching the live TickList instance against every map's
-            // AsyncTimeComp. Rebind on every execution rather than allowing
-            // only the rejoining client to repair a missing spawned pawn.
-            Map runtimeOwner = _asyncTickingMapField?.GetValue(null) as Map;
-            bool usedOwnerFallback = false;
-            if (runtimeOwner == null)
-            {
-                runtimeOwner = ResolveTickListOwner(__instance);
-                usedOwnerFallback = runtimeOwner != null;
-            }
-            if (runtimeOwner != null && ownerMap != runtimeOwner)
-            {
-                ownerMap = runtimeOwner;
-                ListOwners[__instance] = runtimeOwner;
-                if (LoggedRuntimeOwnerMaps.Add(runtimeOwner.uniqueID))
-                {
-                    Log.Message(
-                        "[MP-MeowOnlineShop] Bound active async TickLists from " +
-                        (usedOwnerFallback
-                            ? "the live AsyncTimeComp owner scan"
-                            : "Multiplayer tickingMap") +
-                        $": map={runtimeOwner.uniqueID}. " +
-                        "Runtime membership reconciliation now applies equally " +
-                        "to long-running hosts and joining clients.");
-                }
-                if (usedOwnerFallback && !_loggedOwnerFallback)
-                {
-                    _loggedOwnerFallback = true;
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Deterministic TickList owner " +
-                        "fallback is active; Multiplayer tickingMap was not " +
-                        "resolved from this runtime.");
-                }
-            }
 
             if (firstTick && ownerMap != null)
             {
@@ -404,7 +542,7 @@ namespace MP_MeowOnlineShop
                 {
                     var thing = pending[i];
                     if (thing == null || IsVisualMote(thing) ||
-                        (ownerMap != null && IsInvalidForOwner(thing, ownerMap)))
+                        IsInvalidForOwner(thing, ownerMap))
                         continue;
 
                     RemoveAllOccurrences(buckets, thing);
@@ -412,13 +550,16 @@ namespace MP_MeowOnlineShop
                     buckets[hash % buckets.Count].Add(thing);
                 }
                 pending.Clear();
+                MarkTickListDirty(__instance);
             }
 
-            if (ownerMap != null)
+            if (ShouldReconcile(__instance, Find.TickManager?.TicksGame ?? 0))
+            {
                 ReconcileCurrentBucket(
                     buckets,
                     ownerMap,
                     GetTickType(__instance));
+            }
 
             if (!firstTick && !hasRegistrations)
                 return;
@@ -729,9 +870,9 @@ namespace MP_MeowOnlineShop
 
         private static TickerType GetTickType(TickList tickList)
         {
-            if (tickList == null || TickTypeField == null)
+            if (tickList == null || TickTypeRef == null)
                 return TickerType.Never;
-            return (TickerType)TickTypeField.GetValue(tickList);
+            return TickTypeRef(tickList);
         }
 
         private static bool BelongsToTickList(Thing thing, TickerType tickType)
