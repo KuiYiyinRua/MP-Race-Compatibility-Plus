@@ -14,6 +14,8 @@
     <RuntimeIdentifiers>win;win-x64;win-x86</RuntimeIdentifiers>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -99,8 +101,10 @@
     <Compile Include="CompMeowCommsConsole.cs" />
     <Compile Include="Patch_CommsConsole.cs" />
     <Compile Include="Patch_DefensivePositionsMp.cs" />
+    <Compile Include="UnityInputCompat.cs" />
     <Compile Include="Patch_MpConfigHotSync.cs" />
     <Compile Include="Patch_MpDesyncTraceBudget.cs" />
+    <Compile Include="Patch_MpServerLagLogThrottle.cs" />
     <Compile Include="Patch_AsyncRandStateDiagnostic.cs" />
     <Compile Include="Patch_PerformanceOptimizerMp.cs" />
     <Compile Include="Patch_SlowerPawnTickRateMp.cs" />
@@ -109,6 +113,7 @@
     <Compile Include="Patch_DubsMintMenusPlant.cs" />
     <Compile Include="Patch_MiliraActiveDropPod.cs" />
     <Compile Include="Patch_MiliraFallenAngelQuest.cs" />
+    <Compile Include="Patch_MiliraCaravanRaidFactionContext.cs" />
     <Compile Include="Patch_MiliraTaleStorytellerDeterminism.cs" />
     <Compile Include="Patch_MiliraSupplyMp.cs" />
     <Compile Include="Patch_MiliraMultifactionRelations.cs" />
@@ -125,6 +130,7 @@
     <Compile Include="Patch_MutantAbilityCacheMp.cs" />
     <Compile Include="Patch_InsectGirlPermanentWoundMp.cs" />
     <Compile Include="Patch_DeterministicTickList.cs" />
+    <Compile Include="Patch_OrderedJobMultifactionContext.cs" />
     <Compile Include="Patch_AsyncTimeMapLoadSafety.cs" />
     <Compile Include="Patch_NudityMattersMoreMp.cs" />
     <Compile Include="Patch_DeterministicWorldPawns.cs" />
@@ -135,6 +141,7 @@
     <Compile Include="Patch_DisableHarbingerTreeSpawn.cs" />
     <Compile Include="Patch_RitualObligationDateDeterminism.cs" />
     <Compile Include="Patch_RitualRoleChangeMultifactionPersistence.cs" />
+    <Compile Include="RitualRoleAssignmentPersistence.cs" />
     <Compile Include="Patch_GoodwillRecalcMultifactionDeterminism.cs" />
     <Compile Include="Patch_TraderStockDeterminism.cs" />
     <Compile Include="Patch_RWBeheadingRandIsolation.cs" />
@@ -145,18 +152,26 @@
     <Compile Include="Patch_RpgDialogMp.cs" />
     <Compile Include="Patch_FishShadowRandIsolation.cs" />
     <Compile Include="Patch_SimpleFxSplashesRandIsolation.cs" />
+    <Compile Include="Patch_MoteConstructionRandIsolation.cs" />
     <Compile Include="Patch_StaticQualityDeterminism.cs" />
     <Compile Include="Patch_InspirationScheduleMp.cs" />
     <Compile Include="Patch_ChildcareRandMp.cs" />
     <Compile Include="Patch_RitualVisualEffectRandIsolation.cs" />
+    <Compile Include="Patch_AncotTurretRandIsolation.cs" />
     <Compile Include="Patch_PsychicRitualVfxRandIsolation.cs" />
     <Compile Include="Patch_PsychicRitualSkipAbductionMultifaction.cs" />
     <Compile Include="Patch_EliteRaidDeterminism.cs" />
+    <Compile Include="Patch_IncidentRaidFactionContext.cs" />
     <Compile Include="Patch_KiiroStoryEventsMp.cs" />
     <Compile Include="Patch_RatkinWeaponsMp.cs" />
     <Compile Include="Patch_MultifactionTpsOptimize.cs" />
     <Compile Include="Patch_MiliraWeaponMode.cs" />
     <Compile Include="Patch_AncotCommandMode.cs" />
+    <Compile Include="Patch_GodHands.cs" />
+    <Compile Include="Patch_GodHandsTurretCommands.cs" />
+    <Compile Include="Patch_GodHandsDesignators.cs" />
+    <Compile Include="Patch_GodHandsControllers.cs" />
+    <Compile Include="Patch_GodHandsSessionLifecycle.cs" />
     <Compile Include="Patch_MiliraShieldMode.cs" />
     <Compile Include="Patch_MiliraFlightMode.cs" />
     <Compile Include="Patch_MiliraFly.cs" />
@@ -199,6 +214,7 @@
     <Compile Include="Patch_VoiceroidAsAnimal.cs" />
     <Compile Include="Patch_RimJobWorld.cs" />
     <Compile Include="Patch_RjwAddons.cs" />
+    <Compile Include="Patch_RjwP1.cs" />
     <Compile Include="Patch_RjwSerializationRandIsolation.cs" />
     <Compile Include="Patch_RjwMenstruation.cs" />
     <Compile Include="Patch_RjwOnaholeModes.cs" />
@@ -211,13 +227,18 @@
     <Compile Include="Patch_FacialAnimationMp.cs" />
     <Compile Include="Patch_ThirdPartyPerformanceMp.cs" />
     <Compile Include="Patch_MultiplayerVtrContextGuard.cs" />
+    <Compile Include="Patch_AsyncTickSchedulerPhase.cs" />
     <Compile Include="Patch_StoragePriorityAndAsyncQuest.cs" />
     <Compile Include="Patch_AcceptJoinerWorldCommand.cs" />
     <Compile Include="Patch_AncientAmorphousThreatMp.cs" />
-    <Compile Include="Patch_GravshipAbandonQueue.cs" />
+    <Compile Include="Patch_GravshipOrphanCommands.cs" />
+    <Compile Include="Patch_GravshipLandingMp.cs" />
+    <Compile Include="Patch_InvalidMapIndexSafety.cs" />
     <Compile Include="Patch_TransportShipUnloadMp.cs" />
+    <Compile Include="Patch_TransporterLoadingSessionMp.cs" />
     <Compile Include="PerspectiveShiftMpState.cs" />
     <Compile Include="Patch_PerspectiveShiftMp.cs" />
+    <Compile Include="MiliraAddons\*.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -249,12 +249,15 @@ namespace MP_MeowOnlineShop
                     if (state.movementDiagnosticTick >= 0 && now >= state.movementDiagnosticTick)
                     {
                         state.movementDiagnosticTick = -1;
-                        Log.Message(
-                            $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
-                            $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
-                            $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
-                            $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
-                            $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                        if (ModDebug.EnablePerspectiveShiftTrace)
+                        {
+                            Log.Message(
+                                $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
+                                $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
+                                $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
+                                $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
+                                $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                        }
                     }
                 }
             }
@@ -342,13 +345,12 @@ namespace MP_MeowOnlineShop
             Pawn pawn = state.pawn;
             if (pawn.jobs != null && pawn.Spawned)
             {
-                pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
                 pawn.pather?.StopDead();
 
                 Job wait = JobMaker.MakeJob(JobDefOf.Wait);
                 wait.expiryInterval = 60;
                 wait.checkOverrideOnExpire = true;
-                pawn.jobs.TryTakeOrderedJob(wait);
+                pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
             }
 
             Lord lord = pawn.GetLord();
@@ -387,7 +389,12 @@ namespace MP_MeowOnlineShop
         private static void StopMovementJob(PerspectiveShiftControlledAvatar state)
         {
             if (IsMovementJob(state))
-                state.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+            {
+                Job wait = JobMaker.MakeJob(JobDefOf.Wait);
+                wait.expiryInterval = 60;
+                wait.checkOverrideOnExpire = true;
+                state.pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
+            }
             state.movementJobId = -1;
         }
 
@@ -437,22 +444,20 @@ namespace MP_MeowOnlineShop
             if (!destination.IsValid || destination == pawn.Position)
                 return;
 
-            if (forceNew && pawn.CurJob != null &&
-                (IsMovementJob(state) ||
-                 pawn.CurJob.def == JobDefOf.Wait ||
-                 pawn.CurJob.def == JobDefOf.Wait_Combat))
-            {
-                pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                state.movementJobId = -1;
-            }
-
             Job job = JobMaker.MakeJob(JobDefOf.Goto, destination);
             job.playerForced = true;
             job.expiryInterval = 240;
             job.checkOverrideOnExpire = true;
             job.locomotionUrgency = MovementUrgency(state);
 
-            bool accepted = pawn.jobs.TryTakeOrderedJob(job);
+            // StartJob replaces the current job atomically. EndCurrentJob and
+            // TryTakeOrderedJob both let the pawn's think tree pick an
+            // intermediate job first, which allocates a JobID/hediff under the
+            // map Rand stream; a drafted Milira weapon pawn can pick
+            // JobGiver_Orders on one peer and JobGiver_MoveToStandable on the
+            // other (Desync-06). StartJob gives every peer the same Goto job.
+            pawn.jobs.StartJob(job, JobCondition.InterruptForced);
+            bool accepted = pawn.CurJob == job;
             if (accepted)
             {
                 state.movementJobId = job.loadID;
@@ -462,12 +467,15 @@ namespace MP_MeowOnlineShop
 
             if (forceNew)
             {
-                Log.Message(
-                    $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
-                    $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
-                    $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
-                    $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
-                    $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+                if (ModDebug.EnablePerspectiveShiftTrace)
+                {
+                    Log.Message(
+                        $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
+                        $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
+                        $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
+                        $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
+                        $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+                }
             }
         }
 

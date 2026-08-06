@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
@@ -24,6 +25,14 @@ namespace MP_MeowOnlineShop
         private static PropertyInfo _executingCmdsProperty;
         private static PropertyInfo _inInterfaceProperty;
         private static FieldInfo _reloadingField;
+        private static Func<object> _clientGetter;
+        private static Func<bool> _tickingGetter;
+        private static Func<bool> _executingCmdsGetter;
+        private static Func<bool> _inInterfaceGetter;
+        private static Func<bool> _reloadingGetter;
+        private static Func<bool> _localIdsOverrideGetter;
+        private static Action<bool> _localIdsOverrideSetter;
+        private static Func<bool> _longEventActiveFunc;
         private static int _authoritativeDeferredSimulationDepth;
         private static bool _loggedInterception;
         private static bool _loggedRuntimeFailure;
@@ -48,6 +57,14 @@ namespace MP_MeowOnlineShop
             _executingCmdsProperty = AccessTools.Property(multiplayerType, "ExecutingCmds");
             _inInterfaceProperty = AccessTools.Property(multiplayerType, "InInterface");
             _reloadingField = AccessTools.Field(multiplayerType, "reloading");
+            _clientGetter = TryCompileStaticPropertyObject(_clientProperty);
+            _tickingGetter = TryCompileStaticPropertyBool(_tickingProperty);
+            _executingCmdsGetter = TryCompileStaticPropertyBool(_executingCmdsProperty);
+            _inInterfaceGetter = TryCompileStaticPropertyBool(_inInterfaceProperty);
+            _reloadingGetter = TryCompileStaticFieldBool(_reloadingField);
+            _localIdsOverrideGetter = TryCompileStaticFieldBool(_localIdsOverrideField);
+            _localIdsOverrideSetter = TryCompileStaticFieldBoolSetter(_localIdsOverrideField);
+            _longEventActiveFunc = TryCompileLongEventActive();
 
             MethodInfo target = AccessTools.Method(
                 typeof(UniqueIDsManager),
@@ -90,48 +107,63 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                // A joining client re-runs Game.FinalizeInit/Notify_GameStarted
-                // while Scribe is still loading the snapshot. Those allocations
-                // must consume the deserialized positive counters so the client
-                // matches the host's load-time IDs. Intercepting them here is
-                // what made each rejoin drift the client's unique-ID counter by
-                // one (Desync-193 through Desync-198). Scribe.mode is already
-                // Inactive by FinalizeInit, so also treat any running LongEvent
-                // as a load/generation boundary.
-                if (Scribe.mode != LoadSaveMode.Inactive ||
-                    IsLongEventActive())
+                // Most unique-ID allocations happen inside synchronized
+                // ticking/commands. Return before any LongEvent or stack-trace
+                // work so the hot path stays cheap.
+                if (_authoritativeDeferredSimulationDepth > 0)
                     return;
 
-                // The Odyssey takeoff/landing and the caravan ambush map are
-                // deterministic synchronized flows whose WorldObject/MapParent
-                // creation runs inside a LongEvent queued by the synchronized
-                // flow. Those must keep positive shared IDs because
-                // Multiplayer serializes WorldObject arguments by ID. Local
-                // negative IDs are not comparable across peers and made the
-                // client desync right after the map was created.
-                if (IsGravshipSynchronizedAllocation())
-                    return;
-                if (IsAmbushMapAllocation())
-                    return;
-
-                if (_authoritativeDeferredSimulationDepth > 0 ||
-                    _clientProperty.GetValue(null, null) == null ||
-                    ReadBool(_tickingProperty) ||
-                    ReadBool(_executingCmdsProperty) ||
-                    (bool)_reloadingField.GetValue(null) ||
+                if (MP.IsExecutingSyncCommand ||
                     Current.ProgramState != ProgramState.Playing)
                 {
                     return;
                 }
 
+                object client = _clientGetter != null
+                    ? _clientGetter()
+                    : _clientProperty.GetValue(null, null);
+                if (client == null)
+                    return;
+
+                if (ReadCachedBool(_tickingGetter, _tickingProperty) ||
+                    ReadCachedBool(_executingCmdsGetter, _executingCmdsProperty) ||
+                    ReadCachedBool(_reloadingGetter, _reloadingField))
+                {
+                    return;
+                }
+
+                // A joining client re-runs Game.FinalizeInit/Notify_GameStarted
+                // while Scribe is still loading the snapshot. Those allocations
+                // must consume the deserialized positive counters so the client
+                // matches the host's load-time IDs. Scribe.mode is already
+                // Inactive by FinalizeInit, so also treat any running LongEvent
+                // as a load/generation boundary.
+                if (Scribe.mode != LoadSaveMode.Inactive ||
+                    IsLongEventActiveCached())
+                    return;
+
+                // The Odyssey takeoff/landing and the caravan ambush map are
+                // deterministic synchronized flows whose WorldObject/MapParent
+                // creation runs inside a LongEvent queued by the synchronized
+                // flow. Those must keep positive shared IDs.
+                if (IsGravshipSynchronizedAllocation())
+                    return;
+                if (IsAmbushMapAllocation())
+                    return;
+
                 __state.active = true;
-                __state.previousOverride = (bool)_localIdsOverrideField.GetValue(null);
-                _localIdsOverrideField.SetValue(null, true);
+                __state.previousOverride =
+                    ReadCachedBool(_localIdsOverrideGetter, _localIdsOverrideField);
+                if (_localIdsOverrideSetter != null)
+                    _localIdsOverrideSetter(true);
+                else
+                    _localIdsOverrideField.SetValue(null, true);
 
                 // Normal interface allocations are already local in Multiplayer.
                 // Log only the newly covered gap, once, so the next bundle identifies
                 // the mod callback that attempted to pollute a positive counter.
-                if (!_loggedInterception && !ReadBool(_inInterfaceProperty))
+                if (!_loggedInterception &&
+                    !ReadCachedBool(_inInterfaceGetter, _inInterfaceProperty))
                 {
                     _loggedInterception = true;
                     Log.Warning(
@@ -146,7 +178,7 @@ namespace MP_MeowOnlineShop
                 {
                     try
                     {
-                        _localIdsOverrideField.SetValue(null, __state.previousOverride);
+                        RestoreLocalIdsOverride(__state.previousOverride);
                     }
                     catch
                     {
@@ -293,7 +325,7 @@ namespace MP_MeowOnlineShop
             {
                 try
                 {
-                    _localIdsOverrideField.SetValue(null, __state.previousOverride);
+                    RestoreLocalIdsOverride(__state.previousOverride);
                 }
                 catch (Exception e)
                 {
@@ -310,9 +342,32 @@ namespace MP_MeowOnlineShop
             return __exception;
         }
 
-        private static bool ReadBool(PropertyInfo property)
+        private static bool ReadCachedBool(Func<bool> getter, PropertyInfo property)
         {
-            return (bool)property.GetValue(null, null);
+            if (getter != null)
+                return getter();
+            return property != null && (bool)property.GetValue(null, null);
+        }
+
+        private static bool ReadCachedBool(Func<bool> getter, FieldInfo field)
+        {
+            if (getter != null)
+                return getter();
+            return field != null && (bool)field.GetValue(null);
+        }
+
+        private static bool IsLongEventActiveCached()
+        {
+            if (_longEventActiveFunc == null)
+                return IsLongEventActive();
+            try
+            {
+                return _longEventActiveFunc();
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static bool IsLongEventActive()
@@ -332,6 +387,101 @@ namespace MP_MeowOnlineShop
             catch
             {
                 return false;
+            }
+        }
+
+        private static void RestoreLocalIdsOverride(bool value)
+        {
+            if (_localIdsOverrideSetter != null)
+                _localIdsOverrideSetter(value);
+            else
+                _localIdsOverrideField?.SetValue(null, value);
+        }
+
+        private static Func<bool> TryCompileLongEventActive()
+        {
+            try
+            {
+                PropertyInfo property =
+                    AccessTools.Property(typeof(LongEventHandler), "currentEvent") ??
+                    AccessTools.Property(typeof(LongEventHandler), "CurrentEvent");
+                if (property != null)
+                    return TryCompileStaticPropertyBool(property);
+
+                FieldInfo field =
+                    AccessTools.Field(typeof(LongEventHandler), "currentEvent");
+                return TryCompileStaticFieldBool(field);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<bool> TryCompileStaticPropertyBool(PropertyInfo property)
+        {
+            if (property == null)
+                return null;
+            var getter = property.GetGetMethod(true);
+            if (getter == null)
+                return null;
+            try
+            {
+                return Expression.Lambda<Func<bool>>(Expression.Call(getter)).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object> TryCompileStaticPropertyObject(PropertyInfo property)
+        {
+            if (property == null)
+                return null;
+            var getter = property.GetGetMethod(true);
+            if (getter == null)
+                return null;
+            try
+            {
+                var body = Expression.Convert(Expression.Call(getter), typeof(object));
+                return Expression.Lambda<Func<object>>(body).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<bool> TryCompileStaticFieldBool(FieldInfo field)
+        {
+            if (field == null || field.FieldType != typeof(bool))
+                return null;
+            try
+            {
+                return Expression.Lambda<Func<bool>>(Expression.Field(null, field)).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Action<bool> TryCompileStaticFieldBoolSetter(FieldInfo field)
+        {
+            if (field == null || field.FieldType != typeof(bool))
+                return null;
+            try
+            {
+                var value = Expression.Parameter(typeof(bool), "value");
+                var body = Expression.Assign(
+                    Expression.Field(null, field),
+                    value);
+                return Expression.Lambda<Action<bool>>(body, value).Compile();
+            }
+            catch
+            {
+                return null;
             }
         }
 

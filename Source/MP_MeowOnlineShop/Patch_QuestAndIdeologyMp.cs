@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
@@ -47,35 +49,30 @@ namespace MP_MeowOnlineShop
         [ThreadStatic]
         private static bool _unityRandomStateCaptured;
 
+        private sealed class QuestTickCacheEntry
+        {
+            public int StableKey;
+            public bool KeyValid;
+        }
+
+        private static readonly ConditionalWeakTable<Quest, QuestTickCacheEntry> QuestTickCache =
+            new ConditionalWeakTable<Quest, QuestTickCacheEntry>();
+
+        private sealed class QuestMapAccessor
+        {
+            public Func<object, Map> GetMap;
+        }
+
+        private static readonly Dictionary<Type, QuestMapAccessor> QuestMapAccessors =
+            new Dictionary<Type, QuestMapAccessor>();
+        private static readonly object QuestMapAccessorLock = new object();
+
         private static bool IsHandledByVaaIncidentPatch(Type t)
         {
             if (t == null)
                 return false;
             var ns = t.Namespace ?? "";
             return ns.StartsWith(VoiceroidAsAnimalNamespacePrefix, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static readonly Func<object> WorldRandGetter = TryGetWorldRandGetter();
-
-        private static Func<object> TryGetWorldRandGetter()
-        {
-            try
-            {
-                return () =>
-                {
-                    var w = Find.World;
-                    if (w == null) return null;
-                    var t = w.GetType();
-                    return AccessTools.Property(t, "Rand")?.GetValue(w)
-                           ?? AccessTools.Property(t, "rand")?.GetValue(w)
-                           ?? AccessTools.Field(t, "Rand")?.GetValue(w)
-                           ?? AccessTools.Field(t, "rand")?.GetValue(w);
-                };
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         public static void Apply()
@@ -333,7 +330,9 @@ namespace MP_MeowOnlineShop
                 return;
 
             var map = TryResolveMapForQuestStable(__instance);
-            int seed = Gen.HashCombineInt(SeedQuestInstance, StableQuestKey(__instance));
+            int seed = Gen.HashCombineInt(
+                SeedQuestInstance,
+                GetQuestCache(__instance).StableKey);
             if (!MP.IsExecutingSyncCommand)
             {
                 int tick = Find.TickManager?.TicksGame ?? 0;
@@ -344,6 +343,17 @@ namespace MP_MeowOnlineShop
             TryPushTripleRandSafe(map, seed, ref __state, "QuestTick");
         }
 
+        private static QuestTickCacheEntry GetQuestCache(Quest quest)
+        {
+            var entry = QuestTickCache.GetOrCreateValue(quest);
+            if (!entry.KeyValid)
+            {
+                entry.StableKey = StableQuestKey(quest);
+                entry.KeyValid = true;
+            }
+            return entry;
+        }
+
         /// <summary>
         /// 尝试从任务实例解析地图（反射），避免使用 Find.CurrentMap；解析失败则仅包静态+世界 Rand。
         /// </summary>
@@ -351,33 +361,87 @@ namespace MP_MeowOnlineShop
         {
             if (quest == null)
                 return null;
+
+            var accessor = GetQuestMapAccessor(quest.GetType());
+            if (accessor?.GetMap == null)
+                return null;
             try
             {
-                foreach (var name in new[] { "map", "Map", "involvedMap", "parentMap" })
-                {
-                    var f = AccessTools.Field(quest.GetType(), name);
-                    if (f != null && typeof(Map).IsAssignableFrom(f.FieldType))
-                    {
-                        var m = f.GetValue(quest) as Map;
-                        if (m != null)
-                            return m;
-                    }
-
-                    var p = AccessTools.Property(quest.GetType(), name);
-                    if (p != null && typeof(Map).IsAssignableFrom(p.PropertyType) && p.CanRead)
-                    {
-                        var m = p.GetValue(quest, null) as Map;
-                        if (m != null)
-                            return m;
-                    }
-                }
+                return accessor.GetMap(quest);
             }
             catch
             {
-                // ignored
+                return null;
+            }
+        }
+
+        private static QuestMapAccessor GetQuestMapAccessor(Type questType)
+        {
+            lock (QuestMapAccessorLock)
+            {
+                QuestMapAccessor accessor;
+                if (QuestMapAccessors.TryGetValue(questType, out accessor))
+                    return accessor;
+
+                accessor = BuildQuestMapAccessor(questType);
+                OptimizationCacheUtility.EnsureBound(QuestMapAccessors, 256);
+                QuestMapAccessors[questType] = accessor;
+                return accessor;
+            }
+        }
+
+        private static QuestMapAccessor BuildQuestMapAccessor(Type questType)
+        {
+            foreach (var name in new[] { "map", "Map", "involvedMap", "parentMap" })
+            {
+                var field = AccessTools.Field(questType, name);
+                if (field != null && typeof(Map).IsAssignableFrom(field.FieldType))
+                {
+                    try
+                    {
+                        var instance = Expression.Parameter(typeof(object), "quest");
+                        var body = Expression.Convert(
+                            Expression.Field(Expression.Convert(instance, questType), field),
+                            typeof(Map));
+                        return new QuestMapAccessor
+                        {
+                            GetMap = Expression.Lambda<Func<object, Map>>(body, instance).Compile()
+                        };
+                    }
+                    catch
+                    {
+                        // Fall through to the next candidate.
+                    }
+                }
+
+                var property = AccessTools.Property(questType, name);
+                if (property != null &&
+                    typeof(Map).IsAssignableFrom(property.PropertyType) &&
+                    property.CanRead)
+                {
+                    var getter = property.GetGetMethod(true);
+                    if (getter != null)
+                    {
+                        try
+                        {
+                            var instance = Expression.Parameter(typeof(object), "quest");
+                            var body = Expression.Convert(
+                                Expression.Call(Expression.Convert(instance, questType), getter),
+                                typeof(Map));
+                            return new QuestMapAccessor
+                            {
+                                GetMap = Expression.Lambda<Func<object, Map>>(body, instance).Compile()
+                            };
+                        }
+                        catch
+                        {
+                            // Fall through to the next candidate.
+                        }
+                    }
+                }
             }
 
-            return null;
+            return new QuestMapAccessor();
         }
 
         /// <summary>Prefix 内安全推 Rand：失败时重置 __state，避免 Finalizer 误 Pop。</summary>
@@ -595,17 +659,13 @@ namespace MP_MeowOnlineShop
             __state = 0;
             _mapForRandPop = null;
 
-            Rand.PushState(seed);
-            __state |= StateStaticRand;
-
-            if (PushMapRandIfExists(map, seed))
-            {
-                _mapForRandPop = map;
-                __state |= StateMapRand;
-            }
-
-            if (PushWorldRandIfExists(seed + WorldSeedOffset))
-                __state |= StateWorldRand;
+            DeterministicRandScope.Begin(
+                map,
+                seed,
+                WorldSeedOffset,
+                ref __state,
+                out _mapForRandPop,
+                ignoreGate: true);
             if (PushUnityRandIfEnabled(seed + UnitySeedOffset))
                 __state |= StateUnityRand;
         }
@@ -618,16 +678,15 @@ namespace MP_MeowOnlineShop
             {
                 if ((__state & StateUnityRand) != 0)
                     PopUnityRandIfExists();
-                if ((__state & StateWorldRand) != 0)
-                    PopWorldRandIfExists();
-                if ((__state & StateMapRand) != 0)
-                    PopMapRandIfExists();
-                if ((__state & StateStaticRand) != 0)
-                    Rand.PopState();
+                DeterministicRandScope.End(__state, _mapForRandPop);
             }
             catch
             {
                 // ignored
+            }
+            finally
+            {
+                _mapForRandPop = null;
             }
         }
 
@@ -745,80 +804,6 @@ namespace MP_MeowOnlineShop
                 $"stage={stage}, mode={syncFlag}, nested={(nestedOnly ? "yes" : "no")}, worker={workerName}, " +
                 $"map={(map != null ? map.uniqueID.ToString() : "null")}, targetType={targetType}, targetKey={targetKey}, " +
                 $"tile={tile}, points={points:0.###}, raidArrival={raidArrival}, breakdownSeed={breakdownSeed}, finalSeed={finalSeed}, depth={_incidentRandScopeDepth}.");
-        }
-
-        private static bool PushMapRandIfExists(Map map, int seed)
-        {
-            if (map == null) return false;
-            try
-            {
-                var t = map.GetType();
-                var mapRand = AccessTools.Property(t, "Rand")?.GetValue(map) ?? AccessTools.Property(t, "rand")?.GetValue(map)
-                    ?? AccessTools.Field(t, "Rand")?.GetValue(map) ?? AccessTools.Field(t, "rand")?.GetValue(map);
-                if (mapRand == null) return false;
-                var pushMethod = mapRand.GetType().GetMethod("PushState", new[] { typeof(int) });
-                if (pushMethod == null) return false;
-                pushMethod.Invoke(mapRand, new object[] { seed });
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static bool PushWorldRandIfExists(int seed)
-        {
-            if (WorldRandGetter == null) return false;
-            try
-            {
-                var worldRand = WorldRandGetter();
-                if (worldRand == null) return false;
-                var pushMethod = worldRand.GetType().GetMethod("PushState", new[] { typeof(int) });
-                if (pushMethod == null) return false;
-                pushMethod.Invoke(worldRand, new object[] { seed });
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static void PopWorldRandIfExists()
-        {
-            if (WorldRandGetter == null) return;
-            try
-            {
-                var worldRand = WorldRandGetter();
-                if (worldRand == null) return;
-                var popMethod = worldRand.GetType().GetMethod("PopState", Type.EmptyTypes);
-                popMethod?.Invoke(worldRand, null);
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        private static void PopMapRandIfExists()
-        {
-            var map = _mapForRandPop;
-            _mapForRandPop = null;
-            if (map == null) return;
-            try
-            {
-                var t = map.GetType();
-                var mapRand = AccessTools.Property(t, "Rand")?.GetValue(map) ?? AccessTools.Property(t, "rand")?.GetValue(map)
-                    ?? AccessTools.Field(t, "Rand")?.GetValue(map) ?? AccessTools.Field(t, "rand")?.GetValue(map);
-                if (mapRand == null) return;
-                var popMethod = mapRand.GetType().GetMethod("PopState", Type.EmptyTypes);
-                popMethod?.Invoke(mapRand, null);
-            }
-            catch
-            {
-                // ignored
-            }
         }
 
         /// <summary>

@@ -26,6 +26,7 @@ namespace MP_MeowOnlineShop
         public bool enableUiActionBatching = true;
         public bool enableDeterministicRandRefactor = true;
         public bool enableMpSafeAlertThrottling = true;
+        public bool blockGodHandsWhilePaused;
         public int mediumAlertRecheckIntervalTicks = 180;
         public bool enableExperimentalTickScheduler = false;
         public int schedulerMode = SchedulerModeAggressive;
@@ -50,6 +51,7 @@ namespace MP_MeowOnlineShop
             Scribe_Values.Look(ref enableUiActionBatching, "mp_meow_modcfg_opt_ui_batching_enabled", true);
             Scribe_Values.Look(ref enableDeterministicRandRefactor, "mp_meow_modcfg_opt_rand_refactor_enabled", true);
             Scribe_Values.Look(ref enableMpSafeAlertThrottling, "mp_meow_modcfg_opt_alert_throttling_enabled", true);
+            Scribe_Values.Look(ref blockGodHandsWhilePaused, "mp_meow_modcfg_godhands_pause_block_enabled", false);
             Scribe_Values.Look(ref mediumAlertRecheckIntervalTicks, "mp_meow_modcfg_opt_alert_interval_ticks", 180);
             Scribe_Values.Look(ref enableExperimentalTickScheduler, "mp_meow_modcfg_opt_exp_tick_scheduler_enabled", false);
             Scribe_Values.Look(ref schedulerMode, "mp_meow_modcfg_tps_opt_mode", SchedulerModeAggressive);
@@ -325,6 +327,11 @@ namespace MP_MeowOnlineShop
             Widgets.BeginScrollView(inRect, ref _settingsScrollPos, viewRect);
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
+            listing.CheckboxLabeled(
+                "暂停时禁用神之手（联机）",
+                ref _settings.blockGodHandsWhilePaused,
+                "勾选后，联机暂停时无法使用神之手及该模组的其他手功能；恢复运行后才可使用。");
+            listing.Gap(8f);
             listing.Label("一键优化预设（会覆盖下方调度模式与各间隔参数；无优化仍保留 UI 批处理与确定性 Rand 以降低失步风险）");
             if (listing.ButtonText("选择并应用预设档位…"))
             {
