@@ -31,27 +31,13 @@ namespace MP_MeowOnlineShop
             TryGetThingsToDeregisterRef();
         private static readonly AccessTools.FieldRef<TickList, TickerType> TickTypeRef =
             TryGetTickTypeRef();
-        private static readonly HashSet<TickList> InitializedLists =
-            new HashSet<TickList>();
-        private static readonly Dictionary<TickList, Map> ListOwners =
-            new Dictionary<TickList, Map>();
-        private static readonly HashSet<TickList> DirtyTickLists =
-            new HashSet<TickList>();
-        private static readonly Dictionary<TickList, int> LastReconcileTickByList =
-            new Dictionary<TickList, int>();
+        private static readonly Dictionary<TickList, TickListRuntimeState> RuntimeStates =
+            new Dictionary<TickList, TickListRuntimeState>();
         private const int ReconcileSafetyInterval = 600;
         private static readonly HashSet<int> LoggedStaleMemberMaps =
             new HashSet<int>();
-        private static readonly HashSet<int> LoggedMissingPawnMaps =
-            new HashSet<int>();
-        private static readonly HashSet<int> LoggedMissingProjectileMaps =
-            new HashSet<int>();
         private static readonly HashSet<int> LoggedMissingNormalThingMaps =
             new HashSet<int>();
-        private static readonly Dictionary<Map, NormalTickerCandidateCache>
-            NormalTickerCandidates =
-                new Dictionary<Map, NormalTickerCandidateCache>();
-        private const int NormalTickerCacheRefreshInterval = 600;
         private static bool _loggedComplexMapCoverage;
         private static bool _asyncTickPatchActive;
         private static FieldInfo _asyncMapField;
@@ -62,6 +48,14 @@ namespace MP_MeowOnlineShop
         private static AccessTools.FieldRef<object, TickList> _asyncNormalRef;
         private static AccessTools.FieldRef<object, TickList> _asyncRareRef;
         private static AccessTools.FieldRef<object, TickList> _asyncLongRef;
+
+        private sealed class TickListRuntimeState
+        {
+            public Map Owner;
+            public bool Initialized;
+            public bool Dirty;
+            public int LastReconcileTick;
+        }
 
         private static AccessTools.FieldRef<TickList, List<List<Thing>>> TryGetThingListsRef()
         {
@@ -273,23 +267,41 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        private static TickListRuntimeState GetOrCreateState(TickList tickList)
+        {
+            TickListRuntimeState state;
+            if (!RuntimeStates.TryGetValue(tickList, out state))
+            {
+                state = new TickListRuntimeState();
+                RuntimeStates[tickList] = state;
+            }
+            return state;
+        }
+
         private static void BindAsyncTickList(TickList tickList, Map map)
         {
             if (tickList == null || map == null)
                 return;
 
-            if (ListOwners.TryGetValue(tickList, out Map existing) && existing == map)
+            var state = GetOrCreateState(tickList);
+            if (state.Owner == map)
                 return;
 
-            ListOwners[tickList] = map;
-            InitializedLists.Add(tickList);
-            MarkTickListDirty(tickList);
+            state.Owner = map;
+            state.Initialized = true;
+            state.Dirty = true;
+        }
+
+        private static void SetInitialized(TickList tickList, bool value)
+        {
+            if (tickList != null)
+                GetOrCreateState(tickList).Initialized = value;
         }
 
         private static void MarkTickListDirty(TickList tickList)
         {
             if (tickList != null)
-                DirtyTickLists.Add(tickList);
+                GetOrCreateState(tickList).Dirty = true;
         }
 
         private static void RegisterThingPostfix(TickList __instance)
@@ -302,30 +314,27 @@ namespace MP_MeowOnlineShop
             MarkTickListDirty(__instance);
         }
 
-        private static bool IsSafetyReconcileDue(TickList tickList, int tick)
+        private static bool IsSafetyReconcileDue(
+            TickListRuntimeState state,
+            int tick)
         {
-            if (!LastReconcileTickByList.TryGetValue(tickList, out int lastTick))
-                return true;
-            return tick - lastTick >= ReconcileSafetyInterval;
+            return tick - state.LastReconcileTick >= ReconcileSafetyInterval;
         }
 
-        private static bool ShouldReconcile(TickList tickList, int tick)
+        private static bool ShouldReconcile(
+            TickListRuntimeState state,
+            int tick)
         {
-            if (DirtyTickLists.Remove(tickList))
+            if (state.Dirty)
             {
-                LastReconcileTickByList[tickList] = tick;
+                state.Dirty = false;
+                state.LastReconcileTick = tick;
                 return true;
             }
 
-            if (!LastReconcileTickByList.TryGetValue(tickList, out int lastTick))
+            if (tick - state.LastReconcileTick >= ReconcileSafetyInterval)
             {
-                LastReconcileTickByList[tickList] = tick;
-                return true;
-            }
-
-            if (tick - lastTick >= ReconcileSafetyInterval)
-            {
-                LastReconcileTickByList[tickList] = tick;
+                state.LastReconcileTick = tick;
                 return true;
             }
 
@@ -401,9 +410,9 @@ namespace MP_MeowOnlineShop
                 // Force one more authoritative rebuild at the actual first tick
                 // so those process-timing-dependent pending registrations cannot
                 // make a rejoining peer tick an extra pawn.
-                InitializedLists.Remove(normal);
-                InitializedLists.Remove(rare);
-                InitializedLists.Remove(longTicks);
+                SetInitialized(normal, false);
+                SetInitialized(rare, false);
+                SetInitialized(longTicks, false);
 
                 Log.Message(
                     "[MP-MeowOnlineShop] Rebuilt async map TickLists from authoritative " +
@@ -506,7 +515,7 @@ namespace MP_MeowOnlineShop
         {
             BindAsyncTickList(tickList, map);
             RebuildSingleTickList(tickList, map, out _);
-            InitializedLists.Add(tickList);
+            SetInitialized(tickList, true);
             MarkTickListDirty(tickList);
         }
 
@@ -554,7 +563,8 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            if (!ListOwners.TryGetValue(__instance, out Map ownerMap))
+            TickListRuntimeState state;
+            if (!RuntimeStates.TryGetValue(__instance, out state))
             {
                 if (_asyncTickPatchActive)
                     return;
@@ -562,25 +572,28 @@ namespace MP_MeowOnlineShop
                 Map runtimeOwner = ResolveTickListOwner(__instance);
                 if (runtimeOwner == null)
                     return;
-                BindAsyncTickList(__instance, runtimeOwner);
-                ownerMap = runtimeOwner;
+                state = GetOrCreateState(__instance);
+                state.Owner = runtimeOwner;
+                state.Initialized = true;
+                state.Dirty = true;
             }
 
+            Map ownerMap = state.Owner;
             int currentTick = Find.TickManager?.TicksGame ?? 0;
-            bool firstTick = !InitializedLists.Contains(__instance);
+            bool firstTick = !state.Initialized;
             if (!firstTick &&
-                !DirtyTickLists.Contains(__instance) &&
-                !IsSafetyReconcileDue(__instance, currentTick))
+                !state.Dirty &&
+                !IsSafetyReconcileDue(state, currentTick))
             {
                 return;
             }
+
+            state.Initialized = true;
 
             var buckets = ThingListsRef(__instance);
             var pending = ThingsToRegisterRef(__instance);
             if (buckets == null || pending == null || buckets.Count == 0)
                 return;
-
-            InitializedLists.Add(__instance);
 
             if (firstTick && ownerMap != null)
             {
@@ -609,10 +622,10 @@ namespace MP_MeowOnlineShop
                     buckets[hash % buckets.Count].Add(thing);
                 }
                 pending.Clear();
-                MarkTickListDirty(__instance);
+                state.Dirty = true;
             }
 
-            if (ShouldReconcile(__instance, currentTick))
+            if (ShouldReconcile(state, currentTick))
             {
                 ReconcileCurrentBucket(
                     buckets,
@@ -709,199 +722,6 @@ namespace MP_MeowOnlineShop
 
             }
 
-            List<string> removedIds = null;
-            var seen = new HashSet<Thing>();
-            int removed = bucket.RemoveAll(thing =>
-            {
-                bool invalid = IsInvalidForOwner(thing, ownerMap);
-                bool duplicate = !invalid && !seen.Add(thing);
-                bool wrongBucket = !invalid && !duplicate &&
-                                   StableHash(thing) % buckets.Count != bucketIndex;
-                bool visualMote = !invalid && IsVisualMote(thing);
-                if (!invalid && !duplicate && !wrongBucket && !visualMote)
-                    return false;
-
-                if (!LoggedStaleMemberMaps.Contains(ownerMap.uniqueID) &&
-                    removedIds == null)
-                {
-                    removedIds = new List<string>();
-                }
-                if (removedIds != null && removedIds.Count < 8)
-                    removedIds.Add(thing?.ThingID ?? "<null>");
-                return true;
-            });
-
-            // Desync-69 proved the inverse of a stale host member: at tick
-            // 383041 the host ticked Ratkin102560 and consumed 16 job-selection
-            // draws, while the rejoined client skipped that pawn entirely and
-            // moved to the next world tick. The serialized map pawn registry is
-            // authoritative, so repair only missing spawned pawns in the normal
-            // bucket that is about to execute. This avoids scanning tens of
-            // thousands of map things and preserves vanilla bucket scheduling.
-            int added = 0;
-            List<string> addedIds = null;
-            if (tickType == TickerType.Normal)
-            {
-                IReadOnlyList<Pawn> spawnedPawns = ownerMap.mapPawns?.AllPawnsSpawned;
-                if (spawnedPawns != null)
-                {
-                    for (int i = 0; i < spawnedPawns.Count; i++)
-                    {
-                        Pawn pawn = spawnedPawns[i];
-                        if (pawn == null || pawn.Destroyed || !pawn.Spawned ||
-                            pawn.Map != ownerMap || pawn.def == null ||
-                            StableHash(pawn) % buckets.Count != bucketIndex ||
-                            !seen.Add(pawn))
-                        {
-                            continue;
-                        }
-
-                        bucket.Add(pawn);
-                        added++;
-                        if (!LoggedMissingPawnMaps.Contains(ownerMap.uniqueID))
-                        {
-                            if (addedIds == null)
-                                addedIds = new List<string>();
-                            if (addedIds.Count < 8)
-                                addedIds.Add(pawn.ThingID ?? "<null>");
-                        }
-                    }
-                }
-            }
-
-            if (added > 0)
-            {
-                bucket.Sort(CompareStableThings);
-                if (LoggedMissingPawnMaps.Add(ownerMap.uniqueID))
-                {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Restored missing spawned pawn TickList " +
-                        $"members before execution: map={ownerMap.uniqueID}, " +
-                        $"bucket={bucketIndex}, added={added}, " +
-                        $"ids={string.Join(",", addedIds ?? new List<string>())}.");
-                }
-            }
-
-            // Desync-05 proved that dynamic Normal-TickList members need the
-            // same inverse repair as pawns. The cold client rebuilt
-            // MiliraBullet_PlasmaPistolCharged40274 from listerThings while the
-            // long-running host no longer had that still-spawned projectile in
-            // its runtime TickList. The client consequently executed
-            // Projectile.CheckForFreeIntercept alone. Scan only RimWorld's
-            // dedicated projectile group, rather than every map thing, and
-            // restore missing members immediately before the Normal list runs.
-            int projectilesAdded = 0;
-            List<string> projectileIds = null;
-            if (tickType == TickerType.Normal)
-            {
-                List<Thing> projectiles = ownerMap.listerThings?
-                    .ThingsInGroup(ThingRequestGroup.Projectile);
-                if (projectiles != null)
-                {
-                    for (int i = 0; i < projectiles.Count; i++)
-                    {
-                        Thing projectile = projectiles[i];
-                        if (!(projectile is Projectile) || projectile.Destroyed ||
-                            !projectile.Spawned || projectile.Map != ownerMap ||
-                            projectile.def == null ||
-                            StableHash(projectile) % buckets.Count != bucketIndex ||
-                            !seen.Add(projectile))
-                        {
-                            continue;
-                        }
-
-                        bucket.Add(projectile);
-                        projectilesAdded++;
-                        if (!LoggedMissingProjectileMaps.Contains(ownerMap.uniqueID))
-                        {
-                            if (projectileIds == null)
-                                projectileIds = new List<string>();
-                            if (projectileIds.Count < 8)
-                                projectileIds.Add(projectile.ThingID ?? "<null>");
-                        }
-                    }
-                }
-            }
-
-            if (projectilesAdded > 0)
-            {
-                bucket.Sort(CompareStableThings);
-                if (LoggedMissingProjectileMaps.Add(ownerMap.uniqueID))
-                {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Restored missing spawned projectile TickList " +
-                        $"members before execution: map={ownerMap.uniqueID}, " +
-                        $"bucket={bucketIndex}, added={projectilesAdded}, " +
-                        $"ids={string.Join(",", projectileIds ?? new List<string>())}. " +
-                        "This keeps long-running hosts aligned with cold clients that " +
-                        "rebuild projectiles from the authoritative map registry.");
-                }
-            }
-
-            // Desync-235 through Desync-237 showed that Pawn and Projectile
-            // coverage is not sufficient.  A missing normal-ticker building
-            // (the Ancot/Milira plasma turret in the bundle) lets one peer
-            // advance to an unrelated projectile or pawn, after which every
-            // later Rand and UniqueID allocation diverges.  Include every
-            // spawned normal-ticker Thing from the authoritative map registry.
-            // The candidate list is cached and only rescanned on a map-count
-            // change or a bounded refresh, so this repair does not turn every
-            // normal tick into a full scan of a large map's item registry.
-            int normalThingsAdded = 0;
-            List<string> normalThingIds = null;
-            if (tickType == TickerType.Normal)
-            {
-                List<Thing> candidates = GetNormalTickerCandidates(ownerMap);
-                if (candidates != null)
-                {
-                    for (int i = 0; i < candidates.Count; i++)
-                    {
-                        Thing thing = candidates[i];
-                        if (IsInvalidForOwner(thing, ownerMap) ||
-                            !BelongsToTickList(thing, TickerType.Normal) ||
-                            StableHash(thing) % buckets.Count != bucketIndex ||
-                            !seen.Add(thing))
-                        {
-                            continue;
-                        }
-
-                        bucket.Add(thing);
-                        normalThingsAdded++;
-                        if (!LoggedMissingNormalThingMaps.Contains(ownerMap.uniqueID))
-                        {
-                            if (normalThingIds == null)
-                                normalThingIds = new List<string>();
-                            if (normalThingIds.Count < 8)
-                                normalThingIds.Add(thing.ThingID ?? "<null>");
-                        }
-                    }
-                }
-            }
-
-            if (normalThingsAdded > 0)
-            {
-                bucket.Sort(CompareStableThings);
-                if (LoggedMissingNormalThingMaps.Add(ownerMap.uniqueID))
-                {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Restored missing spawned normal TickList " +
-                        $"members before execution: map={ownerMap.uniqueID}, " +
-                        $"bucket={bucketIndex}, added={normalThingsAdded}, " +
-                        $"ids={string.Join(",", normalThingIds ?? new List<string>())}. " +
-                        "This covers buildings and holders in addition to pawns and projectiles.");
-                }
-            }
-
-            if (removed <= 0 || !LoggedStaleMemberMaps.Add(ownerMap.uniqueID))
-                return;
-
-            Log.Warning(
-                "[MP-MeowOnlineShop] Removed stale, cross-map, duplicate, or wrong-bucket " +
-                "TickList members before " +
-                $"execution: map={ownerMap.uniqueID}, bucket={bucketIndex}, " +
-                $"removed={removed}, ids={string.Join(",", removedIds ?? new List<string>())}. " +
-                "This prevents a long-running host from ticking entities omitted by a " +
-                "cold-joining client's authoritative map rebuild.");
         }
 
         private static List<Thing> CollectExpectedBucket(
@@ -934,50 +754,6 @@ namespace MP_MeowOnlineShop
             return result;
         }
 
-        private static List<Thing> GetNormalTickerCandidates(Map map)
-        {
-            if (map == null)
-                return null;
-
-            List<Thing> allThings = map.listerThings?.AllThings;
-            if (allThings == null)
-                return null;
-
-            int currentTick = Find.TickManager?.TicksGame ?? 0;
-            if (!NormalTickerCandidates.TryGetValue(map, out NormalTickerCandidateCache cache) ||
-                cache.AllThingsCount != allThings.Count ||
-                currentTick - cache.LastRefreshTick >= NormalTickerCacheRefreshInterval)
-            {
-                cache = new NormalTickerCandidateCache
-                {
-                    AllThingsCount = allThings.Count,
-                    LastRefreshTick = currentTick,
-                    Things = new List<Thing>()
-                };
-
-                for (int i = 0; i < allThings.Count; i++)
-                {
-                    Thing thing = allThings[i];
-                    if (!IsInvalidForOwner(thing, map) &&
-                        BelongsToTickList(thing, TickerType.Normal))
-                    {
-                        cache.Things.Add(thing);
-                    }
-                }
-
-                cache.Things.Sort(CompareStableThings);
-                NormalTickerCandidates[map] = cache;
-            }
-
-            return cache.Things;
-        }
-
-        private sealed class NormalTickerCandidateCache
-        {
-            internal int AllThingsCount;
-            internal int LastRefreshTick;
-            internal List<Thing> Things;
-        }
 
         private static int RebuildSingleTickList(
             TickList tickList,

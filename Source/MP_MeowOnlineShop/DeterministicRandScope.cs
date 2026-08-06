@@ -14,6 +14,9 @@ namespace MP_MeowOnlineShop
 
         private static readonly object RandReflectionCacheLock = new object();
         private static readonly Dictionary<Type, AccessorCache> MapRandAccessorCacheByType = new Dictionary<Type, AccessorCache>();
+        private static object _cachedWorld;
+        private static object _cachedWorldRand;
+        private static AccessorCache _cachedWorldCache;
 
         private sealed class AccessorCache
         {
@@ -67,7 +70,7 @@ namespace MP_MeowOnlineShop
                 var rand = TryGetWorldRand();
                 if (rand == null)
                     return false;
-                var cache = GetOrBuildAccessorCache(rand.GetType());
+                var cache = _cachedWorldCache;
                 if (cache.pushState == null)
                     return false;
                 cache.pushState(rand, seed);
@@ -86,7 +89,7 @@ namespace MP_MeowOnlineShop
                 var rand = TryGetWorldRand();
                 if (rand == null)
                     return;
-                var cache = GetOrBuildAccessorCache(rand.GetType());
+                var cache = _cachedWorldCache;
                 cache.popState?.Invoke(rand);
             }
             catch
@@ -98,14 +101,34 @@ namespace MP_MeowOnlineShop
         {
             var world = Find.World;
             if (world == null)
+            {
+                _cachedWorld = null;
+                _cachedWorldRand = null;
+                _cachedWorldCache = null;
                 return null;
+            }
+
+            if (ReferenceEquals(world, _cachedWorld) &&
+                _cachedWorldRand != null &&
+                _cachedWorldCache != null)
+            {
+                return _cachedWorldRand;
+            }
+
             try
             {
                 var cache = GetOrBuildAccessorCache(world.GetType());
-                return cache.getRand?.Invoke(world);
+                var rand = cache.getRand?.Invoke(world);
+                _cachedWorld = world;
+                _cachedWorldRand = rand;
+                _cachedWorldCache = cache;
+                return rand;
             }
             catch
             {
+                _cachedWorld = world;
+                _cachedWorldRand = null;
+                _cachedWorldCache = null;
                 return null;
             }
         }

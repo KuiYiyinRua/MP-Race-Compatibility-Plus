@@ -113,6 +113,12 @@ namespace MP_MeowOnlineShop
                 if (_authoritativeDeferredSimulationDepth > 0)
                     return;
 
+                if (MP.IsExecutingSyncCommand ||
+                    Current.ProgramState != ProgramState.Playing)
+                {
+                    return;
+                }
+
                 object client = _clientGetter != null
                     ? _clientGetter()
                     : _clientProperty.GetValue(null, null);
@@ -121,8 +127,7 @@ namespace MP_MeowOnlineShop
 
                 if (ReadCachedBool(_tickingGetter, _tickingProperty) ||
                     ReadCachedBool(_executingCmdsGetter, _executingCmdsProperty) ||
-                    ReadCachedBool(_reloadingGetter, _reloadingField) ||
-                    Current.ProgramState != ProgramState.Playing)
+                    ReadCachedBool(_reloadingGetter, _reloadingField))
                 {
                     return;
                 }
