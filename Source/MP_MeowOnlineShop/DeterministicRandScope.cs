@@ -12,7 +12,6 @@ namespace MP_MeowOnlineShop
         public const int StateMapRand = 2;
         public const int StateWorldRand = 4;
 
-        private static readonly Func<object> WorldRandGetter = TryGetWorldRandGetter();
         private static readonly object RandReflectionCacheLock = new object();
         private static readonly Dictionary<Type, AccessorCache> MapRandAccessorCacheByType = new Dictionary<Type, AccessorCache>();
 
@@ -61,36 +60,11 @@ namespace MP_MeowOnlineShop
                 Rand.PopState();
         }
 
-        private static Func<object> TryGetWorldRandGetter()
-        {
-            try
-            {
-                return () =>
-                {
-                    var world = Find.World;
-                    if (world == null)
-                        return null;
-
-                    var worldType = world.GetType();
-                    return AccessTools.Property(worldType, "Rand")?.GetValue(world)
-                           ?? AccessTools.Property(worldType, "rand")?.GetValue(world)
-                           ?? AccessTools.Field(worldType, "Rand")?.GetValue(world)
-                           ?? AccessTools.Field(worldType, "rand")?.GetValue(world);
-                };
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         internal static bool TryPushWorldRand(int seed)
         {
             try
             {
-                if (WorldRandGetter == null)
-                    return false;
-                var rand = WorldRandGetter();
+                var rand = TryGetWorldRand();
                 if (rand == null)
                     return false;
                 var cache = GetOrBuildAccessorCache(rand.GetType());
@@ -109,9 +83,7 @@ namespace MP_MeowOnlineShop
         {
             try
             {
-                if (WorldRandGetter == null)
-                    return;
-                var rand = WorldRandGetter();
+                var rand = TryGetWorldRand();
                 if (rand == null)
                     return;
                 var cache = GetOrBuildAccessorCache(rand.GetType());
@@ -119,6 +91,22 @@ namespace MP_MeowOnlineShop
             }
             catch
             {
+            }
+        }
+
+        private static object TryGetWorldRand()
+        {
+            var world = Find.World;
+            if (world == null)
+                return null;
+            try
+            {
+                var cache = GetOrBuildAccessorCache(world.GetType());
+                return cache.getRand?.Invoke(world);
+            }
+            catch
+            {
+                return null;
             }
         }
 

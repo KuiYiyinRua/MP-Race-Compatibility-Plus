@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
@@ -42,6 +43,18 @@ namespace MP_MeowOnlineShop
         private static FieldInfo cameraLockPositionField;
         private static FieldInfo isActiveCacheFrameField;
         private static FieldInfo asyncTickingMapField;
+        private static AccessTools.FieldRef<object, Pawn> _avatarPawnRef;
+        private static AccessTools.FieldRef<object, Pawn> _tweenerPawnRef;
+        private static AccessTools.FieldRef<object, Pawn> _jobTrackerPawnRef;
+        private static Func<object> _stateAvatarGetter;
+        private static Action<object> _stateAvatarSetter;
+        private static Func<object, object> _physicsPositionGetter;
+        private static Game _componentCacheGame;
+        private static PerspectiveShiftMpComponent _componentCache;
+        private static bool _componentCacheValid;
+        private static readonly Dictionary<Type, AccessTools.FieldRef<object, Pawn>> NestedPawnRefCache =
+            new Dictionary<Type, AccessTools.FieldRef<object, Pawn>>();
+        private static readonly object NestedPawnRefCacheLock = new object();
 
         private static int lastMoveX;
         private static int lastMoveZ;
@@ -301,6 +314,11 @@ namespace MP_MeowOnlineShop
             asyncTickingMapField = asyncTimeType == null
                 ? null
                 : AccessTools.Field(asyncTimeType, "tickingMap");
+            _avatarPawnRef = TryGetInstanceFieldRef<Pawn>(avatarType, "pawn");
+            _stateAvatarGetter = TryCompileStaticFieldGetter(stateAvatarField);
+            _stateAvatarSetter = TryCompileStaticFieldSetter(stateAvatarField);
+            _physicsPositionGetter = TryCompileInstanceFieldGetter(avatarType, physicsPositionField);
+            _jobTrackerPawnRef = TryGetInstanceFieldRef<Pawn>(typeof(Pawn_JobTracker), "pawn");
 
             MethodInfo setAvatar = AccessTools.Method(stateType, "SetAvatar", new[] { typeof(Pawn), typeof(bool) });
             MethodInfo clearAvatar = originalClearAvatarMethod;
@@ -564,6 +582,8 @@ namespace MP_MeowOnlineShop
 
             Type tweenerPatchType = AccessTools.TypeByName("PerspectiveShift.PawnTweener_PreDrawPosCalculation_Patch");
             MethodInfo tweenerPrefix = tweenerPatchType == null ? null : AccessTools.Method(tweenerPatchType, "Prefix");
+            Type tweenerType = AccessTools.TypeByName("PerspectiveShift.PawnTweener");
+            _tweenerPawnRef = TryGetInstanceFieldRef<Pawn>(tweenerType, "pawn");
             if (tweenerPrefix != null)
             {
                 harmony.Patch(
@@ -946,7 +966,7 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active)
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
             if (pawn != null && state == null && MP.IsHosting && !MP.IsExecutingSyncCommand)
             {
@@ -1049,7 +1069,7 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active || physicsPositionField == null)
                 return;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state =
                 CurrentComponent()?.ForOwner(MP.PlayerName);
             if (!IsExclusiveLocalOwnership(state) || state.pawn != pawn ||
@@ -1109,7 +1129,7 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active || MP.IsExecutingSyncCommand)
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
             Event currentEvent = Event.current;
             if (pawn == null || state == null || state.pawn != pawn || currentEvent == null ||
@@ -1144,7 +1164,7 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active || MP.IsExecutingSyncCommand)
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
             if (pawn == null || state == null || state.pawn != pawn || !pawn.Drafted ||
                 pawn.Downed || pawn.InMentalState || Find.Targeter.IsTargeting || Find.TickManager.Paused)
@@ -1208,7 +1228,7 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active || !(thing is Building_Storage storage))
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             if (pawn == null || pawn.Map == null || storage.Map != pawn.Map)
             {
                 __result = false;
@@ -1315,10 +1335,17 @@ namespace MP_MeowOnlineShop
                 return true;
 
             object tweener = __args != null && __args.Length > 0 ? __args[0] : null;
-            Pawn pawn = tweener == null ? null : AccessTools.Field(tweener.GetType(), "pawn")?.GetValue(tweener) as Pawn;
-            object localAvatar = stateAvatarField?.GetValue(null);
-            Pawn localPawn = localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
-            bool hasPrediction = localAvatar != null && physicsPositionField?.GetValue(localAvatar) != null;
+            Pawn pawn = tweener == null
+                ? null
+                : _tweenerPawnRef != null
+                    ? _tweenerPawnRef(tweener)
+                    : AccessTools.Field(tweener.GetType(), "pawn")?.GetValue(tweener) as Pawn;
+            object localAvatar = LocalAvatarObject();
+            Pawn localPawn = AvatarPawnOf(localAvatar);
+            bool hasPrediction = localAvatar != null &&
+                                 (_physicsPositionGetter != null
+                                     ? _physicsPositionGetter(localAvatar)
+                                     : physicsPositionField?.GetValue(localAvatar)) != null;
             __result = pawn == null || pawn != localPawn || !hasPrediction;
             return false;
         }
@@ -1349,26 +1376,14 @@ namespace MP_MeowOnlineShop
             {
                 foreach (object arg in __args)
                 {
-                    if (arg is Pawn directPawn)
-                    {
-                        targetPawn = directPawn;
+                    targetPawn = ResolvePawnArg(arg);
+                    if (targetPawn != null)
                         break;
-                    }
-
-                    if (arg != null)
-                    {
-                        FieldInfo pawnField = AccessTools.Field(arg.GetType(), "pawn");
-                        if (pawnField?.GetValue(arg) is Pawn nestedPawn)
-                        {
-                            targetPawn = nestedPawn;
-                            break;
-                        }
-                    }
                 }
             }
 
-            object localAvatar = stateAvatarField?.GetValue(null);
-            Pawn localPawn = localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
+            object localAvatar = LocalAvatarObject();
+            Pawn localPawn = AvatarPawnOf(localAvatar);
             if (targetPawn != null && targetPawn == localPawn)
                 return true;
 
@@ -1387,7 +1402,9 @@ namespace MP_MeowOnlineShop
             Pawn_JobTracker tracker = __args?.OfType<Pawn_JobTracker>().FirstOrDefault();
             Pawn trackerPawn = tracker == null
                 ? null
-                : AccessTools.Field(typeof(Pawn_JobTracker), "pawn")?.GetValue(tracker) as Pawn;
+                : _jobTrackerPawnRef != null
+                    ? _jobTrackerPawnRef(tracker)
+                    : AccessTools.Field(typeof(Pawn_JobTracker), "pawn")?.GetValue(tracker) as Pawn;
             PerspectiveShiftControlledAvatar controlledState = CurrentComponent()?.ForPawn(trackerPawn);
             if (controlledState == null)
                 return false;
@@ -1601,7 +1618,10 @@ namespace MP_MeowOnlineShop
 
         private static void ClearLocalViewOnly()
         {
-            stateAvatarField?.SetValue(null, null);
+            if (_stateAvatarSetter != null)
+                _stateAvatarSetter(null);
+            else
+                stateAvatarField?.SetValue(null, null);
             sentInput = false;
             localPrediction.Clear();
             ClearHeldMovementKeys();
@@ -1624,13 +1644,153 @@ namespace MP_MeowOnlineShop
 
         private static PerspectiveShiftMpComponent CurrentComponent()
         {
-            return Current.Game?.GetComponent<PerspectiveShiftMpComponent>();
+            Game game = Current.Game;
+            if (!_componentCacheValid || !ReferenceEquals(game, _componentCacheGame))
+            {
+                _componentCache = game?.GetComponent<PerspectiveShiftMpComponent>();
+                _componentCacheGame = game;
+                _componentCacheValid = true;
+            }
+
+            return _componentCache;
+        }
+
+        private static AccessTools.FieldRef<object, T> TryGetInstanceFieldRef<T>(
+            Type type,
+            string name) where T : class
+        {
+            if (type == null)
+                return null;
+            try
+            {
+                return AccessTools.FieldRefAccess<T>(type, name);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object> TryCompileStaticFieldGetter(FieldInfo field)
+        {
+            if (field == null)
+                return null;
+            try
+            {
+                var body = Expression.Convert(
+                    Expression.Field(null, field),
+                    typeof(object));
+                return Expression.Lambda<Func<object>>(body).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Action<object> TryCompileStaticFieldSetter(FieldInfo field)
+        {
+            if (field == null)
+                return null;
+            try
+            {
+                var value = Expression.Parameter(typeof(object), "value");
+                var body = Expression.Assign(
+                    Expression.Field(null, field),
+                    Expression.Convert(value, field.FieldType));
+                return Expression.Lambda<Action<object>>(body, value).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object, object> TryCompileInstanceFieldGetter(
+            Type type,
+            FieldInfo field)
+        {
+            if (type == null || field == null)
+                return null;
+            try
+            {
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var body = Expression.Convert(
+                    Expression.Field(Expression.Convert(instance, type), field),
+                    typeof(object));
+                return Expression.Lambda<Func<object, object>>(body, instance).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Pawn ResolvePawnArg(object arg)
+        {
+            if (arg is Pawn pawn)
+                return pawn;
+            if (arg == null)
+                return null;
+
+            var accessor = GetNestedPawnRef(arg.GetType());
+            if (accessor == null)
+                return null;
+            try
+            {
+                return accessor(arg);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AccessTools.FieldRef<object, Pawn> GetNestedPawnRef(Type type)
+        {
+            lock (NestedPawnRefCacheLock)
+            {
+                AccessTools.FieldRef<object, Pawn> cached;
+                if (NestedPawnRefCache.TryGetValue(type, out cached))
+                    return cached;
+
+                AccessTools.FieldRef<object, Pawn> accessor = null;
+                try
+                {
+                    accessor = AccessTools.FieldRefAccess<Pawn>(type, "pawn");
+                }
+                catch
+                {
+                    accessor = null;
+                }
+
+                NestedPawnRefCache[type] = accessor;
+                if (NestedPawnRefCache.Count > 256)
+                    NestedPawnRefCache.Clear();
+                return accessor;
+            }
         }
 
         private static Pawn LocalAvatarPawn()
         {
-            object localAvatar = stateAvatarField?.GetValue(null);
-            return localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
+            object localAvatar = LocalAvatarObject();
+            return AvatarPawnOf(localAvatar);
+        }
+
+        private static object LocalAvatarObject()
+        {
+            return _stateAvatarGetter != null
+                ? _stateAvatarGetter()
+                : stateAvatarField?.GetValue(null);
+        }
+
+        private static Pawn AvatarPawnOf(object avatar)
+        {
+            if (avatar == null)
+                return null;
+            return _avatarPawnRef != null
+                ? _avatarPawnRef(avatar)
+                : avatarPawnField?.GetValue(avatar) as Pawn;
         }
 
         private static bool KeyDown(string defName, bool eventHeld)

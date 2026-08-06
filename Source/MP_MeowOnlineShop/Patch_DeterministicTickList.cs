@@ -134,6 +134,39 @@ namespace MP_MeowOnlineShop
                     priority = Priority.First
                 });
 
+            MethodInfo register = AccessTools.Method(
+                typeof(TickList),
+                nameof(TickList.RegisterThing),
+                new[] { typeof(Thing) });
+            MethodInfo deregister = AccessTools.Method(
+                typeof(TickList),
+                nameof(TickList.DeregisterThing),
+                new[] { typeof(Thing) });
+            MethodInfo registerPostfix = AccessTools.Method(
+                typeof(Patch_DeterministicTickList),
+                nameof(RegisterThingPostfix));
+            MethodInfo deregisterPostfix = AccessTools.Method(
+                typeof(Patch_DeterministicTickList),
+                nameof(DeregisterThingPostfix));
+            if (register != null && registerPostfix != null)
+            {
+                harmony.Patch(
+                    register,
+                    postfix: new HarmonyMethod(registerPostfix)
+                    {
+                        priority = Priority.Last
+                    });
+            }
+            if (deregister != null && deregisterPostfix != null)
+            {
+                harmony.Patch(
+                    deregister,
+                    postfix: new HarmonyMethod(deregisterPostfix)
+                    {
+                        priority = Priority.Last
+                    });
+            }
+
             PatchAsyncTimeFinalizeInit(harmony);
 
             Log.Message(
@@ -257,6 +290,23 @@ namespace MP_MeowOnlineShop
         {
             if (tickList != null)
                 DirtyTickLists.Add(tickList);
+        }
+
+        private static void RegisterThingPostfix(TickList __instance)
+        {
+            MarkTickListDirty(__instance);
+        }
+
+        private static void DeregisterThingPostfix(TickList __instance)
+        {
+            MarkTickListDirty(__instance);
+        }
+
+        private static bool IsSafetyReconcileDue(TickList tickList, int tick)
+        {
+            if (!LastReconcileTickByList.TryGetValue(tickList, out int lastTick))
+                return true;
+            return tick - lastTick >= ReconcileSafetyInterval;
         }
 
         private static bool ShouldReconcile(TickList tickList, int tick)
@@ -516,12 +566,21 @@ namespace MP_MeowOnlineShop
                 ownerMap = runtimeOwner;
             }
 
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            bool firstTick = !InitializedLists.Contains(__instance);
+            if (!firstTick &&
+                !DirtyTickLists.Contains(__instance) &&
+                !IsSafetyReconcileDue(__instance, currentTick))
+            {
+                return;
+            }
+
             var buckets = ThingListsRef(__instance);
             var pending = ThingsToRegisterRef(__instance);
             if (buckets == null || pending == null || buckets.Count == 0)
                 return;
 
-            bool firstTick = InitializedLists.Add(__instance);
+            InitializedLists.Add(__instance);
 
             if (firstTick && ownerMap != null)
             {
@@ -553,7 +612,7 @@ namespace MP_MeowOnlineShop
                 MarkTickListDirty(__instance);
             }
 
-            if (ShouldReconcile(__instance, Find.TickManager?.TicksGame ?? 0))
+            if (ShouldReconcile(__instance, currentTick))
             {
                 ReconcileCurrentBucket(
                     buckets,
@@ -586,6 +645,69 @@ namespace MP_MeowOnlineShop
             List<Thing> bucket = buckets[bucketIndex];
             if (bucket == null)
                 return;
+
+            {
+            List<Thing> expected = CollectExpectedBucket(
+                ownerMap,
+                tickType,
+                buckets.Count,
+                bucketIndex);
+            var oldSet = new HashSet<Thing>(bucket);
+            var expectedSet = new HashSet<Thing>(expected);
+            int innerAdded = 0;
+            List<string> innerAddedIds = null;
+            for (int i = 0; i < expected.Count; i++)
+            {
+                Thing thing = expected[i];
+                if (oldSet.Contains(thing))
+                    continue;
+                innerAdded++;
+                if (innerAddedIds == null)
+                    innerAddedIds = new List<string>();
+                if (innerAddedIds.Count < 8)
+                    innerAddedIds.Add(thing.ThingID ?? "<null>");
+            }
+
+            int innerRemoved = 0;
+            List<string> innerRemovedIds = null;
+            for (int i = 0; i < bucket.Count; i++)
+            {
+                Thing thing = bucket[i];
+                if (expectedSet.Contains(thing))
+                    continue;
+                innerRemoved++;
+                if (innerRemovedIds == null)
+                    innerRemovedIds = new List<string>();
+                if (innerRemovedIds.Count < 8)
+                    innerRemovedIds.Add(thing?.ThingID ?? "<null>");
+            }
+
+            bucket.Clear();
+            bucket.AddRange(expected);
+            if (expected.Count > 1)
+                bucket.Sort(CompareStableThings);
+
+            if (innerRemoved > 0 && LoggedStaleMemberMaps.Add(ownerMap.uniqueID))
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Removed stale, cross-map, duplicate, or wrong-bucket " +
+                    "TickList members before " +
+                    $"execution: map={ownerMap.uniqueID}, bucket={bucketIndex}, " +
+                    $"removed={innerRemoved}, ids={string.Join(",", innerRemovedIds ?? new List<string>())}.");
+            }
+
+            if (innerAdded > 0 && LoggedMissingNormalThingMaps.Add(ownerMap.uniqueID))
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Restored missing spawned TickList " +
+                    $"members before execution: map={ownerMap.uniqueID}, " +
+                    $"bucket={bucketIndex}, added={innerAdded}, " +
+                    $"ids={string.Join(",", innerAddedIds ?? new List<string>())}.");
+            }
+
+            return;
+
+            }
 
             List<string> removedIds = null;
             var seen = new HashSet<Thing>();
@@ -780,6 +902,36 @@ namespace MP_MeowOnlineShop
                 $"removed={removed}, ids={string.Join(",", removedIds ?? new List<string>())}. " +
                 "This prevents a long-running host from ticking entities omitted by a " +
                 "cold-joining client's authoritative map rebuild.");
+        }
+
+        private static List<Thing> CollectExpectedBucket(
+            Map ownerMap,
+            TickerType tickType,
+            int bucketCount,
+            int bucketIndex)
+        {
+            var result = new List<Thing>();
+            List<Thing> allThings = ownerMap?.listerThings?.AllThings;
+            if (allThings == null)
+                return result;
+
+            var seen = new HashSet<Thing>();
+            for (int i = 0; i < allThings.Count; i++)
+            {
+                Thing thing = allThings[i];
+                if (IsInvalidForOwner(thing, ownerMap) ||
+                    !BelongsToTickList(thing, tickType) ||
+                    StableHash(thing) % bucketCount != bucketIndex ||
+                    !seen.Add(thing))
+                {
+                    continue;
+                }
+
+                result.Add(thing);
+            }
+
+            result.Sort(CompareStableThings);
+            return result;
         }
 
         private static List<Thing> GetNormalTickerCandidates(Map map)
