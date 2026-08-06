@@ -40,7 +40,7 @@ namespace MP_MeowOnlineShop
             if (_doEffectFinal == null || _doEffectFinal.IsStatic || _doEffectFinal.ReturnType != typeof(void) ||
                 !typeof(ThingComp).IsAssignableFrom(_delayedCompType))
             {
-                Log.Error("[MP-MeowOnlineShop] Ancient Amorphous Threat DoEffectFinal() signature changed; delayed-arrival sync was NOT installed.");
+                Log.Warning("[MP-MeowOnlineShop] Ancient Amorphous Threat DoEffectFinal() signature changed; delayed-arrival sync was NOT installed.");
                 return;
             }
 
@@ -56,7 +56,7 @@ namespace MP_MeowOnlineShop
             }
             catch (Exception exception)
             {
-                Log.Error("[MP-MeowOnlineShop] Ancient Amorphous Threat delayed-arrival sync installation failed: " + exception);
+                Log.Warning("[MP-MeowOnlineShop] Ancient Amorphous Threat delayed-arrival sync installation skipped: " + exception.Message);
                 return;
             }
 
@@ -92,6 +92,8 @@ namespace MP_MeowOnlineShop
         /// <summary>
         /// Resolve the original component from stable primitive IDs, then execute its complete
         /// final callback (delay Rand, GameComponent schedule, target map and notification).
+        /// Keep this method free of exception handlers: Multiplayer wraps registered sync
+        /// methods with MonoMod and cannot regenerate methods containing exception blocks.
         /// </summary>
         private static void SyncDoEffectFinalById(int mapUniqueId, int parentThingId)
         {
@@ -109,6 +111,11 @@ namespace MP_MeowOnlineShop
             if (_replayLogBudget-- > 0)
                 Log.Message($"[MP-MeowOnlineShop] AAT delayed-arrival replay: map={mapUniqueId}, thing={parentThingId}.");
 
+            ExecuteReplay(comp);
+        }
+
+        private static void ExecuteReplay(ThingComp comp)
+        {
             _executingReplay = true;
             try
             {

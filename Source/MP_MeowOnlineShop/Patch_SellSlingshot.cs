@@ -316,6 +316,7 @@ namespace MP_MeowOnlineShop
             {
                 Patch_RimJobWorld.Apply(Harmony);
                 Patch_RjwAddons.Apply(Harmony);
+                Patch_RjwP1.Apply(Harmony);
                 Patch_RjwSerializationRandIsolation.Apply(Harmony);
             }
             catch (Exception e)

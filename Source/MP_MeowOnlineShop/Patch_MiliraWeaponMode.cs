@@ -25,6 +25,10 @@ namespace MP_MeowOnlineShop
         private const int SeedOffsetCompGizmo = 0x6B11;
         private const int SeedOffsetCompInit = 0x6B19;
         private const int WorldSeedOffset = 0x6C23;
+        private const int MaxPerspectiveFireCooldownEntries = 1024;
+
+        private static readonly Dictionary<long, int> PerspectiveFireCooldownUntil =
+            new Dictionary<long, int>();
 
         private static readonly string[] TargetCompTypeNames =
         {
@@ -256,6 +260,12 @@ namespace MP_MeowOnlineShop
                 return true;
             }
 
+            // The original Avatar.HandleFiring blocks every shot while the pawn
+            // is in a warmup or cooldown stance; without this gate the ordered
+            // fire commands would keep calling TryStartCastOn during cooldown.
+            if (pawn.stances?.curStance is Stance_Busy)
+                return true;
+
             Thing targetThing = pawn.Map.thingGrid.ThingsListAt(cell)
                 .Where(t => t != null && t != pawn &&
                             (t is Pawn || t.def.category == ThingCategory.Building ||
@@ -287,10 +297,57 @@ namespace MP_MeowOnlineShop
             if (verb != null && !verb.verbProps.IsMeleeAttack &&
                 verb.Available() && verb.CanHitTarget(target))
             {
-                verb.TryStartCastOn(target, false, true, false, false);
+                int pawnId = pawn.thingIDNumber;
+                int weaponId = weapon.thingIDNumber;
+                int now = Find.TickManager.TicksGame;
+                if (now < GetPerspectiveFireCooldownUntil(pawnId, weaponId))
+                    return true;
+                if (verb.TryStartCastOn(target, false, true, false, false))
+                    SetPerspectiveFireCooldown(
+                        pawnId,
+                        weaponId,
+                        now + verb.verbProps.AdjustedCooldownTicks(verb, pawn));
             }
 
             return true;
+        }
+
+        private static long PerspectiveFireKey(int pawnId, int weaponId)
+        {
+            return ((long)pawnId << 32) ^ (uint)weaponId;
+        }
+
+        private static int GetPerspectiveFireCooldownUntil(int pawnId, int weaponId)
+        {
+            return PerspectiveFireCooldownUntil.TryGetValue(
+                PerspectiveFireKey(pawnId, weaponId),
+                out int until)
+                ? until
+                : 0;
+        }
+
+        private static void SetPerspectiveFireCooldown(int pawnId, int weaponId, int untilTick)
+        {
+            long key = PerspectiveFireKey(pawnId, weaponId);
+            PerspectiveFireCooldownUntil[key] = untilTick;
+            if (PerspectiveFireCooldownUntil.Count <= MaxPerspectiveFireCooldownEntries)
+                return;
+
+            int now = Find.TickManager.TicksGame;
+            List<long> stale = null;
+            foreach (KeyValuePair<long, int> pair in PerspectiveFireCooldownUntil)
+            {
+                if (pair.Value <= now)
+                {
+                    if (stale == null)
+                        stale = new List<long>();
+                    stale.Add(pair.Key);
+                }
+            }
+            if (stale == null)
+                return;
+            for (int i = 0; i < stale.Count; i++)
+                PerspectiveFireCooldownUntil.Remove(stale[i]);
         }
 
         private static void PatchCompMethod(Harmony harmony, Type compType, string methodName, MethodInfo prefix, MethodInfo finalizer, MethodInfo postfix)

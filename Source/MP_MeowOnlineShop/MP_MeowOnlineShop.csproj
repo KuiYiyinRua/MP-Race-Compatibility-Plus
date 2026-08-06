@@ -214,6 +214,7 @@
     <Compile Include="Patch_VoiceroidAsAnimal.cs" />
     <Compile Include="Patch_RimJobWorld.cs" />
     <Compile Include="Patch_RjwAddons.cs" />
+    <Compile Include="Patch_RjwP1.cs" />
     <Compile Include="Patch_RjwSerializationRandIsolation.cs" />
     <Compile Include="Patch_RjwMenstruation.cs" />
     <Compile Include="Patch_RjwOnaholeModes.cs" />

@@ -42,10 +42,12 @@ namespace MP_MeowOnlineShop
             TryPatch(harmony, Patch_GodHands.WeaponHandlerType, "ToggleMeleeMode", nameof(ToggleMeleePrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.ControllerType, "ShootInShootingMode", nameof(ShootPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.ControllerType, "ResetMouseRelease", nameof(ResetMouseReleasePrefix), Priority.First + 2);
+            TryPatch(harmony, Patch_GodHands.ControllerType, "Update", nameof(GodHandUpdatePauseCancelPrefix), Priority.First + 2);
 
             TryPatch(harmony, Patch_GodHands.WrenchControllerType, "TryStartGrab", nameof(WrenchStartGrabPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WrenchControllerType, "UpdateDraggedThing", nameof(WrenchDragPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WrenchControllerType, "ReleaseGrab", nameof(WrenchReleasePrefix), Priority.First + 2);
+            TryPatch(harmony, Patch_GodHands.WrenchControllerType, "Update", nameof(WrenchUpdatePauseCancelPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WrenchControllerType, "StartBulkScoop", nameof(WrenchStartBulkPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WrenchTurretHandlerType, "TrySnatch", nameof(WrenchSnatchPrefix), Priority.First + 2);
             TryPatch(harmony, Patch_GodHands.WrenchTurretHandlerType, "TryRemoveFromPawn", nameof(WrenchRemoveFromPawnPrefix), Priority.First + 2);
@@ -80,6 +82,8 @@ namespace MP_MeowOnlineShop
 
         private static bool GodHandStartGrabPrefix(object __instance, Map map, Pawn target, IntVec3 startCell)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -102,6 +106,8 @@ namespace MP_MeowOnlineShop
 
         private static bool GodHandStartGrabItemPrefix(object __instance, Map map, Thing target, IntVec3 startCell)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -124,6 +130,8 @@ namespace MP_MeowOnlineShop
 
         private static bool GodHandDragPrefix(object __instance, Map map, IntVec3 cell, float time)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -174,6 +182,8 @@ namespace MP_MeowOnlineShop
 
         private static bool WeaponHandlerUpdatePrefix(object __instance, Map map, Vector3 mousePos)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!MP.IsInMultiplayer)
                 return true;
             if (ShouldInterceptUi() && __instance != null && Patch_GodHands.WeaponMeleeModeField != null &&
@@ -223,6 +233,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ToggleShootingPrefix(object __instance)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || __instance == null || Find.CurrentMap == null)
                 return true;
             object core = Patch_GodHands.WeaponCoreField?.GetValue(__instance);
@@ -255,6 +267,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ToggleMeleePrefix(object __instance)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || __instance == null || Find.CurrentMap == null)
                 return true;
             object core = Patch_GodHands.WeaponCoreField?.GetValue(__instance);
@@ -285,6 +299,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ShootPrefix(object __instance, Map map, IntVec3 target, float time)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -310,8 +326,30 @@ namespace MP_MeowOnlineShop
             return false;
         }
 
+        private static bool GodHandUpdatePauseCancelPrefix(object __instance)
+        {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+            {
+                GodHandSync.CancelPausedLocalSessions();
+                return false;
+            }
+            return true;
+        }
+
+        private static bool WrenchUpdatePauseCancelPrefix(object __instance)
+        {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+            {
+                GodHandSync.CancelPausedLocalSessions();
+                return false;
+            }
+            return true;
+        }
+
         private static bool WrenchStartGrabPrefix(object __instance, Map map, Thing thing, IntVec3 start)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null || thing == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -323,6 +361,8 @@ namespace MP_MeowOnlineShop
 
         private static bool WrenchDragPrefix(object __instance, Map map, IntVec3 currentCell)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -353,6 +393,8 @@ namespace MP_MeowOnlineShop
 
         private static bool WrenchStartBulkPrefix(object __instance, IntVec3 start, object type)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int playerId = Patch_GodHands.GetLocalPlayerId();
@@ -366,6 +408,8 @@ namespace MP_MeowOnlineShop
 
         private static bool WrenchSnatchPrefix(object __instance, Map map, Thing t, Pawn user)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null || t == null)
                 return true;
             GodHandSync.SyncWrenchSnatchTurret(map.uniqueID, t.thingIDNumber);
@@ -374,6 +418,8 @@ namespace MP_MeowOnlineShop
 
         private static bool WrenchRemoveFromPawnPrefix(object __instance, Map map, Pawn p, object head)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null || p == null || head == null)
                 return true;
             int headId = head is Thing thing ? thing.thingIDNumber : 0;
@@ -395,6 +441,8 @@ namespace MP_MeowOnlineShop
 
         private static bool MagnifierScalePrefix(object __instance, int action)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || __instance == null || Find.CurrentMap == null)
                 return true;
             Pawn pawn = Patch_GodHands.MagnifierTargetPawnField?.GetValue(__instance) as Pawn;
@@ -407,6 +455,8 @@ namespace MP_MeowOnlineShop
 
         private static bool PrecisionApplyChangesPrefix(object __instance)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || __instance == null || Find.CurrentMap == null)
                 return true;
             Thing thing = Patch_GodHands.PrecisionTargetThingField?.GetValue(__instance) as Thing;
@@ -444,6 +494,8 @@ namespace MP_MeowOnlineShop
 
         private static bool PrecisionTurretRotationPrefix(object __instance, float rotation)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || __instance == null || Find.CurrentMap == null)
                 return true;
             Thing thing = Patch_GodHands.PrecisionTargetThingField?.GetValue(__instance) as Thing;

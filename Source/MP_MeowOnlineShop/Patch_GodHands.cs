@@ -434,6 +434,13 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        public static bool PausedGodHandsBlocked()
+        {
+            if (!MP.IsInMultiplayer || Find.TickManager == null || !Find.TickManager.Paused)
+                return false;
+            return MpMeowOnlineShopMod.Settings?.blockGodHandsWhilePaused ?? false;
+        }
+
         public static object GetMapComponent(Map map, Type componentType)
         {
             if (map?.components == null || componentType == null)
@@ -581,6 +588,7 @@ namespace MP_MeowOnlineShop
             public int WeaponThingId;
             public Vector3 FixedWeaponPos;
             public int LastDragTick = -999;
+            public IntVec3 LastDragCell;
             public bool WaitForRelease;
             public int BurstLeft;
             public int NextShotTick;
@@ -921,6 +929,7 @@ namespace MP_MeowOnlineShop
                 MapIndex = mapIndex,
                 PlayerId = playerId,
                 StartCell = start,
+                LastDragCell = start,
                 RangeMode = rangeMode,
                 IsPawnGrab = grabPawn
             };
@@ -1027,6 +1036,7 @@ namespace MP_MeowOnlineShop
             if (map == null)
                 return;
             IntVec3 cell = new IntVec3(cellX, 0, cellZ);
+            session.LastDragCell = cell;
             Vector3 mousePos = cell.ToVector3Shifted();
             foreach (var pair in session.Pawns)
             {
@@ -1133,6 +1143,47 @@ namespace MP_MeowOnlineShop
             TrySyncLocalGodHandController(null, mapIndex, playerId);
         }
 
+        public static bool CancelPausedLocalSessions()
+        {
+            if (!Patch_GodHands.PausedGodHandsBlocked())
+                return false;
+            int playerId = Patch_GodHands.GetLocalPlayerId();
+            if (playerId < 0)
+                return false;
+
+            List<SessionKey> godHandKeys = null;
+            foreach (KeyValuePair<SessionKey, GodHandDragSession> pair in GodHandSessions)
+            {
+                if (pair.Key.PlayerId != playerId)
+                    continue;
+                if (godHandKeys == null)
+                    godHandKeys = new List<SessionKey>();
+                godHandKeys.Add(pair.Key);
+            }
+            if (godHandKeys != null)
+            {
+                for (int i = 0; i < godHandKeys.Count; i++)
+                    SyncGodHandForceRelease(playerId, godHandKeys[i].MapIndex);
+            }
+
+            List<SessionKey> wrenchKeys = null;
+            foreach (KeyValuePair<SessionKey, GodWrenchSession> pair in WrenchSessions)
+            {
+                if (pair.Key.PlayerId != playerId)
+                    continue;
+                if (wrenchKeys == null)
+                    wrenchKeys = new List<SessionKey>();
+                wrenchKeys.Add(pair.Key);
+            }
+            if (wrenchKeys != null)
+            {
+                for (int i = 0; i < wrenchKeys.Count; i++)
+                    SyncWrenchForceRelease(playerId, wrenchKeys[i].MapIndex);
+            }
+
+            return godHandKeys != null || wrenchKeys != null;
+        }
+
         private static void AbortGodHandDrag(GodHandDragSession session, Map map)
         {
             foreach (Pawn p in session.Pawns.Values)
@@ -1147,7 +1198,17 @@ namespace MP_MeowOnlineShop
             {
                 if (t == null || t.Destroyed || t.Spawned)
                     continue;
-                GenPlace.TryPlaceThing(t, fallback, map, ThingPlaceMode.Near);
+                IntVec3 targetCell = fallback;
+                if (session.LastDragCell.IsValid && session.LastDragCell.InBounds(map))
+                {
+                    Vector3 offset = session.Offsets.TryGetValue(t.thingIDNumber, out Vector3 stored)
+                        ? stored
+                        : Vector3.zero;
+                    IntVec3 candidate = (session.LastDragCell.ToVector3Shifted() + offset).ToIntVec3();
+                    if (candidate.InBounds(map))
+                        targetCell = candidate;
+                }
+                GenPlace.TryPlaceThing(t, targetCell, map, ThingPlaceMode.Near);
             }
         }
 
@@ -1437,6 +1498,25 @@ namespace MP_MeowOnlineShop
             {
                 if (session.Bulk && session.BulkController != null)
                     Patch_GodHands.Invoke(session.BulkController, Patch_GodHands.WrenchForceReleaseGrabMethod);
+                else
+                {
+                    Map map = Patch_GodHands.FindMap(mapIndex);
+                    if (map != null)
+                    {
+                        if (session.RoofDrag && session.RoofDef != null &&
+                            session.DragStartCell.InBounds(map))
+                        {
+                            map.roofGrid.SetRoof(session.DragStartCell, session.RoofDef);
+                            RefreshRoofCell(map, session.DragStartCell);
+                        }
+                        else if (session.DeepDrag && session.DeepDef != null &&
+                                 session.DragStartCell.InBounds(map))
+                        {
+                            map.deepResourceGrid.SetAt(session.DragStartCell, session.DeepDef, session.DeepCount);
+                            RefreshRoofCell(map, session.DragStartCell);
+                        }
+                    }
+                }
             }
             WrenchSessions.Remove(key);
             TrySyncLocalGodWrenchController(null, mapIndex, playerId);
@@ -1940,6 +2020,7 @@ namespace MP_MeowOnlineShop
             if (session == null)
             {
                 Patch_GodHands.SetField(controller, Patch_GodHands.WrenchGrabbedThingField, null);
+                Patch_GodHandsDesignators.CancelLocalWrenchDrag();
                 return;
             }
             Thing thing = session.ThingId == 0 ? null : Patch_GodHands.FindThingById(Patch_GodHands.FindMap(mapIndex), session.ThingId);

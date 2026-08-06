@@ -303,6 +303,8 @@ namespace MP_MeowOnlineShop
                     original?.Invoke();
                     return;
                 }
+                if (Patch_GodHands.PausedGodHandsBlocked())
+                    return;
 
                 bool newValue;
                 switch (action)
@@ -352,6 +354,8 @@ namespace MP_MeowOnlineShop
                     original?.Invoke();
                     return;
                 }
+                if (Patch_GodHands.PausedGodHandsBlocked())
+                    return;
                 GodHandSync.SyncTurretClearForced(mapIndex, headId);
             }));
         }
@@ -372,6 +376,8 @@ namespace MP_MeowOnlineShop
                     original?.Invoke(target);
                     return;
                 }
+                if (Patch_GodHands.PausedGodHandsBlocked())
+                    return;
                 int kind = InferTargetKind(slotRef);
                 int thingId = target.HasThing && target.Thing != null ? target.Thing.thingIDNumber : 0;
                 GodHandSync.SyncTurretTarget(mapIndex, headId, slotIndex, kind, thingId, target.Cell.x, target.Cell.z);
@@ -404,6 +410,8 @@ namespace MP_MeowOnlineShop
 
         private static bool LoadShellClosurePrefix(object __instance)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || __instance == null)
                 return true;
             ThingDef shellDef = null;
@@ -448,6 +456,8 @@ namespace MP_MeowOnlineShop
 
         private static bool RefuelOrderPrefix(object __instance, int slotIndex)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || !(__instance is Thing head) || head.Map == null)
                 return true;
             GodHandSync.SyncTurretRefuelOrder(head.Map.uniqueID, head.thingIDNumber, slotIndex);
@@ -488,6 +498,8 @@ namespace MP_MeowOnlineShop
 
         private static bool TrySendSlotCommand(object slot, Action<int, int, int> send)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (slot == null || SlotParentHeadField == null)
                 return true;
             object parent = SlotParentHeadField.GetValue(slot);

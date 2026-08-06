@@ -94,6 +94,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ProtectionDesignateSingleCellPrefix(object __instance, IntVec3 c)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int mode = Patch_GodHands.GetSettingsValue("currentProtectionMode", 0);
@@ -109,6 +111,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ProtectionDesignateThingPrefix(object __instance, Thing t)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null || !(t is Pawn pawn))
                 return true;
             int mode = Patch_GodHands.GetSettingsValue("currentProtectionMode", 0);
@@ -119,6 +123,8 @@ namespace MP_MeowOnlineShop
 
         private static bool AssistantDesignateSingleCellPrefix(object __instance, IntVec3 c)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int mode = AssistantModeField?.GetValue(__instance) is int m ? m : 0;
@@ -143,6 +149,8 @@ namespace MP_MeowOnlineShop
 
         private static bool AssistantDesignateThingPrefix(object __instance, Thing t)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null || t == null)
                 return true;
             int mode = AssistantModeField?.GetValue(__instance) is int m ? m : 0;
@@ -153,6 +161,8 @@ namespace MP_MeowOnlineShop
 
         private static bool CleaningDesignateSingleCellPrefix(object __instance, IntVec3 c)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int mode = GetCleaningMode();
@@ -163,6 +173,8 @@ namespace MP_MeowOnlineShop
 
         private static bool JudgmentDesignateSingleCellPrefix(object __instance, IntVec3 c)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int mode = Patch_GodHands.GetSettingsValue("currentJudgmentMode", 0);
@@ -172,6 +184,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ProtectionApplyIndividualPrefix(Pawn pawn)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || pawn == null)
                 return true;
             Map map = pawn.Map ?? Find.CurrentMap;
@@ -183,6 +197,8 @@ namespace MP_MeowOnlineShop
 
         private static bool CleanAreaPrefix(Map map, IntVec3 center)
         {
+            if (Patch_GodHands.PausedGodHandsBlocked())
+                return false;
             if (!ShouldInterceptUi() || map == null)
                 return true;
             GodHandSync.SyncCleanArea(map.uniqueID, center.x, center.z, GetCleaningMode(), GetCleanRadius());
@@ -218,6 +234,8 @@ namespace MP_MeowOnlineShop
                 return true;
             bool mouseDown = UnityInputCompat.GetMouseButton(0);
             bool isDragging = WrenchIsDraggingField != null && (bool)(WrenchIsDraggingField.GetValue(__instance) ?? false);
+            if (Patch_GodHands.PausedGodHandsBlocked() && mouseDown)
+                return false;
             object controller = WrenchControllerField?.GetValue(__instance);
             if (controller != null && Patch_GodHands.WrenchIsActiveProperty != null &&
                 (bool)(Patch_GodHands.WrenchIsActiveProperty.GetValue(controller, null) ?? false))
@@ -270,6 +288,8 @@ namespace MP_MeowOnlineShop
                 return true;
             bool mouseDown = UnityInputCompat.GetMouseButton(0);
             bool isDragging = WrenchIsDraggingField != null && (bool)(WrenchIsDraggingField.GetValue(__instance) ?? false);
+            if (Patch_GodHands.PausedGodHandsBlocked() && mouseDown)
+                return false;
             object controller = WrenchControllerField?.GetValue(__instance);
             if (controller != null && Patch_GodHands.WrenchIsActiveProperty != null &&
                 (bool)(Patch_GodHands.WrenchIsActiveProperty.GetValue(controller, null) ?? false))
@@ -323,6 +343,22 @@ namespace MP_MeowOnlineShop
             WrenchDraggedRoofField?.SetValue(designator, null);
             WrenchDraggedResourceField?.SetValue(designator, null);
             WrenchDraggedResourceCountField?.SetValue(designator, 0);
+        }
+
+        public static void CancelLocalWrenchDrag()
+        {
+            try
+            {
+                Designator selected = Find.DesignatorManager?.SelectedDesignator;
+                if (selected != null && Patch_GodHands.DesignatorGodWrenchType != null &&
+                    Patch_GodHands.DesignatorGodWrenchType.IsInstanceOfType(selected))
+                {
+                    CancelWrenchDrag(selected);
+                }
+            }
+            catch
+            {
+            }
         }
 
         private static bool WrenchForceReleasePrefix(object __instance)
