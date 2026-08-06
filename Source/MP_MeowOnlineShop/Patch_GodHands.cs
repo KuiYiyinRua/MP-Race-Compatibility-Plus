@@ -176,6 +176,7 @@ namespace MP_MeowOnlineShop
             Patch_GodHandsTurretCommands.Apply(harmony);
             Patch_GodHandsDesignators.Apply(harmony);
             Patch_GodHandsControllers.Apply(harmony);
+            Patch_GodHandsSessionLifecycle.Apply(harmony);
 
             Log.Message(
                 "[MP-MeowOnlineShop] God Hands multiplayer compatibility active: " +
@@ -343,7 +344,15 @@ namespace MP_MeowOnlineShop
 
         public static Map FindMap(int mapIndex)
         {
-            return Find.Maps?.FirstOrDefault(m => m != null && m.Index == mapIndex);
+            if (Find.Maps == null)
+                return null;
+            for (int i = 0; i < Find.Maps.Count; i++)
+            {
+                Map map = Find.Maps[i];
+                if (map != null && map.uniqueID == mapIndex)
+                    return map;
+            }
+            return null;
         }
 
         public static Thing FindThingById(Map map, int thingId)
@@ -616,12 +625,55 @@ namespace MP_MeowOnlineShop
             public override int GetHashCode() => unchecked((MapIndex * 397) ^ PlayerId);
         }
 
+        // Session keys use map.uniqueID (not Map.Index) so a command issued
+        // while one peer iterates Find.Maps in a different order still targets
+        // the same map on every peer during async replay.
         private static readonly Dictionary<SessionKey, GodHandDragSession> GodHandSessions = new Dictionary<SessionKey, GodHandDragSession>();
         private static readonly Dictionary<SessionKey, GodWrenchSession> WrenchSessions = new Dictionary<SessionKey, GodWrenchSession>();
         private static bool _registered;
         private static int _registeredCount;
 
         public static int RegisteredCount => _registeredCount;
+
+        public static void RemovePlayerSessions(int playerId)
+        {
+            if (playerId < 0)
+                return;
+
+            List<SessionKey> godKeys = null;
+            foreach (SessionKey key in GodHandSessions.Keys)
+            {
+                if (key.PlayerId == playerId)
+                {
+                    (godKeys ??= new List<SessionKey>()).Add(key);
+                }
+            }
+            if (godKeys != null)
+            {
+                for (int i = 0; i < godKeys.Count; i++)
+                    GodHandSessions.Remove(godKeys[i]);
+            }
+
+            List<SessionKey> wrenchKeys = null;
+            foreach (SessionKey key in WrenchSessions.Keys)
+            {
+                if (key.PlayerId == playerId)
+                {
+                    (wrenchKeys ??= new List<SessionKey>()).Add(key);
+                }
+            }
+            if (wrenchKeys != null)
+            {
+                for (int i = 0; i < wrenchKeys.Count; i++)
+                    WrenchSessions.Remove(wrenchKeys[i]);
+            }
+        }
+
+        public static void ResetAllSessions()
+        {
+            GodHandSessions.Clear();
+            WrenchSessions.Clear();
+        }
 
         public static void Register()
         {
@@ -1718,7 +1770,7 @@ namespace MP_MeowOnlineShop
                 Patch_GodHands.SetField(controller, Patch_GodHands.PokeTargetCorpseField, Patch_GodHands.FindThingById(map, corpseId) as Corpse);
             int state = 0;
             Map mapForPop = null;
-            int seed = Gen.HashCombineInt(map.Index, Gen.HashCombineInt(pawnId ^ corpseId, Gen.HashCombineInt(start.GetHashCode(), end.GetHashCode())));
+            int seed = Gen.HashCombineInt(map.uniqueID, Gen.HashCombineInt(pawnId ^ corpseId, Gen.HashCombineInt(start.GetHashCode(), end.GetHashCode())));
             DeterministicRandScope.Begin(map, seed, 0x77A1, ref state, out mapForPop, ignoreGate: true);
             try
             {

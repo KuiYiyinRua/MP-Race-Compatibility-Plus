@@ -171,6 +171,7 @@
     <Compile Include="Patch_GodHandsTurretCommands.cs" />
     <Compile Include="Patch_GodHandsDesignators.cs" />
     <Compile Include="Patch_GodHandsControllers.cs" />
+    <Compile Include="Patch_GodHandsSessionLifecycle.cs" />
     <Compile Include="Patch_MiliraShieldMode.cs" />
     <Compile Include="Patch_MiliraFlightMode.cs" />
     <Compile Include="Patch_MiliraFly.cs" />

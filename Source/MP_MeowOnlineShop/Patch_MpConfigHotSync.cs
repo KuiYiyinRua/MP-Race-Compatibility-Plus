@@ -985,10 +985,8 @@ namespace MP_MeowOnlineShop
 
         private static bool ValuesEqual(object left, object right)
         {
-            if (ReferenceEquals(left, right))
-                return true;
             if (left == null || right == null)
-                return false;
+                return left == right;
 
             if (left is IEnumerable leftEnumerable && right is IEnumerable rightEnumerable)
             {

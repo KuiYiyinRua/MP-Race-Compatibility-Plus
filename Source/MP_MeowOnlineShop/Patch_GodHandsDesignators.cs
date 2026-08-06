@@ -102,7 +102,7 @@ namespace MP_MeowOnlineShop
                 float radius = Patch_GodHands.GetSettingsValue("protectionDomeRadius", 10f);
                 bool infinite = Patch_GodHands.GetSettingsValue("protectionDomeInfiniteDuration", true);
                 int duration = Patch_GodHands.GetSettingsValue("protectionDurationTicks", 60000);
-                GodHandSync.SyncProtectionExecute(Find.CurrentMap.Index, c.x, c.z, mode, radius, infinite, duration);
+                GodHandSync.SyncProtectionExecute(Find.CurrentMap.uniqueID, c.x, c.z, mode, radius, infinite, duration);
             }
             return false;
         }
@@ -113,7 +113,7 @@ namespace MP_MeowOnlineShop
                 return true;
             int mode = Patch_GodHands.GetSettingsValue("currentProtectionMode", 0);
             if (mode == 1)
-                GodHandSync.SyncProtectionIndividual(Find.CurrentMap.Index, pawn.thingIDNumber);
+                GodHandSync.SyncProtectionIndividual(Find.CurrentMap.uniqueID, pawn.thingIDNumber);
             return false;
         }
 
@@ -127,14 +127,14 @@ namespace MP_MeowOnlineShop
             {
                 if (mode == 0 && t is Building_WorkTable)
                 {
-                    GodHandSync.SyncAssistantExecute(Find.CurrentMap.Index, t.thingIDNumber, mode, shift);
+                    GodHandSync.SyncAssistantExecute(Find.CurrentMap.uniqueID, t.thingIDNumber, mode, shift);
                     return false;
                 }
                 if (mode == 1 &&
                     ((t is Pawn candidatePawn && candidatePawn.Spawned) ||
                      (t is Building_Bed candidateBed && candidateBed.Spawned)))
                 {
-                    GodHandSync.SyncAssistantExecute(Find.CurrentMap.Index, t.thingIDNumber, mode, shift);
+                    GodHandSync.SyncAssistantExecute(Find.CurrentMap.uniqueID, t.thingIDNumber, mode, shift);
                     return false;
                 }
             }
@@ -147,7 +147,7 @@ namespace MP_MeowOnlineShop
                 return true;
             int mode = AssistantModeField?.GetValue(__instance) is int m ? m : 0;
             bool shift = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
-            GodHandSync.SyncAssistantExecute(Find.CurrentMap.Index, t.thingIDNumber, mode, shift);
+            GodHandSync.SyncAssistantExecute(Find.CurrentMap.uniqueID, t.thingIDNumber, mode, shift);
             return false;
         }
 
@@ -157,7 +157,7 @@ namespace MP_MeowOnlineShop
                 return true;
             int mode = GetCleaningMode();
             int radius = GetCleanRadius();
-            GodHandSync.SyncCleanArea(Find.CurrentMap.Index, c.x, c.z, mode, radius);
+            GodHandSync.SyncCleanArea(Find.CurrentMap.uniqueID, c.x, c.z, mode, radius);
             return false;
         }
 
@@ -166,7 +166,7 @@ namespace MP_MeowOnlineShop
             if (!ShouldInterceptUi() || Find.CurrentMap == null)
                 return true;
             int mode = Patch_GodHands.GetSettingsValue("currentJudgmentMode", 0);
-            GodHandSync.SyncJudgmentExecute(Find.CurrentMap.Index, c.x, c.z, mode);
+            GodHandSync.SyncJudgmentExecute(Find.CurrentMap.uniqueID, c.x, c.z, mode);
             return false;
         }
 
@@ -177,7 +177,7 @@ namespace MP_MeowOnlineShop
             Map map = pawn.Map ?? Find.CurrentMap;
             if (map == null)
                 return true;
-            GodHandSync.SyncProtectionIndividual(map.Index, pawn.thingIDNumber);
+            GodHandSync.SyncProtectionIndividual(map.uniqueID, pawn.thingIDNumber);
             return false;
         }
 
@@ -185,7 +185,7 @@ namespace MP_MeowOnlineShop
         {
             if (!ShouldInterceptUi() || map == null)
                 return true;
-            GodHandSync.SyncCleanArea(map.Index, center.x, center.z, GetCleaningMode(), GetCleanRadius());
+            GodHandSync.SyncCleanArea(map.uniqueID, center.x, center.z, GetCleaningMode(), GetCleanRadius());
             return false;
         }
 
@@ -199,7 +199,7 @@ namespace MP_MeowOnlineShop
             Corpse corpse = PokeTargetCorpseField?.GetValue(__instance) as Corpse;
             IntVec3 start = PokeStartCellField == null ? IntVec3.Invalid : (IntVec3)PokeStartCellField.GetValue(__instance);
             GodHandSync.SyncPokeEnd(
-                map.Index,
+                map.uniqueID,
                 pawn?.thingIDNumber ?? 0,
                 corpse?.thingIDNumber ?? 0,
                 start.x,
@@ -223,9 +223,9 @@ namespace MP_MeowOnlineShop
                 (bool)(Patch_GodHands.WrenchIsActiveProperty.GetValue(controller, null) ?? false))
             {
                 if (mouseDown)
-                    GodHandSync.SyncWrenchDrag(playerId, map.Index, cell.x, cell.z);
+                    GodHandSync.SyncWrenchDrag(playerId, map.uniqueID, cell.x, cell.z);
                 else
-                    GodHandSync.SyncWrenchRelease(playerId, map.Index, cell.x, cell.z);
+                    GodHandSync.SyncWrenchRelease(playerId, map.uniqueID, cell.x, cell.z);
             }
 
             if (mouseDown && !isDragging)
@@ -234,7 +234,7 @@ namespace MP_MeowOnlineShop
                 if (shift && Patch_GodHands.GetSettingsValue("godWrenchEnableBulkScoop", true))
                 {
                     float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
-                    GodHandSync.SyncWrenchStartBulk(playerId, map.Index, cell.x, cell.z, 2, radius);
+                    GodHandSync.SyncWrenchStartBulk(playerId, map.uniqueID, cell.x, cell.z, 2, radius);
                     return false;
                 }
                 RoofDef roof = map.roofGrid.RoofAt(cell);
@@ -243,7 +243,7 @@ namespace MP_MeowOnlineShop
                     WrenchIsDraggingField?.SetValue(__instance, true);
                     WrenchDragStartCellField?.SetValue(__instance, cell);
                     WrenchDraggedRoofField?.SetValue(__instance, roof);
-                    GodHandSync.SyncWrenchRoofStart(playerId, map.Index, cell.x, cell.z, roof.defName);
+                    GodHandSync.SyncWrenchRoofStart(playerId, map.uniqueID, cell.x, cell.z, roof.defName);
                 }
                 return false;
             }
@@ -253,7 +253,7 @@ namespace MP_MeowOnlineShop
                 RoofDef dragged = WrenchDraggedRoofField?.GetValue(__instance) as RoofDef;
                 IntVec3 start = WrenchDragStartCellField == null ? cell : (IntVec3)WrenchDragStartCellField.GetValue(__instance);
                 if (dragged != null)
-                    GodHandSync.SyncWrenchRoofRelease(playerId, map.Index, cell.x, cell.z, dragged.defName, start.x, start.z);
+                    GodHandSync.SyncWrenchRoofRelease(playerId, map.uniqueID, cell.x, cell.z, dragged.defName, start.x, start.z);
                 CancelWrenchDrag(__instance);
                 return false;
             }
@@ -275,9 +275,9 @@ namespace MP_MeowOnlineShop
                 (bool)(Patch_GodHands.WrenchIsActiveProperty.GetValue(controller, null) ?? false))
             {
                 if (mouseDown)
-                    GodHandSync.SyncWrenchDrag(playerId, map.Index, cell.x, cell.z);
+                    GodHandSync.SyncWrenchDrag(playerId, map.uniqueID, cell.x, cell.z);
                 else
-                    GodHandSync.SyncWrenchRelease(playerId, map.Index, cell.x, cell.z);
+                    GodHandSync.SyncWrenchRelease(playerId, map.uniqueID, cell.x, cell.z);
             }
 
             if (mouseDown && !isDragging)
@@ -286,7 +286,7 @@ namespace MP_MeowOnlineShop
                 if (shift && Patch_GodHands.GetSettingsValue("godWrenchEnableBulkScoop", true))
                 {
                     float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
-                    GodHandSync.SyncWrenchStartBulk(playerId, map.Index, cell.x, cell.z, 3, radius);
+                    GodHandSync.SyncWrenchStartBulk(playerId, map.uniqueID, cell.x, cell.z, 3, radius);
                     return false;
                 }
                 ThingDef resource = map.deepResourceGrid.ThingDefAt(cell);
@@ -297,7 +297,7 @@ namespace MP_MeowOnlineShop
                     WrenchDragStartCellField?.SetValue(__instance, cell);
                     WrenchDraggedResourceField?.SetValue(__instance, resource);
                     WrenchDraggedResourceCountField?.SetValue(__instance, count);
-                    GodHandSync.SyncWrenchDeepStart(playerId, map.Index, cell.x, cell.z, resource.defName);
+                    GodHandSync.SyncWrenchDeepStart(playerId, map.uniqueID, cell.x, cell.z, resource.defName);
                 }
                 return false;
             }
@@ -308,7 +308,7 @@ namespace MP_MeowOnlineShop
                 int count = WrenchDraggedResourceCountField?.GetValue(__instance) is int c ? c : 0;
                 IntVec3 start = WrenchDragStartCellField == null ? cell : (IntVec3)WrenchDragStartCellField.GetValue(__instance);
                 if (dragged != null)
-                    GodHandSync.SyncWrenchDeepRelease(playerId, map.Index, cell.x, cell.z, dragged.defName, count, start.x, start.z);
+                    GodHandSync.SyncWrenchDeepRelease(playerId, map.uniqueID, cell.x, cell.z, dragged.defName, count, start.x, start.z);
                 CancelWrenchDrag(__instance);
                 return false;
             }
@@ -335,7 +335,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncWrenchForceRelease(playerId, map.Index);
+            GodHandSync.SyncWrenchForceRelease(playerId, map.uniqueID);
             return false;
         }
 

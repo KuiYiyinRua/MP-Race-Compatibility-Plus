@@ -295,7 +295,7 @@ namespace MP_MeowOnlineShop
                 return;
             var original = CommandToggleField.GetValue(toggle) as Action;
             int headId = head.thingIDNumber;
-            int mapIndex = head.Map.Index;
+            int mapIndex = head.Map.uniqueID;
             CommandToggleField.SetValue(toggle, (Action)(() =>
             {
                 if (!MP.IsInMultiplayer || MP.IsExecutingSyncCommand)
@@ -344,7 +344,7 @@ namespace MP_MeowOnlineShop
                 return;
             var original = CommandActionField.GetValue(commandAction) as Action;
             int headId = head.thingIDNumber;
-            int mapIndex = head.Map.Index;
+            int mapIndex = head.Map.uniqueID;
             CommandActionField.SetValue(commandAction, (Action)(() =>
             {
                 if (!MP.IsInMultiplayer || MP.IsExecutingSyncCommand)
@@ -364,7 +364,7 @@ namespace MP_MeowOnlineShop
             object slotRef = CommandTargetSlotField.GetValue(command);
             int slotIndex = FindSlotIndex(state.Slots, slotRef);
             int headId = head.thingIDNumber;
-            int mapIndex = head.Map.Index;
+            int mapIndex = head.Map.uniqueID;
             CommandTargetOnSelectedField.SetValue(command, (Action<LocalTargetInfo>)(target =>
             {
                 if (!MP.IsInMultiplayer || MP.IsExecutingSyncCommand)
@@ -437,7 +437,7 @@ namespace MP_MeowOnlineShop
             if (count <= 0)
                 return false;
             GodHandSync.SyncTurretLoadShell(
-                head.Map.Index,
+                head.Map.uniqueID,
                 head.thingIDNumber,
                 slotIndex,
                 shellThing.thingIDNumber,
@@ -450,7 +450,7 @@ namespace MP_MeowOnlineShop
         {
             if (!ShouldInterceptUi() || !(__instance is Thing head) || head.Map == null)
                 return true;
-            GodHandSync.SyncTurretRefuelOrder(head.Map.Index, head.thingIDNumber, slotIndex);
+            GodHandSync.SyncTurretRefuelOrder(head.Map.uniqueID, head.thingIDNumber, slotIndex);
             return false;
         }
 
@@ -497,7 +497,7 @@ namespace MP_MeowOnlineShop
             int slotIndex = stackIndex is int i ? i : -1;
             if (slotIndex < 0)
                 return true;
-            send(head.Map.Index, head.thingIDNumber, slotIndex);
+            send(head.Map.uniqueID, head.thingIDNumber, slotIndex);
             return false;
         }
 

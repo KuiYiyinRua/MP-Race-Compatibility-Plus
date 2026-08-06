@@ -89,7 +89,7 @@ namespace MP_MeowOnlineShop
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
             GodHandSync.SyncGodHandStartGrab(
                 playerId,
-                map.Index,
+                map.uniqueID,
                 target?.thingIDNumber ?? 0,
                 0,
                 startCell.x,
@@ -111,7 +111,7 @@ namespace MP_MeowOnlineShop
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
             GodHandSync.SyncGodHandStartGrab(
                 playerId,
-                map.Index,
+                map.uniqueID,
                 0,
                 target?.thingIDNumber ?? 0,
                 startCell.x,
@@ -130,14 +130,14 @@ namespace MP_MeowOnlineShop
             if (playerId < 0)
                 return true;
             int tick = Find.TickManager.TicksGame;
-            if (LastGodHandDragCell.TryGetValue(map.Index, out IntVec3 last) &&
+            if (LastGodHandDragCell.TryGetValue(map.uniqueID, out IntVec3 last) &&
                 last == cell &&
-                LastGodHandDragTick.TryGetValue(map.Index, out int lastTick) &&
+                LastGodHandDragTick.TryGetValue(map.uniqueID, out int lastTick) &&
                 tick - lastTick < 2)
                 return false;
-            LastGodHandDragCell[map.Index] = cell;
-            LastGodHandDragTick[map.Index] = tick;
-            GodHandSync.SyncGodHandDrag(playerId, map.Index, cell.x, cell.z);
+            LastGodHandDragCell[map.uniqueID] = cell;
+            LastGodHandDragTick[map.uniqueID] = tick;
+            GodHandSync.SyncGodHandDrag(playerId, map.uniqueID, cell.x, cell.z);
             return false;
         }
 
@@ -148,7 +148,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandRelease(playerId, map.Index, cell.x, cell.z);
+            GodHandSync.SyncGodHandRelease(playerId, map.uniqueID, cell.x, cell.z);
             return false;
         }
 
@@ -162,7 +162,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandForceRelease(playerId, map.Index);
+            GodHandSync.SyncGodHandForceRelease(playerId, map.uniqueID);
             return false;
         }
 
@@ -213,7 +213,7 @@ namespace MP_MeowOnlineShop
                 hitList?.Add(target);
                 int playerId = Patch_GodHands.GetLocalPlayerId();
                 if (playerId >= 0)
-                    GodHandSync.SyncGodHandMeleeHit(playerId, map.Index, weapon.thingIDNumber, target.thingIDNumber);
+                    GodHandSync.SyncGodHandMeleeHit(playerId, map.uniqueID, weapon.thingIDNumber, target.thingIDNumber);
             }
             else
             {
@@ -245,7 +245,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandToggleShooting(playerId, Find.CurrentMap.Index, weapon.thingIDNumber, pos.x, pos.z);
+            GodHandSync.SyncGodHandToggleShooting(playerId, Find.CurrentMap.uniqueID, weapon.thingIDNumber, pos.x, pos.z);
             Patch_GodHands.SetField(__instance, Patch_GodHands.WeaponShootingModeField, true);
             Patch_GodHands.SetField(__instance, Patch_GodHands.WeaponMeleeModeField, false);
             Patch_GodHands.SetField(__instance, Patch_GodHands.WeaponFixedWeaponPosField, pos);
@@ -276,7 +276,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandToggleMelee(playerId, Find.CurrentMap.Index, weapon.thingIDNumber);
+            GodHandSync.SyncGodHandToggleMelee(playerId, Find.CurrentMap.uniqueID, weapon.thingIDNumber);
             Patch_GodHands.SetField(__instance, Patch_GodHands.WeaponMeleeModeField, true);
             Patch_GodHands.SetField(__instance, Patch_GodHands.WeaponShootingModeField, false);
             Patch_GodHands.SetField(__instance, Patch_GodHands.WeaponHitListField, new HashSet<Thing>());
@@ -290,7 +290,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandShoot(playerId, map.Index, 0, target.x, target.z);
+            GodHandSync.SyncGodHandShoot(playerId, map.uniqueID, 0, target.x, target.z);
             return false;
         }
 
@@ -305,7 +305,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandResetMouseRelease(playerId, Find.CurrentMap.Index);
+            GodHandSync.SyncGodHandResetMouseRelease(playerId, Find.CurrentMap.uniqueID);
             Patch_GodHands.SetField(weaponHandler, Patch_GodHands.WeaponWaitForReleaseField, false);
             return false;
         }
@@ -317,7 +317,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncWrenchStartGrab(playerId, map.Index, thing.thingIDNumber, start.x, start.z);
+            GodHandSync.SyncWrenchStartGrab(playerId, map.uniqueID, thing.thingIDNumber, start.x, start.z);
             return false;
         }
 
@@ -329,14 +329,14 @@ namespace MP_MeowOnlineShop
             if (playerId < 0)
                 return true;
             int tick = Find.TickManager.TicksGame;
-            if (LastWrenchDragCell.TryGetValue(map.Index, out IntVec3 last) &&
+            if (LastWrenchDragCell.TryGetValue(map.uniqueID, out IntVec3 last) &&
                 last == currentCell &&
-                LastWrenchDragTick.TryGetValue(map.Index, out int lastTick) &&
+                LastWrenchDragTick.TryGetValue(map.uniqueID, out int lastTick) &&
                 tick - lastTick < 2)
                 return false;
-            LastWrenchDragCell[map.Index] = currentCell;
-            LastWrenchDragTick[map.Index] = tick;
-            GodHandSync.SyncWrenchDrag(playerId, map.Index, currentCell.x, currentCell.z);
+            LastWrenchDragCell[map.uniqueID] = currentCell;
+            LastWrenchDragTick[map.uniqueID] = tick;
+            GodHandSync.SyncWrenchDrag(playerId, map.uniqueID, currentCell.x, currentCell.z);
             return false;
         }
 
@@ -347,7 +347,7 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncWrenchRelease(playerId, map.Index, cell.x, cell.z);
+            GodHandSync.SyncWrenchRelease(playerId, map.uniqueID, cell.x, cell.z);
             return false;
         }
 
@@ -360,7 +360,7 @@ namespace MP_MeowOnlineShop
                 return true;
             int typeInt = type == null ? 0 : Convert.ToInt32(type);
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
-            GodHandSync.SyncWrenchStartBulk(playerId, Find.CurrentMap.Index, start.x, start.z, typeInt, radius);
+            GodHandSync.SyncWrenchStartBulk(playerId, Find.CurrentMap.uniqueID, start.x, start.z, typeInt, radius);
             return false;
         }
 
@@ -368,7 +368,7 @@ namespace MP_MeowOnlineShop
         {
             if (!ShouldInterceptUi() || map == null || t == null)
                 return true;
-            GodHandSync.SyncWrenchSnatchTurret(map.Index, t.thingIDNumber);
+            GodHandSync.SyncWrenchSnatchTurret(map.uniqueID, t.thingIDNumber);
             return false;
         }
 
@@ -379,7 +379,7 @@ namespace MP_MeowOnlineShop
             int headId = head is Thing thing ? thing.thingIDNumber : 0;
             if (headId == 0)
                 return true;
-            GodHandSync.SyncWrenchRemoveFromPawn(map.Index, p.thingIDNumber, headId);
+            GodHandSync.SyncWrenchRemoveFromPawn(map.uniqueID, p.thingIDNumber, headId);
             return false;
         }
 
@@ -401,7 +401,7 @@ namespace MP_MeowOnlineShop
             if (pawn == null)
                 return true;
             bool visualMode = (bool)(Patch_GodHands.MagnifierVisualScaleModeField?.GetValue(__instance) ?? true);
-            GodHandSync.SyncMagnifier(Find.CurrentMap.Index, pawn.thingIDNumber, action, visualMode);
+            GodHandSync.SyncMagnifier(Find.CurrentMap.uniqueID, pawn.thingIDNumber, action, visualMode);
             return false;
         }
 
@@ -428,7 +428,7 @@ namespace MP_MeowOnlineShop
             object overrideRot = Patch_GodHands.PrecisionOverrideRotField?.GetValue(__instance);
             int rot = overrideRot is int r ? r : -1;
             GodHandSync.SyncPrecisionTransform(
-                Find.CurrentMap.Index,
+                Find.CurrentMap.uniqueID,
                 thing.thingIDNumber,
                 key,
                 offset.x,
@@ -449,7 +449,7 @@ namespace MP_MeowOnlineShop
             Thing thing = Patch_GodHands.PrecisionTargetThingField?.GetValue(__instance) as Thing;
             if (thing == null)
                 return true;
-            GodHandSync.SyncPrecisionTurretRotation(Find.CurrentMap.Index, thing.thingIDNumber, rotation);
+            GodHandSync.SyncPrecisionTurretRotation(Find.CurrentMap.uniqueID, thing.thingIDNumber, rotation);
             return false;
         }
 
