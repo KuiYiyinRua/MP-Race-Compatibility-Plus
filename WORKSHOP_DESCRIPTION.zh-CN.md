@@ -33,7 +33,8 @@
 - NewRatkinPlus：鼠族。
 - Ratkin Weapons+：鼠族武器扩展。
 - Ratkin Knights+：鼠族骑士扩展。
-- Ratkin Underground+：鼠族地下势力扩展。
+- Ratkin Anomaly+：鼠族异象遗物、剧情确认与随机特效兼容。
+- Ratkin Underground+：地下鼠族电台、共享交易、货运、乘客与钻机控制。
 - [OA] Ratkin Faction: Oberonia aurea：金鸢尾兰鼠族派系。
 - [OA] Oberonia Aurea Framework：金鸢尾兰内容框架。
 - [OA] Ratkin Scenario: Snowstorm Orphan：鼠族雪灾遗孤剧本。
@@ -143,9 +144,9 @@
 - 多地图调度：按战斗、警戒和空闲状态调整更新频率，减少多基地开销；实验功能，默认关闭。
 - 界面与日志减负：减少警报检查、重复 UI 操作及卡顿日志。
 
-补丁按目标结构检测，未安装或版本不匹配时会自动跳过。兼容性受模组版本、加载顺序及组合影响，无法保证所有组合完全避免不同步。
+兼容性受版本、加载顺序及组合影响，无法保证任意整合包均不失步。
 
-硬性依赖：Multiplayer。请将本模组置于 Multiplayer 和所有被兼容模组之后，并放在列表末尾。主机与客户端必须使用完全相同的模组列表和版本；不要与其他 Tick、TPS 或时间膨胀调度模组同时使用。
+需要 Multiplayer；本模组放在列表末尾。所有玩家使用相同模组及版本；不要同时启用其他 Tick、TPS 或时间膨胀调度模组。
 
 作者：尹怨怨
 

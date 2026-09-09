@@ -5,5 +5,6 @@
     <li>/</li>
     <li IfModActive="co.uk.epicguru.meleeanimation">MeleeAnimation</li>
     <li IfModActive="ZuoYao.RavenRace">RavenCompatibility</li>
+    <li IfModActive="rku.ratkinunderground">RatkinUnderground</li>
   </v1.6>
 </loadFolders>

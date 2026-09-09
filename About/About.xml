@@ -18,6 +18,8 @@ MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch col
     </li>
   </modDependencies>
   <loadAfter>
+    <li>fxz.ratkinanomaly.update</li>
+    <li>rku.ratkinunderground</li>
     <li>keeptpa.NivarianRace</li>
     <li>keeptpa.NivarianRace.MentalHarness</li>
     <li>keeptpa.NivarianRace.ApparelConvenienceStore</li>

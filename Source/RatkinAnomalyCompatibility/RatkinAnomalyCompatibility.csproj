@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
+    <AssemblyName>Meow.RatkinCompatibility</AssemblyName><Version>1.0.0</Version>
+    <GameRoot Condition="'$(GameRoot)' == ''">G:/Steam/steamapps/common/RimWorld</GameRoot>
+    <ModsRoot Condition="'$(ModsRoot)' == ''">../../..</ModsRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(ModsRoot)/2009463077/Current/Assemblies/0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0MultiplayerAPI"><HintPath>$(ModsRoot)/Multiplayer/1.6/Assemblies/0MultiplayerAPI.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

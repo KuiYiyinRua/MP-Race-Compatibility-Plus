@@ -31,7 +31,8 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - NewRatkinPlus: Ratkin race.
 - Ratkin Weapons+: Ratkin weapons.
 - Ratkin Knights+: Ratkin knights.
-- Ratkin Underground+: Underground Ratkin faction.
+- Ratkin Anomaly+: Relic actions, story confirmations and deterministic effects.
+- Ratkin Underground+: Radio, shared trading, cargo, passengers and drilling controls.
 - [OA] Ratkin Faction: Oberonia aurea: Oberonia Aurea Ratkin faction.
 - [OA] Oberonia Aurea Framework: Oberonia Aurea framework.
 - [OA] Ratkin Scenario: Snowstorm Orphan: Ratkin snowstorm scenario.
@@ -141,7 +142,7 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - Multi-map scheduling: adjusts combat, alert and idle map update frequency to reduce workload. Experimental; disabled by default.
 - UI and log overhead reduction: checks some alerts less often, batches some repeated UI actions and reduces repeated lag messages.
 
-Patches detect their target structures and skip missing or incompatible versions. Compatibility depends on mod versions, load order, and mod combinations; no universal desync-free result is guaranteed.
+Compatibility depends on mod versions, load order and combinations; arbitrary modpacks are not guaranteed desync-free.
 
 Required: Multiplayer. Load this mod after Multiplayer and all mods it patches, at the end of the mod list. The host and all clients must use identical mod lists and versions. Do not combine it with other Tick, TPS, or time-dilation scheduling mods.
 

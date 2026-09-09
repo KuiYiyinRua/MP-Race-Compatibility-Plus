@@ -657,7 +657,8 @@ P1 批量审计表已覆盖 P1Inventory160.txt 中本阶段需要定向审计的
 | 模组 | 状态 | 结论 |
 | --- | --- | --- |
 | `solaris.ratkinracemod`（NewRatkinPlus，1578693166） | 已补丁 | 1.6 反编译确认 `Comp_BFRAmmoToggle.isHEMode`、`Comp_PulseRifleFireMode.isBurstMode` 由 Gizmo lambda 直写，注册 SyncField；`Dialog_CaravanSettlers.AcceptPawn`/`AcceptAllSettlers` 会改派系/Lord/游商 GameComponent，前缀改为同步重放 |
-| `rku.ratkinunderground`（Ratkin Underground+，3613814532） | 已补丁 | `Comp_RKU_Radio.isSearchJob`、钻地车炮塔 `holdFire` 注册 SyncField；电台对话同步；背包电台 `LaunchBunkerBuster`/`LaunchDrillerGun` 在 UI 同步上下文转为同步命令并写入冷却 tick，Tick 自动发射保持本地 |
+| `rku.ratkinunderground`（Ratkin Underground+，3613814532） | 已补丁；2026-09-10 扩展覆盖 | 在原补丁上增加完整电台按钮、共享交易与货物交付、冷却/扫描站点存档、钻机及货运/乘客窗口、背包完整目标回调；验证记录见 [鼠族扩展专项](Ratkin-Expansions-Multiplayer.md) |
+| `fxz.ratkinanomaly.update`（Ratkin Anomaly+，3293914637） | 2026-09-10 新增补丁 | 怀表、童话书和黑十字石交互同步，浆果酒及暗魂确定性随机，纯特效随机隔离；验证记录见 [鼠族扩展专项](Ratkin-Expansions-Multiplayer.md) |
 | `melondove.wolfeinrace`（Wolfein Race，3473140562） | 已补丁 | `Building_TurretGunForceAiming.holdFire/burstActivated`、`CompCauseHediff_ArtificialMoonApparatus.switchOn/powerOn` 注册 SyncField；充能护盾 `CompShield.Reset`/`CompApparelVerbOwner.UsedOnce` 与工具切换 `currentGroupIndex`/`ApplyCurrentToolGroupVerbs` 注册同步 |
 | `oark.ratkinfaction.oberoniaaurea`（Oberonia Aurea YH，3159926804） | 已补丁 | `GravDataBeacon.isActive`、`CompCircuitRegulator.repairmentEnabled` 注册 SyncField；失事飞船 `MakeGravityAdjustmentJob` 注册 SyncMethod |
 | `ny.smeltedloong`（中式龙娘——冶龍，3578170180） | 已补丁 | `HC_TurretGun.fireAtWill` 注册 SyncField；BlackBird 进攻/防守/增援三个皇家许可 `OrderForceTarget` 注册 SyncMethod |
