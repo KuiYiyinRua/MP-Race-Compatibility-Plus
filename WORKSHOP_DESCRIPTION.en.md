@@ -1,6 +1,6 @@
 # [MP] Multiplayer Compatibility Patches
 
-A Harmony compatibility patch collection for RimWorld 1.6 Multiplayer (rwmt.Multiplayer), supplementing the official Multiplayer Compatibility package. Includes targeted compatibility patches for the following mods:
+Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Supported mods:
 
 - Meow Framework / Meow Online Shop: Framework and online trading.
 - MoeLotl Race: Axolotl race.
@@ -37,6 +37,10 @@ A Harmony compatibility patch collection for RimWorld 1.6 Multiplayer (rwmt.Mult
 - [OA] Ratkin Scenario: Snowstorm Orphan: Ratkin snowstorm scenario.
 - Maru Race: Maru race.
 - Nivarian Race: Nivarian race, recruitment, production and mothership support.
+- Nivarian Mental Harness: Additional psionic abilities.
+- Nivarian: Apparel Store: Clothing and accessories.
+- Nivarian Race: Draconiture: Furniture, engineering drones and reshaping caskets.
+- Nivarian Race: DraconicMilitary: Military equipment, drones, turret controls and teleport beacons.
 - Monolyn Race: Monolyn race, building controls and light networks.
 - Sylvie Race: Sylvie race.
 - Dragonian Mix: Dragonian race expansion.
@@ -132,9 +136,9 @@ A Harmony compatibility patch collection for RimWorld 1.6 Multiplayer (rwmt.Mult
 
 ## Additional features
 
-- Combat speed unlock: removes forced 1x speed during combat and threat events in multiplayer, while respecting Multiplayer's shared speed controls.
-- TPS optimization settings: offers several optimization presets with adjustable strength and parameters.
-- Multi-map scheduling: experimental scheduling adjusts update frequency for combat, alert and idle maps to reduce simultaneous multi-base workload. Disabled by default; enable manually.
+- Combat speed unlock: removes forced 1x combat speed while respecting shared speed controls.
+- TPS settings: optimization presets with adjustable strength and parameters.
+- Multi-map scheduling: adjusts combat, alert and idle map update frequency to reduce workload. Experimental; disabled by default.
 - UI and log overhead reduction: checks some alerts less often, batches some repeated UI actions and reduces repeated lag messages.
 
 Patches detect their target structures and skip missing or incompatible versions. Compatibility depends on mod versions, load order, and mod combinations; no universal desync-free result is guaranteed.

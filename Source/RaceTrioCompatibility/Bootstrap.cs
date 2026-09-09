@@ -16,6 +16,7 @@ namespace Meow.RaceTrioCompatibility
         static Bootstrap()
         {
             if (!MP.enabled) return;
+            NivarianExpansions.Apply(new Harmony("meow.trio.nivarian-expansions"));
             if (ModsConfig.IsActive("keeptpa.NivarianRace"))
             {
                 Recruitment.Apply(new Harmony("meow.trio.recruitment"));

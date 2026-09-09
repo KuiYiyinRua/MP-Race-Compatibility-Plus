@@ -19,6 +19,10 @@ MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch col
   </modDependencies>
   <loadAfter>
     <li>keeptpa.NivarianRace</li>
+    <li>keeptpa.NivarianRace.MentalHarness</li>
+    <li>keeptpa.NivarianRace.ApparelConvenienceStore</li>
+    <li>keeptpa.NivarianDraconiture</li>
+    <li>keeptpa.NivarianDraconicMilitary</li>
     <li>ASEL.MonolynRace</li>
     <li>hatena.VoiceroidAsAnimal</li>
     <li>ZuoYao.RavenRace</li>

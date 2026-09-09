@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
     <AssemblyName>Meow.RaceTrioCompatibility</AssemblyName>
+    <Version>1.1.0</Version>
     <GameRoot>G:/Steam/steamapps/common/RimWorld</GameRoot>
     <ReferenceRoot>../../BuildValidation/WolfeinSuite_20260906/Game/Mods</ReferenceRoot>
   </PropertyGroup>

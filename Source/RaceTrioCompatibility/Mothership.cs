@@ -23,7 +23,11 @@ namespace Meow.RaceTrioCompatibility
         {
             if(!MP.IsInMultiplayer||!MP.InInterface)return true;
             object worker=Worker(sup);
-            if(cellWorker.IsInstanceOfType(worker))
+            if(worker.GetType().FullName=="Nivarian.SupportWorker_Gunship")
+            {
+                Find.Targeter.BeginTargeting(new TargetingParameters{canTargetLocations=true},target=>execute.DoSync(null,sup,map,target.Cell));
+            }
+            else if(cellWorker.IsInstanceOfType(worker))
             {
                 Find.Targeter.BeginTargeting(new TargetingParameters{canTargetPawns=true,canTargetBuildings=true,canTargetLocations=true},
                     target=>execute.DoSync(null,sup,map,target.Cell),null,null,null,null,null,true,
@@ -39,7 +43,13 @@ namespace Meow.RaceTrioCompatibility
             object component=Current.Game.components.First(c=>c.GetType()==componentType);
             if(!(bool)AccessTools.Method(componentType,"CanUse").Invoke(component,new object[]{def,map}))return;
             object worker=Worker(def);
-            if(cellWorker.IsInstanceOfType(worker))
+            if(worker.GetType().FullName=="Nivarian.SupportWorker_Gunship")
+            {
+                if(!cell.InBounds(map))return;
+                AccessTools.Method(worker.GetType(),"SpawnGunshipController").Invoke(worker,new object[]{map,cell,def});
+                AccessTools.Method(worker.GetType(),"Used",new[]{def.GetType(),typeof(Map)}).Invoke(worker,new object[]{def,map});
+            }
+            else if(cellWorker.IsInstanceOfType(worker))
             {
                 if(!cell.InBounds(map))return;
                 if(worker.GetType().FullName=="Nivarian.ShipSupports.NivarianDroppodSupportWorker")

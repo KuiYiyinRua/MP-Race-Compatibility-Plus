@@ -1,5 +1,16 @@
 # list1.xml 模组联机兼容计划
 
+## 2026-09-09 更新：Nivarian 四项扩展
+
+本轮适配四项 Nivarian 扩展，已通过四扩展与原三种族合载、再叠加官方兼容的两个双端快速组合（客户端/主机分别发起操作），使用 `Meow.RaceTrioCompatibility 1.1.0` 补充程序集；核心保持 3.0.125。具体实现、安装版本和最终快速测试记录见 [四扩展专项说明](Nivarian-Expansions-Multiplayer.md)。
+
+- **Nivarian Mental Harness**（3720877013）：灵能扩展，沿用现有能力同步。
+- **Nivarian: Apparel Store**（3747540804）：服装扩展，沿用原版穿脱、制作和心情流程。
+- **Nivarian Race: Draconiture**（3686517288）：工程无人机设置、水培灯、重塑舱治疗选择同步。
+- **Nivarian Race: DraconicMilitary**（3735573834）：装备开关、炮塔射界、信标命名/传送、炮艇支援与移动随机数处理。
+
+所有玩家须使用相同版本和游戏相关设置。本次验证限定主要功能的快速组合测试，不扩展为长期、异步多地图或全部边缘场景保证。
+
 ## 2026-09-09 更新：Nivarian / Monolyn / Voiceroid
 
 以下三项已补齐主要操作的联机同步，并完成两个组合的双端快速回归。具体代码覆盖面、逐轮证据和未测试范围见 [专项记录](Nivarian-Monolyn-Voiceroid-Multiplayer.md)。本节更新这三项的当前状态，下面原有盘点数量与阶段结论保留为历史记录。

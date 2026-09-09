@@ -2,6 +2,8 @@
 
 Optional runtime patches for the installed RimWorld 1.6 builds of `keeptpa.NivarianRace` (3624805128), `ASEL.MonolynRace` (3742031864), and `hatena.VoiceroidAsAnimal` (2073559411). This assembly supplements the existing `MP_MeowOnlineShop.dll`; it does not replace it. Each integration is enabled only when its target package is active.
 
+Version 1.1.0 extends the Nivarian integration to Mental Harness (3720877013), Apparel Store (3747540804), Draconiture (3686517288), and DraconicMilitary (3735573834). See [the expansion notes](../../Docs/Nivarian-Expansions-Multiplayer.md) for synchronization boundaries, binary provenance and runtime coverage. Expansion registrations emit their own `NivarianExpansionCompat` startup records.
+
 Build with `dotnet build Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj -c Release`. Override `GameRoot` and `ReferenceRoot` with MSBuild properties on another machine. The latter contains the Harmony and Multiplayer mod directories. The default reference directory points to the existing isolated validation installation, not to redistributed dependencies.
 
 Install only `bin/Release/net48/Meow.RaceTrioCompatibility.dll` into the mod's `1.6/Assemblies` directory. Do not distribute the validation harness, decompiled third-party code, target mod assemblies, or the isolated game directory. Keep the supplement and core identical on all peers.
