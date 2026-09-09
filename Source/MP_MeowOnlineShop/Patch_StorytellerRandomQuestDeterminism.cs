@@ -19,20 +19,22 @@ namespace MP_MeowOnlineShop
     /// on the host).
     ///
     /// Fix: wrap the whole `ChooseNaturalRandomQuest` body in an unconditional
-    /// deterministic Rand scope (ignoring the local performance gate) and
-    /// enforce Multiplayer's spectator faction context, so every peer evaluates
-    /// the same candidate set and consumes the same Rand sequence during the
-    /// batch regardless of per-player faction/map context. Singleplayer is
-    /// untouched.
+    /// deterministic Rand scope (ignoring the local performance gate). Keep the
+    /// faction context installed by Multiplayer's FactionRepeater: replacing it
+    /// with the spectator faction makes many faction/colonist-dependent quests
+    /// fail CanRun while broad quests such as PollutionDump remain eligible.
+    /// The child scope is derived from one draw of the already-synchronized
+    /// parent Rand stream. This is important: seeding only from
+    /// tick/points/target makes every repeated request in the same tick replay
+    /// the same weighted choice.
+    /// Singleplayer is untouched.
     /// </summary>
     internal static class Patch_StorytellerRandomQuestDeterminism
     {
         private const int RandomQuestSeedOffset = 0x52515531;
 
         private static bool _applied;
-        private static FieldInfo _ofPlayerField;
-        private static PropertyInfo _worldCompProperty;
-        private static FieldInfo _spectatorFactionField;
+        private static FieldInfo _lastCheckCanRunTickField;
 
         [ThreadStatic]
         private static Map _mapForRandPop;
@@ -40,7 +42,6 @@ namespace MP_MeowOnlineShop
         private sealed class RandomQuestScopeState
         {
             internal int RandState;
-            internal Faction SavedFaction;
         }
 
         internal static void Apply(Harmony harmony)
@@ -61,31 +62,14 @@ namespace MP_MeowOnlineShop
                 MethodInfo finalizer = AccessTools.Method(
                     typeof(Patch_StorytellerRandomQuestDeterminism),
                     nameof(ScopeFinalizer));
+                _lastCheckCanRunTickField = AccessTools.Field(
+                    typeof(QuestScriptDef), "lastCheckCanRunTick");
 
-                _ofPlayerField = AccessTools.Field(
-                    typeof(FactionManager), "ofPlayer");
-                Type multiplayerType = AccessTools.TypeByName(
-                    "Multiplayer.Client.Multiplayer");
-                _worldCompProperty = multiplayerType == null
-                    ? null
-                    : AccessTools.Property(multiplayerType, "WorldComp");
-                _spectatorFactionField = null;
-                if (_worldCompProperty?.PropertyType != null)
-                {
-                    _spectatorFactionField = AccessTools.Field(
-                        _worldCompProperty.PropertyType,
-                        "spectatorFaction");
-                }
-
-                if (target == null || prefix == null || finalizer == null ||
-                    _ofPlayerField == null || _worldCompProperty == null ||
-                    _spectatorFactionField == null ||
-                    _spectatorFactionField.FieldType != typeof(Faction))
+                if (target == null || prefix == null || finalizer == null)
                 {
                     Log.Warning(
                         "[MP-MeowOnlineShop] Storyteller random-quest determinism " +
-                        $"target resolution failed: target={target != null}, " +
-                        $"factionCtx={_ofPlayerField != null && _spectatorFactionField != null}; " +
+                        $"target resolution failed: target={target != null}; " +
                         "random-quest bursts can still desync.");
                     return;
                 }
@@ -98,7 +82,8 @@ namespace MP_MeowOnlineShop
                 Log.Message(
                     "[MP-MeowOnlineShop] Storyteller random-quest determinism active: " +
                     "ChooseNaturalRandomQuest uses a deterministic Rand scope and " +
-                    "the spectator faction context.");
+                    "preserves Multiplayer's active faction context; " +
+                    $"CanRun context cache isolation={_lastCheckCanRunTickField != null}.");
             }
             catch (Exception e)
             {
@@ -118,41 +103,59 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer)
                 return;
 
+            int state = 0;
+            Map mapForPop = null;
             try
             {
-                Faction spectator = TryGetSpectatorFaction();
-                FactionManager factionManager = Find.FactionManager;
-                if (spectator != null && factionManager != null)
-                {
-                    __state.SavedFaction =
-                        _ofPlayerField.GetValue(factionManager) as Faction;
-                    _ofPlayerField.SetValue(factionManager, spectator);
-                }
+                Faction callerFaction = Faction.OfPlayer;
 
+                // Derive a unique child stream from the synchronized parent
+                // stream. PushState/PopState alone does not advance the parent;
+                // without this draw, multiple requests with identical arguments
+                // in a paused/single tick replay exactly the same quest choice.
+                int invocationSeed = Rand.Int;
                 int seed = Gen.HashCombineInt(
                     RandomQuestSeedOffset,
+                    invocationSeed);
+                seed = Gen.HashCombineInt(
+                    seed,
                     Find.TickManager?.TicksAbs ?? 0);
                 seed = Gen.HashCombineInt(
                     seed,
                     BitConverter.ToInt32(
                         BitConverter.GetBytes(points), 0));
                 seed = Gen.HashCombineInt(seed, StableTargetKey(target));
+                seed = Gen.HashCombineInt(seed, callerFaction?.loadID ?? 0);
 
-                int state = 0;
-                DeterministicRandScope.Begin(
+                if (!DeterministicRandScope.Begin(
                     null,
                     seed,
                     RandomQuestSeedOffset + 1,
                     ref state,
-                    out Map mapForPop,
-                    ignoreGate: true);
+                    out mapForPop,
+                    ignoreGate: true))
+                {
+                    return;
+                }
                 _mapForRandPop = mapForPop;
                 __state.RandState = state;
+
+                // QuestScriptDef.CanRun caches only tick + points. Multiplayer
+                // evaluates random quests for the world and for each map under
+                // different faction/target contexts in the same tick, so that
+                // vanilla cache can reuse a spectator/world result for a map.
+                // Reset immediately before selection and again in the finalizer
+                // so neither an earlier caller nor this caller leaks a candidate
+                // set across contexts. This remains narrow to the infrequent
+                // natural-random-quest chooser.
+                InvalidateRandomQuestCanRunCache();
             }
             catch (Exception e)
             {
+                if (state != 0)
+                    DeterministicRandScope.End(state, mapForPop);
+                _mapForRandPop = null;
                 __state.RandState = 0;
-                __state.SavedFaction = null;
                 if (!_loggedPrefixFailure)
                 {
                     _loggedPrefixFailure = true;
@@ -169,35 +172,57 @@ namespace MP_MeowOnlineShop
         {
             if (__state != null)
             {
-                DeterministicRandScope.End(
-                    __state.RandState,
-                    _mapForRandPop);
-                _mapForRandPop = null;
-
-                if (__state.SavedFaction != null)
+                try
                 {
-                    try
-                    {
-                        FactionManager factionManager = Find.FactionManager;
-                        if (factionManager != null)
-                            _ofPlayerField.SetValue(
-                                factionManager,
-                                __state.SavedFaction);
-                    }
-                    catch (Exception e)
-                    {
-                        if (!_loggedRestoreFailure)
-                        {
-                            _loggedRestoreFailure = true;
-                            Log.Warning(
-                                "[MP-MeowOnlineShop] Storyteller random-quest " +
-                                "faction restore failed: " + e.Message);
-                        }
-                    }
+                    if (MP.IsInMultiplayer)
+                        InvalidateRandomQuestCanRunCache();
+                }
+                finally
+                {
+                    DeterministicRandScope.End(
+                        __state.RandState,
+                        _mapForRandPop);
+                    _mapForRandPop = null;
                 }
             }
 
             return __exception;
+        }
+
+        private static void InvalidateRandomQuestCanRunCache()
+        {
+            if (_lastCheckCanRunTickField == null)
+            {
+                if (!_loggedCanRunCacheFieldMissing)
+                {
+                    _loggedCanRunCacheFieldMissing = true;
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Storyteller random-quest " +
+                        "CanRun cache field was not found; target/faction " +
+                        "cache isolation is unavailable.");
+                }
+                return;
+            }
+
+            try
+            {
+                foreach (QuestScriptDef quest in
+                    DefDatabase<QuestScriptDef>.AllDefsListForReading)
+                {
+                    if (quest != null && quest.IsRootRandomSelected)
+                        _lastCheckCanRunTickField.SetValue(quest, int.MinValue);
+                }
+            }
+            catch (Exception e)
+            {
+                if (!_loggedCanRunCacheResetFailure)
+                {
+                    _loggedCanRunCacheResetFailure = true;
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Storyteller random-quest " +
+                        "CanRun cache reset failed: " + e.Message);
+                }
+            }
         }
 
         private static int StableTargetKey(IIncidentTarget target)
@@ -216,21 +241,7 @@ namespace MP_MeowOnlineShop
         }
 
         private static bool _loggedPrefixFailure;
-        private static bool _loggedRestoreFailure;
-
-        private static Faction TryGetSpectatorFaction()
-        {
-            try
-            {
-                object worldComp = _worldCompProperty.GetValue(null, null);
-                return worldComp == null
-                    ? null
-                    : _spectatorFactionField.GetValue(worldComp) as Faction;
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        private static bool _loggedCanRunCacheFieldMissing;
+        private static bool _loggedCanRunCacheResetFailure;
     }
 }

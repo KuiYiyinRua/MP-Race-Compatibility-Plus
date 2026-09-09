@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
+using RimWorld;
 using Verse;
 
 namespace MP_MeowOnlineShop
@@ -19,6 +20,16 @@ namespace MP_MeowOnlineShop
         private const string PackageId = "Moo.kemomimihouse.Kz";
         private const string ComponentTypeName = "Kz.GameComponent_Kemhouse";
 
+        private static FieldInfo _ofPlayerField;
+        private static PropertyInfo _worldCompProperty;
+        private static FieldInfo _spectatorFactionField;
+
+        private sealed class KemomimiFactionScopeState
+        {
+            internal bool Active;
+            internal Faction SavedFaction;
+        }
+
         internal static void Apply(Harmony harmony)
         {
             if (harmony == null)
@@ -31,6 +42,7 @@ namespace MP_MeowOnlineShop
                 return;
 
             bool complete = true;
+            complete &= PatchGameComponentTickFactionContext(harmony, type);
             complete &= PatchRandTarget(
                 harmony, type, "AutoSpawnNewPawn", nameof(AutoSpawnPrefix));
             complete &= PatchRandTarget(
@@ -61,7 +73,8 @@ namespace MP_MeowOnlineShop
             {
                 Log.Message(
                     "[MP-MeowOnlineShop][KemomimiHouse] deterministic auto-spawn " +
-                    "Rand scopes and read-only multiplayer serialization are active.");
+                    "Rand scopes, shared-faction home-map selection, and read-only " +
+                    "multiplayer serialization are active.");
             }
             else
             {
@@ -70,6 +83,48 @@ namespace MP_MeowOnlineShop
                     "signatures drifted; only the compatible deterministic guards " +
                     "were installed.");
             }
+        }
+
+        // AutoSpawnNewPawn uses Find.AnyPlayerHomeMap.  In an async multifaction
+        // tick, FactionManager.ofPlayer is a temporary local execution context,
+        // so that property can otherwise select a different map on each peer.
+        private static bool PatchGameComponentTickFactionContext(
+            Harmony harmony,
+            Type type)
+        {
+            MethodInfo target = AccessTools.Method(
+                type, "GameComponentTick", Type.EmptyTypes);
+            MethodInfo prefix = AccessTools.Method(
+                typeof(Patch_KemomimiHouseAutoSpawnRand),
+                nameof(GameComponentTickFactionPrefix));
+            MethodInfo finalizer = AccessTools.Method(
+                typeof(Patch_KemomimiHouseAutoSpawnRand),
+                nameof(GameComponentTickFactionFinalizer));
+
+            _ofPlayerField = AccessTools.Field(typeof(FactionManager), "ofPlayer");
+            Type multiplayerType = AccessTools.TypeByName(
+                "Multiplayer.Client.Multiplayer");
+            _worldCompProperty = multiplayerType == null
+                ? null
+                : AccessTools.Property(multiplayerType, "WorldComp");
+            _spectatorFactionField = _worldCompProperty?.PropertyType == null
+                ? null
+                : AccessTools.Field(
+                    _worldCompProperty.PropertyType, "spectatorFaction");
+
+            if (target == null || target.ReturnType != typeof(void) ||
+                prefix == null || finalizer == null || _ofPlayerField == null ||
+                _worldCompProperty == null || _spectatorFactionField == null ||
+                _spectatorFactionField.FieldType != typeof(Faction))
+            {
+                return false;
+            }
+
+            harmony.Patch(
+                target,
+                prefix: new HarmonyMethod(prefix) { priority = Priority.First },
+                finalizer: new HarmonyMethod(finalizer) { priority = Priority.Last });
+            return true;
         }
 
         private static bool PatchRandTarget(
@@ -170,6 +225,78 @@ namespace MP_MeowOnlineShop
         private static bool SerializationMaintenancePrefix()
         {
             return !MP.IsInMultiplayer || Scribe.mode == LoadSaveMode.Inactive;
+        }
+
+        private static void GameComponentTickFactionPrefix(
+            ref KemomimiFactionScopeState __state)
+        {
+            __state = null;
+            if (!MP.IsInMultiplayer)
+                return;
+
+            try
+            {
+                Faction spectator = TryGetSpectatorFaction();
+                FactionManager factionManager = Find.FactionManager;
+                if (spectator == null || factionManager == null ||
+                    _ofPlayerField == null)
+                {
+                    return;
+                }
+
+                Faction previous = _ofPlayerField.GetValue(factionManager) as Faction;
+                if (ReferenceEquals(previous, spectator))
+                    return;
+
+                _ofPlayerField.SetValue(factionManager, spectator);
+                __state = new KemomimiFactionScopeState
+                {
+                    Active = true,
+                    SavedFaction = previous
+                };
+            }
+            catch
+            {
+                // The existing Rand scopes remain safe if the optional context
+                // bridge is unavailable at a transient startup/load boundary.
+            }
+        }
+
+        private static Exception GameComponentTickFactionFinalizer(
+            Exception __exception,
+            KemomimiFactionScopeState __state)
+        {
+            if (__state?.Active == true && _ofPlayerField != null)
+            {
+                try
+                {
+                    FactionManager factionManager = Find.FactionManager;
+                    if (factionManager != null)
+                        _ofPlayerField.SetValue(factionManager, __state.SavedFaction);
+                }
+                catch
+                {
+                    // Never hide the original simulation exception while restoring
+                    // a temporary compatibility context.
+                }
+            }
+
+            return __exception;
+        }
+
+        private static Faction TryGetSpectatorFaction()
+        {
+            try
+            {
+                object worldComp = _worldCompProperty?.GetValue(null, null);
+                return worldComp == null
+                    ? null
+                    : _spectatorFactionField?.GetValue(worldComp) as Faction;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static void Begin(int salt, ref bool state)

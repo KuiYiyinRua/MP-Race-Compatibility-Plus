@@ -44,7 +44,7 @@ namespace MP_MeowOnlineShop
             try
             {
                 _asyncMapCompType = AccessTools.TypeByName("Multiplayer.Client.AsyncTimeComp");
-                _asyncWorldCompType = AccessTools.TypeByName("Multiplayer.Client.AsyncWorldTimeComp");
+                _asyncWorldCompType = AccessTools.TypeByName("Multiplayer.Client.AsyncTime.AsyncWorldTimeComp");
                 _mapField = AccessTools.Field(_asyncMapCompType, "map");
                 _mapTicksField = AccessTools.Field(_asyncMapCompType, "mapTicks");
                 _mapRandStateField = AccessTools.Field(_asyncMapCompType, "randState");

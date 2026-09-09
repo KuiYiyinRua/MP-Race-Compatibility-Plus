@@ -24,6 +24,15 @@ namespace MP_MeowOnlineShop
 
         internal static void Apply(Harmony harmony)
         {
+            if (!OptimizationGate.IsThirdPartyPerfCleanupEnabled)
+            {
+                OptimizationGate.LogOnce(
+                    "thirdparty.perf.cleanup.disabled",
+                    "[MP-MeowOnlineShop] Runtime cleanup of TPS Optimalizer / PerformanceEsmolas " +
+                    "patches is disabled; their patches are left installed.");
+                return;
+            }
+
             var prefix = AccessTools.Method(
                 typeof(Patch_ThirdPartyPerformanceMp),
                 nameof(PrepareForMultiplayerPrefix));

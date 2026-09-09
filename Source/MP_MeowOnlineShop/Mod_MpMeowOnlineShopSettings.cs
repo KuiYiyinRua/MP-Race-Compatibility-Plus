@@ -25,7 +25,16 @@ namespace MP_MeowOnlineShop
         public int optimizationTelemetryIntervalTicks = 300;
         public bool enableUiActionBatching = true;
         public bool enableDeterministicRandRefactor = true;
+        public bool enableTickListFullReconcile = true;
+        public bool enableThirdPartyPerfCleanup = true;
+        public bool enableMpServerLagThrottle = true;
+        public bool enableProjectileLauncherDeterminism = false;
+        public bool enableMiliraWeaponModeCompat = true;
         public bool enableMpSafeAlertThrottling = true;
+        public bool enableMpMissileGirlMothballPort = true;
+        public bool enableMpMissileGirlBeautyPort = true;
+        public bool enableMpMissileGirlTimetableFix = true;
+        public bool blockGodHandsWhilePaused;
         public int mediumAlertRecheckIntervalTicks = 180;
         public bool enableExperimentalTickScheduler = false;
         public int schedulerMode = SchedulerModeAggressive;
@@ -49,7 +58,16 @@ namespace MP_MeowOnlineShop
             Scribe_Values.Look(ref optimizationTelemetryIntervalTicks, "mp_meow_modcfg_opt_telemetry_interval", 300);
             Scribe_Values.Look(ref enableUiActionBatching, "mp_meow_modcfg_opt_ui_batching_enabled", true);
             Scribe_Values.Look(ref enableDeterministicRandRefactor, "mp_meow_modcfg_opt_rand_refactor_enabled", true);
+            Scribe_Values.Look(ref enableTickListFullReconcile, "mp_meow_modcfg_opt_ticklist_full_reconcile_enabled", true);
+            Scribe_Values.Look(ref enableThirdPartyPerfCleanup, "mp_meow_modcfg_opt_thirdparty_perf_cleanup_enabled", true);
+            Scribe_Values.Look(ref enableMpServerLagThrottle, "mp_meow_modcfg_opt_server_lag_throttle_enabled", true);
+            Scribe_Values.Look(ref enableProjectileLauncherDeterminism, "mp_meow_modcfg_opt_projectile_launcher_determinism_enabled", false);
+            Scribe_Values.Look(ref enableMiliraWeaponModeCompat, "mp_meow_modcfg_opt_milira_weapon_mode_compat_enabled", true);
             Scribe_Values.Look(ref enableMpSafeAlertThrottling, "mp_meow_modcfg_opt_alert_throttling_enabled", true);
+            Scribe_Values.Look(ref enableMpMissileGirlMothballPort, "mp_meow_modcfg_missilegirl_mothball_port", true);
+            Scribe_Values.Look(ref enableMpMissileGirlBeautyPort, "mp_meow_modcfg_missilegirl_beauty_port", true);
+            Scribe_Values.Look(ref enableMpMissileGirlTimetableFix, "mp_meow_modcfg_missilegirl_timetable_fix", true);
+            Scribe_Values.Look(ref blockGodHandsWhilePaused, "mp_meow_modcfg_godhands_pause_block_enabled", false);
             Scribe_Values.Look(ref mediumAlertRecheckIntervalTicks, "mp_meow_modcfg_opt_alert_interval_ticks", 180);
             Scribe_Values.Look(ref enableExperimentalTickScheduler, "mp_meow_modcfg_opt_exp_tick_scheduler_enabled", false);
             Scribe_Values.Look(ref schedulerMode, "mp_meow_modcfg_tps_opt_mode", SchedulerModeAggressive);
@@ -80,6 +98,9 @@ namespace MP_MeowOnlineShop
         public void ApplyOptimizationPreset(int preset)
         {
             enableMpSafeAlertThrottling = preset != OptimizationPresetNone;
+            enableMpMissileGirlMothballPort = false;
+            enableMpMissileGirlBeautyPort = false;
+            enableMpMissileGirlTimetableFix = true;
             mediumAlertRecheckIntervalTicks =
                 preset == OptimizationPresetLight ? 90 :
                 preset == OptimizationPresetMedium ? 120 :
@@ -88,6 +109,11 @@ namespace MP_MeowOnlineShop
                 preset == OptimizationPresetVeryAggressive ? 300 :
                 preset == OptimizationPresetExtreme ? 360 :
                 180;
+            enableTickListFullReconcile = true;
+            enableThirdPartyPerfCleanup = true;
+            enableMpServerLagThrottle = true;
+            enableProjectileLauncherDeterminism = false;
+            enableMiliraWeaponModeCompat = true;
 
             switch (preset)
             {
@@ -321,10 +347,15 @@ namespace MP_MeowOnlineShop
         public override void DoSettingsWindowContents(Rect inRect)
         {
             _settings.ClampValues();
-            var viewRect = new Rect(0f, 0f, inRect.width - 20f, 1770f);
+            var viewRect = new Rect(0f, 0f, inRect.width - 20f, 1950f);
             Widgets.BeginScrollView(inRect, ref _settingsScrollPos, viewRect);
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
+            listing.CheckboxLabeled(
+                "暂停时禁用神之手（联机）",
+                ref _settings.blockGodHandsWhilePaused,
+                "勾选后，联机暂停时无法使用神之手及该模组的其他手功能；恢复运行后才可使用。");
+            listing.Gap(8f);
             listing.Label("一键优化预设（会覆盖下方调度模式与各间隔参数；无优化仍保留 UI 批处理与确定性 Rand 以降低失步风险）");
             if (listing.ButtonText("选择并应用预设档位…"))
             {
@@ -433,6 +464,22 @@ namespace MP_MeowOnlineShop
                 "启用确定性 Rand 公共作用域（默认）",
                 ref _settings.enableDeterministicRandRefactor,
                 "统一随机作用域实现，降低重复反射与分叉风险。");
+            listing.CheckboxLabeled(
+                "Enable async TickList full-bucket reconcile (default on)",
+                ref _settings.enableTickListFullReconcile,
+                "Turns on the periodic full-list safety sweep; disable to keep the conservative first-tick rebuild and pending registration merge.");
+            listing.CheckboxLabeled(
+                "Enable runtime cleanup of third-party performance patches (default on)",
+                ref _settings.enableThirdPartyPerfCleanup,
+                "Unpatches Slower Pawn Tick Rate / TPS Optimalizer / PerformanceEsmolas when entering multiplayer. Leave off unless desync appears; runtime unpatching can crash native detour finalizers.");
+            listing.CheckboxLabeled(
+                "Enable Multiplayer server lag log throttle (default on)",
+                ref _settings.enableMpServerLagThrottle,
+                "Suppresses repeated server pause messages and changes ServerPlayer.ExtrapolatedTicksBehind before the first keepalive. Disabled by default to keep Multiplayer server behavior vanilla.");
+            listing.CheckboxLabeled(
+                "Enable Milira weapon-mode compat patch (default on)",
+                ref _settings.enableMiliraWeaponModeCompat,
+                "Adds Milira weapon gizmo/command interception and sustained-fire sync. Disabled by default to restore vanilla Milira firing behavior.");
             listing.Gap(8f);
             if (listing.ButtonText("重置为默认配置"))
             {
@@ -450,6 +497,21 @@ namespace MP_MeowOnlineShop
                 (int)listing.Slider(_settings.mediumAlertRecheckIntervalTicks, 30f, 600f),
                 30,
                 600);
+
+            listing.GapLine();
+            listing.CheckboxLabeled(
+                "\u79fb\u690d MissileGirl\uff1a\u6210\u763e/\u8010\u53d7 Hediff \u5141\u8bb8\u4f11\u7720\uff08\u9ed8\u8ba4\u5f00\uff09",
+                ref _settings.enableMpMissileGirlMothballPort,
+                "\u6309 HediffDef \u786e\u5b9a\u6027\u653e\u5bbd\u6210\u763e/\u8010\u53d7\u75c7\u7684\u4e16\u754c Pawn \u4f11\u7720\u5224\u5b9a\u3002");
+            listing.CheckboxLabeled(
+                "\u79fb\u690d MissileGirl\uff1a\u52a8\u6001\u7f8e\u89c2\u91c7\u6837\u534a\u5f84\uff08\u9ed8\u8ba4\u5f00\uff09",
+                ref _settings.enableMpMissileGirlBeautyPort,
+                "\u6839\u636e Pawn \u662f\u5426\u5728\u5e8a/\u5012\u5730/\u79fb\u52a8\u8fc7\u7a0b\u786e\u5b9a\u6027\u8c03\u6574\u7f8e\u89c2\u91c7\u6837\u6570\u3002");
+            listing.CheckboxLabeled(
+                "\u79fb\u690d MissileGirl\uff1a\u65f6\u95f4\u8868\u7f3a\u5931\u9632\u5fa1\uff08\u9ed8\u8ba4\u5f00\uff09",
+                ref _settings.enableMpMissileGirlTimetableFix,
+                "\u65f6\u95f4\u8868\u5b9a\u4e49\u7f3a\u5931\u65f6\u56de\u9000\u4e3a Anything\uff0c\u907f\u514d\u5355\u7aef\u5f02\u5e38\u3002");
+
             listing.End();
             Widgets.EndScrollView();
         }

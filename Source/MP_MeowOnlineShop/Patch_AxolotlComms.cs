@@ -132,7 +132,7 @@ namespace MP_MeowOnlineShop
                     }
                 }
 
-                Log.Message($"[MP-MeowOnlineShop] Axolotl comms MP patch applied: patchedTradeActionOnly={(addThingTrade != null || addPawnTrade != null ? "yes" : "no")}, customUiInjection=enabled(commFloatMenuOption={hookCommFloatMenuOption},giveUseCommsJob={hookGiveUseCommsJob},factionTryOpen={hookFactionTryOpen}), vanillaRequestsResolved(trader={RequestTraderOptionMethod != null},military={RequestMilitaryAidOptionMethod != null}), syncMethodsReady(trade={SyncAxolotlTradeMethod != null},trader={SyncAxolotlRequestTraderMethod != null},military={SyncAxolotlRequestMilitaryAidMethod != null}), runtimeDiag=enabled.");
+                Log.Message($"[MP-MeowOnlineShop] Axolotl comms MP patch applied: patchedTradeActionOnly={(addThingTrade != null || addPawnTrade != null ? "yes" : "no")}, customUiInjection=enabled(commFloatMenuOption={hookCommFloatMenuOption},giveUseCommsJob={hookGiveUseCommsJob},factionTryOpen={hookFactionTryOpen}), vanillaRequestsResolved(trader={RequestTraderOptionMethod != null},military={RequestMilitaryAidOptionMethod != null}), syncMethodsReady(trade={SyncAxolotlTradeMethod != null},trader={SyncAxolotlRequestTraderMethod != null},military={SyncAxolotlRequestMilitaryAidMethod != null}), runtimeDiag={(ModDebug.EnableAxolotlCommsTrace ? "enabled" : "disabled")}.");
             }
             catch (Exception e)
             {
@@ -197,7 +197,7 @@ namespace MP_MeowOnlineShop
 
         private static void LogDiag(string message)
         {
-            if (_diagRemaining <= 0)
+            if (!ModDebug.EnableAxolotlCommsTrace || _diagRemaining <= 0)
                 return;
             _diagRemaining--;
             Log.Message(message);

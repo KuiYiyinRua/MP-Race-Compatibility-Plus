@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
@@ -25,6 +26,13 @@ namespace MP_MeowOnlineShop
         private static FieldInfo _startTickField;
         private static FieldInfo _intervalMinField;
         private static FieldInfo _intervalMaxField;
+        private static readonly MethodInfo SnapshotDictAddMethod =
+            typeof(Dictionary<string, object>).GetMethod(
+                "Add",
+                new[] { typeof(string), typeof(object) });
+        private static readonly MethodInfo SnapshotDictIndexerSetMethod =
+            typeof(Dictionary<string, object>).GetProperty("Item")?
+                .GetSetMethod();
 
         internal static void Apply(Harmony harmony)
         {
@@ -36,9 +44,20 @@ namespace MP_MeowOnlineShop
                 var animationType = assembly?.GetType(AnimationTypeName, false);
                 var helperType = assembly?.GetType(HelperTypeName, false);
                 var drawFaceGraphicsCompType = assembly?.GetType(DrawFaceGraphicsCompTypeName, false);
+                var harmonyPatchesType = assembly?.GetType(
+                    "FacialAnimation.HarmonyPatches",
+                    false);
                 var resetMethod = AccessTools.Method(animationType, "Reset", new[] { typeof(int) });
                 var getThoughtsMethod = AccessTools.Method(helperType, "GetThoughts", new[] { typeof(Pawn) });
                 var compRenderNodesMethod = AccessTools.Method(drawFaceGraphicsCompType, "CompRenderNodes", Type.EmptyTypes);
+                var snapshotPrefixMethod = AccessTools.Method(
+                    harmonyPatchesType,
+                    "PrefixCreateSnapshotOfPawn_HookForMods",
+                    new[]
+                    {
+                        typeof(Pawn),
+                        typeof(Dictionary<string, object>).MakeByRefType()
+                    });
                 _animationDefField = AccessTools.Field(animationType, "animationDef");
                 _startTickField = AccessTools.Field(animationType, "startTick");
                 var animationDefType = _animationDefField?.FieldType;
@@ -59,7 +78,10 @@ namespace MP_MeowOnlineShop
                     compRenderNodesMethod == null || renderNodesPrefix == null ||
                     renderNodesFinalizer == null ||
                     _animationDefField == null || _startTickField == null ||
-                    _intervalMinField == null || _intervalMaxField == null)
+                    _intervalMinField == null || _intervalMaxField == null ||
+                    snapshotPrefixMethod == null ||
+                    SnapshotDictAddMethod == null ||
+                    SnapshotDictIndexerSetMethod == null)
                 {
                     if (assembly != null)
                         Log.Warning("[MP-MeowOnlineShop] Facial Animation MP patch target was not resolved.");
@@ -76,15 +98,38 @@ namespace MP_MeowOnlineShop
                     compRenderNodesMethod,
                     prefix: new HarmonyMethod(renderNodesPrefix) { priority = Priority.First },
                     finalizer: new HarmonyMethod(renderNodesFinalizer) { priority = Priority.Last });
+                harmony.Patch(
+                    snapshotPrefixMethod,
+                    transpiler: new HarmonyMethod(
+                        typeof(Patch_FacialAnimationMp),
+                        nameof(SnapshotPrefixTranspiler)));
                 Log.Message(
                     "[MP-MeowOnlineShop] Facial Animation MP patch active: " +
                     "cosmetic reset timers no longer consume synchronized Rand and " +
                     "visual thought queries cannot force simulation thought refreshes; " +
-                    "lazy face/render-node initialization uses an isolated deterministic Rand scope.");
+                    "lazy face/render-node initialization uses an isolated deterministic Rand scope; " +
+                    "statue snapshots tolerate duplicate FacialAnimation comp keys.");
             }
             catch (Exception exception)
             {
                 Log.Warning("[MP-MeowOnlineShop] Facial Animation MP patch failed: " + exception);
+            }
+        }
+
+        private static IEnumerable<CodeInstruction> SnapshotPrefixTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (CodeInstruction instruction in instructions)
+            {
+                if ((instruction.opcode == OpCodes.Call ||
+                     instruction.opcode == OpCodes.Callvirt) &&
+                    instruction.operand is MethodInfo method &&
+                    method.Equals(SnapshotDictAddMethod))
+                {
+                    instruction.operand = SnapshotDictIndexerSetMethod;
+                }
+
+                yield return instruction;
             }
         }
 

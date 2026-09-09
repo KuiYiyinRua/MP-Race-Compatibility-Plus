@@ -119,6 +119,16 @@ namespace MP_MeowOnlineShop
             _mpPreparationRequested = true;
             StopPendingPerFramePatches();
 
+            if (!OptimizationGate.IsThirdPartyPerfCleanupEnabled)
+            {
+                OptimizationGate.LogOnce(
+                    "thirdparty.perf.cleanup.disabled",
+                    "[MP-MeowOnlineShop] Runtime cleanup of third-party performance patches is " +
+                    "disabled; Performance Optimizer factory suppression remains active. " +
+                    "Existing patches are left installed.");
+                return;
+            }
+
             int removed = 0;
             var unpatcher = new Harmony("mp.meowonlineshop.performanceoptimizer.cleanup");
             foreach (var original in Harmony.GetAllPatchedMethods().ToList())
@@ -145,6 +155,7 @@ namespace MP_MeowOnlineShop
                     $"runtime patches and per-frame transpilers; removedPatches={removed}. " +
                     "Single-player behavior before starting/joining multiplayer was left unchanged.");
             }
+
         }
 
         private static IEnumerable<Patch> EnumeratePatches(Patches patchInfo)

@@ -25,6 +25,9 @@ namespace MP_MeowOnlineShop
 
         internal static void Apply(Harmony harmony)
         {
+            if (harmony == null)
+                return;
+
             NormalizeDuplicateMenstruationComps();
 
             PatchTarget(
@@ -93,7 +96,8 @@ namespace MP_MeowOnlineShop
                 {
                     HediffCompProperties properties = comps[index];
                     if (ReferenceEquals(properties, retained) ||
-                        properties?.compClass == null ||
+                        properties == null ||
+                        properties.compClass == null ||
                         !menstruationCompType.IsAssignableFrom(properties.compClass))
                     {
                         continue;

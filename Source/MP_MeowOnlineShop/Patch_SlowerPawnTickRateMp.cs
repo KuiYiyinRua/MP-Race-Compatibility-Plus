@@ -20,6 +20,15 @@ namespace MP_MeowOnlineShop
 
         internal static void Apply(Harmony harmony)
         {
+            if (!OptimizationGate.IsThirdPartyPerfCleanupEnabled)
+            {
+                OptimizationGate.LogOnce(
+                    "thirdparty.perf.cleanup.disabled",
+                    "[MP-MeowOnlineShop] Runtime cleanup of Slower Pawn Tick Rate patches is " +
+                    "disabled; its scheduler patches are left installed.");
+                return;
+            }
+
             var prefix = AccessTools.Method(
                 typeof(Patch_SlowerPawnTickRateMp),
                 nameof(PrepareForMultiplayerPrefix));

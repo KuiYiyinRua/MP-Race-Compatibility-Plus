@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <DebugAction_RepairAllPlayerFactionsToHostFaction>将所有非 NPC 玩家派系并入房主殖民地</DebugAction_RepairAllPlayerFactionsToHostFaction>
+  <DebugAction_RepairSelectedPlayerFactionToHostFaction>选择玩家派系并入房主殖民地</DebugAction_RepairSelectedPlayerFactionToHostFaction>
+</LanguageData>

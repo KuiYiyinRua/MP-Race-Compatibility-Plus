@@ -53,8 +53,15 @@ namespace MP_MeowOnlineShop
                 MethodInfo postfix = AccessTools.Method(
                     typeof(Patch_MapStateOrderNormalizer),
                     nameof(TryAddMapRandomStatePostfix));
+                MethodInfo checkForDesync = opinionType?.GetMethod(
+                    "CheckForDesync",
+                    BindingFlags.Instance | BindingFlags.Public);
+                MethodInfo checkForDesyncPrefix = AccessTools.Method(
+                    typeof(Patch_MapStateOrderNormalizer),
+                    nameof(CheckForDesyncPrefix));
 
                 if (target == null || postfix == null ||
+                    checkForDesync == null || checkForDesyncPrefix == null ||
                     _currentOpinionField == null ||
                     _mapStatesField == null || _mapIdField == null)
                 {
@@ -70,11 +77,17 @@ namespace MP_MeowOnlineShop
                     {
                         priority = Priority.Last
                     });
+                harmony.Patch(
+                    checkForDesync,
+                    prefix: new HarmonyMethod(checkForDesyncPrefix)
+                    {
+                        priority = Priority.First
+                    });
 
                 Log.Message(
                     "[MP-MeowOnlineShop] Map-state order normalizer active: " +
-                    "async map state samples are sorted by map ID for peer " +
-                    "comparison.");
+                    "async map state samples are sorted by map ID before " +
+                    "peer comparison on both sides.");
             }
             catch (Exception e)
             {
@@ -92,27 +105,46 @@ namespace MP_MeowOnlineShop
                 if (opinion == null)
                     return;
 
-                object list = _mapStatesField.GetValue(opinion);
-                if (!(list is IList items) || items.Count <= 1)
-                    return;
-
-                for (int i = 1; i < items.Count; i++)
-                {
-                    object current = items[i];
-                    int currentId = (int)_mapIdField.GetValue(current);
-                    int j = i - 1;
-                    while (j >= 0 &&
-                           (int)_mapIdField.GetValue(items[j]) > currentId)
-                    {
-                        items[j + 1] = items[j];
-                        j--;
-                    }
-                    items[j + 1] = current;
-                }
+                SortMapStates(_mapStatesField.GetValue(opinion));
             }
             catch
             {
                 // The normalizer must never break map ticking or sync sampling.
+            }
+        }
+
+        private static bool CheckForDesyncPrefix(object __instance, object other)
+        {
+            try
+            {
+                SortMapStates(_mapStatesField?.GetValue(__instance));
+                SortMapStates(_mapStatesField?.GetValue(other));
+            }
+            catch
+            {
+                // The comparison must never be blocked by the normalizer.
+            }
+
+            return true;
+        }
+
+        private static void SortMapStates(object list)
+        {
+            if (!(list is IList items) || items.Count <= 1)
+                return;
+
+            for (int i = 1; i < items.Count; i++)
+            {
+                object current = items[i];
+                int currentId = (int)_mapIdField.GetValue(current);
+                int j = i - 1;
+                while (j >= 0 &&
+                       (int)_mapIdField.GetValue(items[j]) > currentId)
+                {
+                    items[j + 1] = items[j];
+                    j--;
+                }
+                items[j + 1] = current;
             }
         }
     }

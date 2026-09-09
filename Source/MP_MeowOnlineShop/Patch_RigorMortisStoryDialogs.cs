@@ -8,6 +8,7 @@ using Multiplayer.API;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace MP_MeowOnlineShop
 {
@@ -22,6 +23,9 @@ namespace MP_MeowOnlineShop
         private static readonly Type CqfWindowType = AccessTools.TypeByName("QuestEditor_Library.CQFDialogTreeWindow");
         private static readonly Type CqfOptionType = AccessTools.TypeByName("QuestEditor_Library.DialogElement_Option");
         private static readonly Type CqfTreeDefType = AccessTools.TypeByName("QuestEditor_Library.DialogTreeDef");
+        private static readonly Type CqfFloatMenuProviderType = AccessTools.TypeByName("QuestEditor_Library.FloatMenuOptionProvider_Dialog");
+        private static readonly Type CqfGameComponentEditorType = AccessTools.TypeByName("QuestEditor_Library.GameComponent_Editor");
+        private static readonly Type CqfGameToolsType = AccessTools.TypeByName("QuestEditor_Library.GameTools");
         private static readonly HashSet<string> RuntimeLogOnce = new HashSet<string>();
 
         private static readonly FieldInfo OptionTextField = AccessTools.Field(CqfOptionType, "text");
@@ -39,6 +43,7 @@ namespace MP_MeowOnlineShop
         private static readonly FieldInfo WindowNextOptionsField = AccessTools.Field(CqfWindowType, "nextOptions");
 
         private static ISyncMethod SyncSelectOptionMethod;
+        private static ISyncMethod SyncCqfStartDialogMethod;
 
         internal static void Apply(Harmony harmony)
         {
@@ -61,11 +66,21 @@ namespace MP_MeowOnlineShop
             var goToNodePrefix = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(GoToNodeRandPrefix));
             var goToNodePostfix = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(GoToNodeRandPostfix));
             var goToNodeFinalizer = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(GoToNodeRandFinalizer));
+            var createCqfDialog = AccessTools.Method(CqfTreeDefType, "CreateCQFDialog", new[] { typeof(Thing), typeof(Thing), typeof(Quest) });
+            var createCqfDialogPrefix = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(CreateCQFDialogRandPrefix));
+            var createCqfDialogPostfix = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(CreateCQFDialogRandPostfix));
+            var createCqfDialogFinalizer = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(CreateCQFDialogRandFinalizer));
+            var floatMenuGetOptions = AccessTools.Method(CqfFloatMenuProviderType, "GetOptionsFor", new[] { typeof(Thing), typeof(FloatMenuContext) });
+            var floatMenuPostfix = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(FloatMenuOptionProviderDialogPostfix));
+            var syncStartDialog = AccessTools.Method(typeof(Patch_RigorMortisStoryDialogs), nameof(SyncCqfStartDialog));
 
             if (CqfWindowType == null || CqfOptionType == null || CqfTreeDefType == null ||
                 draw == null || prefix == null || sync == null ||
                 goToNode == null || goToNodePrefix == null ||
                 goToNodePostfix == null || goToNodeFinalizer == null ||
+                createCqfDialog == null || createCqfDialogPrefix == null ||
+                createCqfDialogPostfix == null || createCqfDialogFinalizer == null ||
+                floatMenuGetOptions == null || floatMenuPostfix == null || syncStartDialog == null ||
                 OptionTextField == null || OptionDisabledField == null ||
                 OptionDisableReasonField == null || OptionActionField == null ||
                 OptionNextIndexField == null ||
@@ -77,23 +92,30 @@ namespace MP_MeowOnlineShop
                 Log.Warning(
                     $"{LogTag}: required CQF 1.6 symbols missing; " +
                     $"window={CqfWindowType != null} option={CqfOptionType != null} tree={CqfTreeDefType != null} " +
-                    $"draw={draw != null} fields={AllFieldsResolved()}.");
+                    $"draw={draw != null} createCQFDialog={createCqfDialog != null} floatMenu={floatMenuGetOptions != null} fields={AllFieldsResolved()}.");
                 return;
             }
 
             try
             {
                 SyncSelectOptionMethod = MP.RegisterSyncMethod(sync, null);
+                SyncCqfStartDialogMethod = MP.RegisterSyncMethod(syncStartDialog, null);
                 harmony.Patch(draw, prefix: new HarmonyMethod(prefix) { priority = Priority.First });
                 harmony.Patch(
                     goToNode,
                     prefix: new HarmonyMethod(goToNodePrefix) { priority = Priority.First },
                     postfix: new HarmonyMethod(goToNodePostfix) { priority = Priority.Last },
                     finalizer: new HarmonyMethod(goToNodeFinalizer) { priority = Priority.Last });
+                harmony.Patch(
+                    createCqfDialog,
+                    prefix: new HarmonyMethod(createCqfDialogPrefix) { priority = Priority.First },
+                    postfix: new HarmonyMethod(createCqfDialogPostfix) { priority = Priority.Last },
+                    finalizer: new HarmonyMethod(createCqfDialogFinalizer) { priority = Priority.Last });
+                harmony.Patch(floatMenuGetOptions, postfix: new HarmonyMethod(floatMenuPostfix));
                 Log.Message(
                     $"{LogTag}: CQF real-option sync ready; " +
                     $"draw={draw.DeclaringType?.FullName}.{draw.Name}, sync={sync.Name}, " +
-                    $"goToNodeRandIsolation=true, fields=true.");
+                    $"goToNodeRandIsolation=true, createCQFDialogRandIsolation=true, floatMenuStartDialogSync=true, fields=true.");
             }
             catch (Exception e)
             {
@@ -218,6 +240,180 @@ namespace MP_MeowOnlineShop
                 __state = false;
             }
             return __exception;
+        }
+
+        public static void CreateCQFDialogRandPrefix(object __instance, Thing interviewer, Thing interviewee, Quest quest, ref bool __state)
+        {
+            __state = false;
+            if (!MP.enabled || !MP.IsInMultiplayer)
+                return;
+
+            // CQF resolves the dialog title through SeedGrammar, which consumes one shared map Rand draw on whichever peer opens the window.
+            int interviewerId = interviewer?.thingIDNumber ?? 0;
+            int intervieweeId = interviewee?.thingIDNumber ?? 0;
+            string treeDefName = (__instance as Def)?.defName ?? string.Empty;
+            int treeHash = GenText.StableStringHash(treeDefName);
+            int questId = quest?.id ?? 0;
+            Rand.PushState(Gen.HashCombineInt(
+                Gen.HashCombineInt(Gen.HashCombineInt(interviewerId, intervieweeId), treeHash),
+                questId));
+            __state = true;
+        }
+
+        public static void CreateCQFDialogRandPostfix(ref bool __state)
+        {
+            if (!__state)
+                return;
+            Rand.PopState();
+            __state = false;
+        }
+
+        public static Exception CreateCQFDialogRandFinalizer(Exception __exception, ref bool __state)
+        {
+            if (__state)
+            {
+                Rand.PopState();
+                __state = false;
+            }
+            return __exception;
+        }
+
+        public static IEnumerable<FloatMenuOption> FloatMenuOptionProviderDialogPostfix(
+            IEnumerable<FloatMenuOption> __result,
+            Thing clickedThing,
+            FloatMenuContext context)
+        {
+            if (!MP.enabled || !MP.IsInMultiplayer || __result == null || SyncCqfStartDialogMethod == null)
+                return __result;
+
+            Pawn pawn = context?.FirstSelectedPawn;
+            if (pawn == null || clickedThing == null)
+                return __result;
+
+            var wrapped = new List<FloatMenuOption>();
+            Rand.PushState(Gen.HashCombineInt(pawn.thingIDNumber, clickedThing.thingIDNumber));
+            try
+            {
+                foreach (var option in __result)
+                {
+                    if (option == null)
+                    {
+                        wrapped.Add(option);
+                        continue;
+                    }
+
+                    Action original = option.action;
+                    Pawn capturedPawn = pawn;
+                    Thing capturedThing = clickedThing;
+                    option.action = () =>
+                    {
+                        if (!MP.enabled || !MP.IsInMultiplayer)
+                        {
+                            original?.Invoke();
+                            return;
+                        }
+
+                        try
+                        {
+                            SyncCqfStartDialogMethod.DoSync(null, capturedPawn, capturedThing);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning($"{LogTag}: start-dialog sync dispatch failed: {e.Message}");
+                        }
+                    };
+                    wrapped.Add(option);
+                }
+            }
+            finally
+            {
+                Rand.PopState();
+            }
+
+            return wrapped;
+        }
+
+        public static void SyncCqfStartDialog(Pawn pawn, Thing thing)
+        {
+            try
+            {
+                if (pawn == null || thing == null)
+                    return;
+
+                object manager = GetDialogManager(thing);
+                if (manager == null)
+                    return;
+
+                var getTree = AccessTools.Method(manager.GetType(), "GetTree", new[] { typeof(Thing), typeof(Thing) });
+                object tree = getTree?.Invoke(manager, new object[] { thing, pawn });
+                if (tree == null)
+                    return;
+
+                var jobDef = DefDatabase<JobDef>.GetNamedSilentFail("QE_StartDialog");
+                if (jobDef == null)
+                    return;
+
+                pawn.jobs.StopAll(false, true);
+                Job job = JobMaker.MakeJob(jobDef, thing);
+                job.reportStringOverride = GetDialogReportText(tree, thing, pawn);
+                pawn.jobs.StartJob(job);
+                Log.Message($"{LogTag}: synced start dialog pawn={pawn.thingIDNumber} thing={thing.thingIDNumber} tree={((Def)tree).defName}.");
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"{LogTag}: SyncCqfStartDialog failed: {e.Message}");
+            }
+        }
+
+        private static object GetDialogManager(Thing thing)
+        {
+            if (CqfGameComponentEditorType == null || thing == null)
+                return null;
+
+            try
+            {
+                object instance = AccessTools.Property(CqfGameComponentEditorType, "Instance")?.GetValue(null)
+                                  ?? AccessTools.Field(CqfGameComponentEditorType, "Instance")?.GetValue(null);
+                if (instance == null)
+                    return null;
+
+                var dialogs = AccessTools.Property(CqfGameComponentEditorType, "Dialogs")?.GetValue(instance) as IDictionary;
+                if (dialogs == null || !dialogs.Contains(thing))
+                    return null;
+                return dialogs[thing];
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string GetDialogReportText(object tree, Thing interviewer, Thing interviewee)
+        {
+            if (tree == null)
+                return null;
+
+            try
+            {
+                string reportKey = AccessTools.Property(tree.GetType(), "dialogReportKey")?.GetValue(tree) as string
+                                   ?? AccessTools.Field(tree.GetType(), "dialogReportKey")?.GetValue(tree) as string
+                                   ?? string.Empty;
+                if (CqfGameToolsType == null)
+                    return reportKey;
+
+                var quest = AccessTools.Method(CqfGameToolsType, "GetQuestFromThing", new[] { typeof(Thing) })
+                    ?.Invoke(null, new object[] { interviewer });
+                var getDialogText = AccessTools.Method(
+                    CqfGameToolsType,
+                    "GetDialogText",
+                    new[] { typeof(string), typeof(Thing), typeof(Thing), tree.GetType(), typeof(Quest) });
+                return getDialogText?.Invoke(null, new object[] { reportKey, interviewer, interviewee, tree, quest }) as string
+                       ?? reportKey;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static void SyncSelectOption(

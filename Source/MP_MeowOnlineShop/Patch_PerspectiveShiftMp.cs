@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using HarmonyLib;
 using Multiplayer.API;
@@ -20,6 +21,7 @@ namespace MP_MeowOnlineShop
         private static Type stateType;
         private static Type avatarType;
         private static FieldInfo stateAvatarField;
+        private static FieldInfo seekAtWillPawnsField;
         private static FieldInfo avatarPawnField;
         private static FieldInfo moveInputField;
         private static FieldInfo sprintField;
@@ -42,6 +44,20 @@ namespace MP_MeowOnlineShop
         private static FieldInfo cameraLockPositionField;
         private static FieldInfo isActiveCacheFrameField;
         private static FieldInfo asyncTickingMapField;
+        private static AccessTools.FieldRef<object, Pawn> _avatarPawnRef;
+        private static AccessTools.FieldRef<object, Pawn> _tweenerPawnRef;
+        private static AccessTools.FieldRef<object, Pawn> _jobTrackerPawnRef;
+        private static AccessTools.FieldRef<object, Pawn> _jobDriverPawnRef;
+        private static AccessTools.FieldRef<object, IntVec3> _shootSourceOffsetRef;
+        private static Func<object> _stateAvatarGetter;
+        private static Action<object> _stateAvatarSetter;
+        private static Func<object, object> _physicsPositionGetter;
+        private static Game _componentCacheGame;
+        private static PerspectiveShiftMpComponent _componentCache;
+        private static bool _componentCacheValid;
+        private static readonly Dictionary<Type, AccessTools.FieldRef<object, Pawn>> NestedPawnRefCache =
+            new Dictionary<Type, AccessTools.FieldRef<object, Pawn>>();
+        private static readonly object NestedPawnRefCacheLock = new object();
 
         private static int lastMoveX;
         private static int lastMoveZ;
@@ -49,14 +65,41 @@ namespace MP_MeowOnlineShop
         private static bool lastWalk;
         private static bool sentInput;
         private static float lastSentInputRealtime = -999f;
-        private static float lastSentFireRealtime = -999f;
+        private static int lastSentInputGameTick;
         private const float InputHeartbeatSeconds = 0.5f;
-        private const float HoldFireRepeatSeconds = 5f / 60f;
 
         [ThreadStatic] private static bool iteratingControlledAvatars;
         [ThreadStatic] private static bool clearingLocalView;
         [ThreadStatic] private static IntVec3? forcedMouseCell;
         [ThreadStatic] private static string executingCommandOwner;
+        [ThreadStatic] private static int _localAvatarCacheFrame;
+        [ThreadStatic] private static object _localAvatarCacheObject;
+        [ThreadStatic] private static Pawn _localAvatarCachePawn;
+        [ThreadStatic] private static int _ownerStateCacheFrame;
+        [ThreadStatic] private static string _ownerStateCacheOwner;
+        [ThreadStatic] private static PerspectiveShiftControlledAvatar _ownerStateCache;
+
+        private const int SeekSeedSalt = 0x53454B57; // "SEKW"
+        private const int SeekWorldSeedOffset = 0x53454B52; // "SEKR"
+        private const string SeekGiverTypeName = "PerspectiveShift.JobGiver_SeekAtWill";
+        private static bool _seekRandIsolationInstalled;
+
+        private sealed class SeekRandContext
+        {
+            public int state;
+            public Map map;
+        }
+
+        private sealed class AvatarContext
+        {
+            public object previous;
+        }
+
+        private struct RenderLeanContext
+        {
+            public PawnLeaner leaner;
+            public IntVec3 shootSourceOffset;
+        }
 
         private static bool commandOwnerResolutionWarningLogged;
         private static bool commandOwnerMismatchWarningLogged;
@@ -71,6 +114,21 @@ namespace MP_MeowOnlineShop
         private static bool heldMoveRight;
         private static bool heldSprint;
         private static bool heldWalk;
+        private static readonly bool FireDiagnostics =
+            string.Equals(
+                Environment.GetEnvironmentVariable("MP_PS_FIRE_DIAG"),
+                "1",
+                StringComparison.OrdinalIgnoreCase);
+        private static int _fireDiagnosticCount;
+
+        private static void LogFireDiagnostic(string message)
+        {
+            if (!FireDiagnostics)
+                return;
+            if (System.Threading.Interlocked.Increment(ref _fireDiagnosticCount) > 20)
+                return;
+            Log.Message("[MP-MeowOnlineShop][PS-Fire] " + message);
+        }
 
         private sealed class PendingMoveInput
         {
@@ -215,10 +273,18 @@ namespace MP_MeowOnlineShop
                 nextSequence = Math.Max(nextSequence, sequence + 1);
             }
 
-            public float PredictionHorizon => Mathf.Clamp(
-                smoothedCommandDelay,
-                0.05f,
-                1f);
+            public float PredictionHorizon
+            {
+                get
+                {
+                    // While acknowledgements stall, their previous average
+                    // understates the current delay. Extend visual replay to
+                    // the oldest outstanding input, keeping the existing cap.
+                    float outstandingAge = pending.Count == 0 ? 0f :
+                        Mathf.Max(0f, Time.realtimeSinceStartup - pending[0].sentRealtime);
+                    return Mathf.Clamp(Mathf.Max(smoothedCommandDelay, outstandingAge), 0.05f, 1f);
+                }
+            }
 
             public void Clear()
             {
@@ -276,6 +342,7 @@ namespace MP_MeowOnlineShop
             }
 
             stateAvatarField = AccessTools.Field(stateType, "Avatar");
+            seekAtWillPawnsField = AccessTools.Field(stateType, "seekAtWillPawns");
             avatarPawnField = AccessTools.Field(avatarType, "pawn");
             moveInputField = AccessTools.Field(avatarType, "moveInput");
             sprintField = AccessTools.Field(avatarType, "isSprinting");
@@ -301,19 +368,29 @@ namespace MP_MeowOnlineShop
             asyncTickingMapField = asyncTimeType == null
                 ? null
                 : AccessTools.Field(asyncTimeType, "tickingMap");
+            _avatarPawnRef = TryGetInstanceFieldRef<Pawn>(avatarType, "pawn");
+            _stateAvatarGetter = TryCompileStaticFieldGetter(stateAvatarField);
+            _stateAvatarSetter = TryCompileStaticFieldSetter(stateAvatarField);
+            _physicsPositionGetter = TryCompileInstanceFieldGetter(avatarType, physicsPositionField);
+            _jobTrackerPawnRef = TryGetInstanceFieldRef<Pawn>(typeof(Pawn_JobTracker), "pawn");
+            _jobDriverPawnRef = TryGetInstanceFieldRef<Pawn>(typeof(JobDriver), "pawn");
+            _shootSourceOffsetRef = TryGetInstanceFieldRef<IntVec3>(typeof(PawnLeaner), "shootSourceOffset");
 
             MethodInfo setAvatar = AccessTools.Method(stateType, "SetAvatar", new[] { typeof(Pawn), typeof(bool) });
             MethodInfo clearAvatar = originalClearAvatarMethod;
+            MethodInfo revokeControl = AccessTools.Method(stateType, "RevokeControl",
+                new[] { typeof(Pawn), typeof(DamageInfo?), typeof(Hediff) });
             MethodInfo stateUpdate = AccessTools.Method(stateType, "Update");
             MethodInfo stateTick = AccessTools.Method(stateType, "Tick");
             MethodInfo stateOnGui = AccessTools.Method(stateType, "OnGUI");
             MethodInfo isAvatar = AccessTools.Method(stateType, "IsAvatar", new[] { typeof(Pawn) });
             MethodInfo updatePhysics = AccessTools.Method(avatarType, "UpdatePhysics");
             MethodInfo updateCamera = AccessTools.Method(avatarType, "UpdateCamera");
+            MethodInfo renderPawn = AccessTools.Method(avatarType, "RenderPawn");
 
             if (stateAvatarField == null || avatarPawnConstructor == null || setAvatar == null ||
-                clearAvatar == null || stateUpdate == null || stateTick == null || stateOnGui == null ||
-                isAvatar == null || updatePhysics == null)
+                clearAvatar == null || revokeControl == null || stateUpdate == null || stateTick == null || stateOnGui == null ||
+                isAvatar == null || updatePhysics == null || renderPawn == null || _shootSourceOffsetRef == null)
             {
                 Log.Warning("[MP-MeowOnlineShop] Perspective Shift API shape is unsupported; compatibility patch skipped.");
                 return;
@@ -321,11 +398,17 @@ namespace MP_MeowOnlineShop
 
             harmony.Patch(setAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(SetAvatarPrefix)));
             harmony.Patch(clearAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(ClearAvatarPrefix)));
+            harmony.Patch(revokeControl, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(RevokeControlPrefix)));
             harmony.Patch(stateUpdate, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateUpdatePrefix)));
             harmony.Patch(stateTick, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateTickPrefix)));
+            harmony.Patch(AccessTools.Method(typeof(Map), nameof(Map.MapPostTick)),
+                postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(AvatarMapPostTick)));
             harmony.Patch(stateOnGui, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateOnGuiPrefix)));
             harmony.Patch(isAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(IsAvatarPrefix)));
             harmony.Patch(updatePhysics, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(UpdatePhysicsPrefix)));
+            harmony.Patch(renderPawn,
+                prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(RenderPawnPrefix)),
+                finalizer: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(RenderPawnFinalizer)));
             if (updateCamera != null)
             {
                 harmony.Patch(
@@ -373,14 +456,31 @@ namespace MP_MeowOnlineShop
 
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncClaimAvatar))
                 .SetContext(SyncContext.CurrentMap);
+            MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncClaimAvatarWithMode))
+                .SetContext(SyncContext.CurrentMap);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncReleaseAvatar))
                 .SetContext(SyncContext.CurrentMap);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncSetMoveIntent))
                 .SetContext(SyncContext.CurrentMap);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncAvatarMapClick))
                 .SetContext(SyncContext.CurrentMap);
+            MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncFireAvatar))
+                .SetContext(SyncContext.CurrentMap);
+            MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncAimAndFireAvatar))
+                .SetContext(SyncContext.CurrentMap);
+            MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncToggleSeekAtWill))
+                .SetContext(SyncContext.None);
+
+            PatchSeekAtWillSync(harmony);
 
             Active = true;
+            Log.Message(
+                "[MP-MeowOnlineShop] Perspective Shift firing patch targets: " +
+                $"handleFiring={handleFiringMethod != null}, " +
+                $"handleSelectorClick={handleSelectorClick != null}, " +
+                $"handleLeftClickInt={handleLeftClickIntMethod != null}, " +
+                $"warmupPostfix={warmupTimeGetter != null}, " +
+                "syncFireAvatar=registered");
             Log.Message(
                 "[MP-MeowOnlineShop] Perspective Shift MP: multi-avatar registry, " +
                 "ordered sequence-acknowledged movement, replay prediction, and " +
@@ -564,6 +664,8 @@ namespace MP_MeowOnlineShop
 
             Type tweenerPatchType = AccessTools.TypeByName("PerspectiveShift.PawnTweener_PreDrawPosCalculation_Patch");
             MethodInfo tweenerPrefix = tweenerPatchType == null ? null : AccessTools.Method(tweenerPatchType, "Prefix");
+            Type tweenerType = AccessTools.TypeByName("PerspectiveShift.PawnTweener");
+            _tweenerPawnRef = TryGetInstanceFieldRef<Pawn>(tweenerType, "pawn");
             if (tweenerPrefix != null)
             {
                 harmony.Patch(
@@ -580,10 +682,12 @@ namespace MP_MeowOnlineShop
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Need_Food_FoodFallPerTickAssumingCategory_Patch", "Postfix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Need_Rest_RestFallPerTick_Patch", "Postfix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Pawn_PathFollower_Moving_Patch", "Postfix");
+            PatchTargetPatchMethod(harmony, "PerspectiveShift.PawnLeaner_ShouldLean_Patch", "Prefix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Pawn_PathFollower_DrawPath_Patch", "Prefix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Pawn_RotationTracker_UpdateRotation_Patch", "Prefix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Pawn_WorkSettings_GetPriority_Patch", "Postfix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.JobDriver_ManTurret_Patch", "Prefix");
+            PatchTargetPatchMethod(harmony, "PerspectiveShift.JobDriver_Wait_CheckForAutoAttack_Patch", "Prefix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.GenClosest_MaxDistance_Patch", "Prefix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.HaulAIUtility_PawnCanAutomaticallyHaul_Patch", "Prefix");
             PatchTargetPatchMethod(harmony, "PerspectiveShift.Verb_WarmupTime_Patch", "Postfix");
@@ -613,7 +717,22 @@ namespace MP_MeowOnlineShop
                 harmony.Patch(
                     endJobPostfix,
                     prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(EndJobPostfixContextPrefix)),
-                    postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(EndJobPostfixContextPostfix)));
+                    finalizer: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(EndJobPostfixContextFinalizer)));
+            }
+
+            MethodInfo checkForAutoAttack = AccessTools.Method(
+                typeof(JobDriver_Wait),
+                "CheckForAutoAttack");
+            if (checkForAutoAttack != null)
+            {
+                harmony.Patch(
+                    checkForAutoAttack,
+                    prefix: new HarmonyMethod(
+                        typeof(Patch_PerspectiveShiftMp),
+                        nameof(ControlledWaitAutoAttackPrefix))
+                    {
+                        priority = Priority.First
+                    });
             }
         }
 
@@ -647,11 +766,231 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        private static void PatchSeekAtWillSync(Harmony harmony)
+        {
+            if (harmony == null || stateType == null || seekAtWillPawnsField == null)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Perspective Shift seek-at-will sync " +
+                    "targets unresolved; skipped.");
+                return;
+            }
+
+            MethodInfo getGizmos = AccessTools.Method(
+                typeof(Pawn),
+                nameof(Pawn.GetGizmos),
+                Type.EmptyTypes);
+            MethodInfo gizmoPostfix = AccessTools.Method(
+                typeof(Patch_PerspectiveShiftMp),
+                nameof(SeekAtWillGizmoPostfix));
+            if (getGizmos != null && gizmoPostfix != null)
+            {
+                harmony.Patch(
+                    getGizmos,
+                    postfix: new HarmonyMethod(gizmoPostfix)
+                    {
+                        priority = Priority.Last
+                    });
+            }
+
+            MethodInfo shouldSeek = AccessTools.Method(
+                stateType,
+                "ShouldSeekEnemy",
+                new[] { typeof(Pawn) });
+            MethodInfo shouldSeekPrefix = AccessTools.Method(
+                typeof(Patch_PerspectiveShiftMp),
+                nameof(ShouldSeekEnemyPrefix));
+            if (shouldSeek != null && shouldSeekPrefix != null)
+            {
+                harmony.Patch(
+                    shouldSeek,
+                    prefix: new HarmonyMethod(shouldSeekPrefix)
+                    {
+                        priority = Priority.First
+                    });
+            }
+
+            PatchSeekAtWillRandIsolation(harmony);
+
+            Log.Message(
+                "[MP-MeowOnlineShop] Perspective Shift seek-at-will sync active.");
+        }
+
+        private static void PatchSeekAtWillRandIsolation(Harmony harmony)
+        {
+            if (harmony == null || _seekRandIsolationInstalled)
+                return;
+
+            Type seekGiverType = AccessTools.TypeByName(SeekGiverTypeName);
+            MethodInfo tryGiveJob = seekGiverType == null
+                ? null
+                : AccessTools.Method(seekGiverType, "TryGiveJob", new[] { typeof(Pawn) });
+            if (tryGiveJob == null)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Perspective Shift seek-at-will job " +
+                    "Rand isolation target not resolved; skipped.");
+                return;
+            }
+
+            _seekRandIsolationInstalled = true;
+            harmony.Patch(
+                tryGiveJob,
+                prefix: new HarmonyMethod(
+                    typeof(Patch_PerspectiveShiftMp),
+                    nameof(SeekAtWillTryGiveJobPrefix))
+                {
+                    priority = Priority.First
+                },
+                finalizer: new HarmonyMethod(
+                    typeof(Patch_PerspectiveShiftMp),
+                    nameof(SeekAtWillTryGiveJobFinalizer))
+                {
+                    priority = Priority.Last
+                });
+
+            Log.Message(
+                "[MP-MeowOnlineShop] Perspective Shift seek-at-will job Rand " +
+                "isolation active.");
+        }
+
+        private static void SeekAtWillTryGiveJobPrefix(
+            Pawn pawn,
+            out SeekRandContext __state)
+        {
+            __state = null;
+            if (!MP.IsInMultiplayer || pawn == null || pawn.Map == null)
+                return;
+
+            int seed = Gen.HashCombineInt(SeekSeedSalt, pawn.Map.uniqueID);
+            seed = Gen.HashCombineInt(seed, pawn.thingIDNumber);
+            seed = Gen.HashCombineInt(seed, Find.TickManager.TicksGame);
+
+            var context = new SeekRandContext();
+            if (DeterministicRandScope.Begin(
+                    pawn.Map,
+                    seed,
+                    SeekWorldSeedOffset,
+                    ref context.state,
+                    out context.map,
+                    ignoreGate: true))
+            {
+                __state = context;
+            }
+        }
+
+        private static Exception SeekAtWillTryGiveJobFinalizer(
+            Exception __exception,
+            SeekRandContext __state)
+        {
+            if (__state != null)
+                DeterministicRandScope.End(__state.state, __state.map);
+            return __exception;
+        }
+
+        public static void SyncToggleSeekAtWill(string owner, Pawn pawn)
+        {
+            if (!ValidateSynchronizedOwner(owner, nameof(SyncToggleSeekAtWill)))
+                return;
+
+            PerspectiveShiftMpComponent comp = CurrentComponent();
+            if (comp == null || pawn == null)
+                return;
+
+            comp.ToggleSeekAtWill(pawn);
+            SyncStaticSeekAtWillFromComponent();
+        }
+
+        public static void SyncStaticSeekAtWillFromComponent()
+        {
+            if (seekAtWillPawnsField == null)
+                return;
+
+            PerspectiveShiftMpComponent comp = CurrentComponent();
+            HashSet<int> set =
+                seekAtWillPawnsField.GetValue(null) as HashSet<int> ??
+                new HashSet<int>();
+            set.Clear();
+            if (comp?.seekAtWillPawnIds != null)
+            {
+                foreach (int id in comp.seekAtWillPawnIds)
+                    set.Add(id);
+            }
+            seekAtWillPawnsField.SetValue(null, set);
+        }
+
+        public static IEnumerable<Gizmo> SeekAtWillGizmoPostfix(
+            IEnumerable<Gizmo> gizmos,
+            Pawn __instance)
+        {
+            if (!MP.IsInMultiplayer || !Active || gizmos == null ||
+                seekAtWillPawnsField == null)
+            {
+                if (gizmos == null)
+                    yield break;
+                foreach (Gizmo gizmo in gizmos)
+                    yield return gizmo;
+                yield break;
+            }
+
+            TaggedString seekLabel = Translator.Translate("PS_SeekAtWill");
+            foreach (Gizmo gizmo in gizmos)
+            {
+                if (gizmo is Command_Toggle toggle &&
+                    !MP.IsExecutingSyncCommand &&
+                    toggle.defaultLabel == seekLabel)
+                {
+                    Pawn pawn = __instance;
+                    toggle.toggleAction = () => SyncToggleSeekAtWill(
+                        MP.PlayerName,
+                        pawn);
+                    toggle.isActive = () =>
+                        CurrentComponent()?.IsSeekAtWill(pawn) ?? false;
+                }
+                yield return gizmo;
+            }
+        }
+
+        public static bool ShouldSeekEnemyPrefix(Pawn pawn, ref bool __result)
+        {
+            if (!MP.IsInMultiplayer || !Active || pawn == null)
+                return true;
+
+            PerspectiveShiftMpComponent comp = CurrentComponent();
+            if (comp == null)
+                return true;
+
+            __result = comp.IsSeekAtWill(pawn);
+            return false;
+        }
+
         public static void SyncClaimAvatar(string owner, Pawn pawn)
         {
             if (!ValidateSynchronizedOwner(owner, nameof(SyncClaimAvatar)))
                 return;
             CurrentComponent()?.Claim(owner, pawn);
+            InvalidateControlledCache();
+        }
+
+        public static void SyncClaimAvatarWithMode(string owner, Pawn pawn, bool retainOnDowned)
+        {
+            if (!ValidateSynchronizedOwner(owner, nameof(SyncClaimAvatarWithMode)))
+                return;
+            PerspectiveShiftMpComponent component = CurrentComponent();
+            component?.Claim(owner, pawn);
+            PerspectiveShiftControlledAvatar state = component?.ForOwner(owner);
+            if (state != null && state.pawn == pawn)
+                state.retainOnDowned = retainOnDowned;
+            InvalidateControlledCache();
+        }
+
+        private static bool LocalRetainOnDowned()
+        {
+            // Capture only at local input; never read local mode in simulation.
+            if (MP.IsExecutingSyncCommand || !MP.InInterface)
+                return CurrentComponent()?.ForOwner(executingCommandOwner)?.retainOnDowned ?? false;
+            return string.Equals(AccessTools.Field(stateType, "CurrentMode")?.GetValue(null)?.ToString(),
+                "Authentic", StringComparison.Ordinal);
         }
 
         public static void SyncReleaseAvatar(string owner, int epoch)
@@ -659,6 +998,7 @@ namespace MP_MeowOnlineShop
             if (!ValidateSynchronizedOwner(owner, nameof(SyncReleaseAvatar)))
                 return;
             CurrentComponent()?.Release(owner, epoch);
+            InvalidateControlledCache();
         }
 
         public static void SyncSetMoveIntent(
@@ -673,10 +1013,19 @@ namespace MP_MeowOnlineShop
         {
             if (!ValidateSynchronizedOwner(owner, nameof(SyncSetMoveIntent)))
                 return;
-            CurrentComponent()?.SetMoveIntent(
+
+            PerspectiveShiftMpComponent component = CurrentComponent();
+            PerspectiveShiftControlledAvatar state = component?.EnsureState(
                 owner,
                 pawn,
-                epoch,
+                epoch);
+            if (component == null || state == null)
+                return;
+
+            component.SetMoveIntent(
+                owner,
+                pawn,
+                state.epoch,
                 inputSequence,
                 moveX,
                 moveZ,
@@ -707,7 +1056,10 @@ namespace MP_MeowOnlineShop
             if (!ValidateSynchronizedOwner(owner, nameof(SyncAvatarMapClick)))
                 return;
 
-            PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(owner);
+            PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(
+                owner,
+                pawn,
+                epoch);
             if (state == null || state.pawn != pawn || state.epoch != epoch || pawn == null || pawn.Dead)
                 return;
 
@@ -741,29 +1093,7 @@ namespace MP_MeowOnlineShop
                 {
                     if (pawn.Drafted)
                     {
-                        int seed = Gen.HashCombineInt(0x50534649, pawn.thingIDNumber);
-                        seed = Gen.HashCombineInt(seed, state.epoch);
-                        seed = Gen.HashCombineInt(seed, cell.x);
-                        seed = Gen.HashCombineInt(seed, cell.z);
-                        seed = Gen.HashCombineInt(seed, Find.TickManager?.TicksGame ?? 0);
-                        int randState = 0;
-                        Map randMap;
-                        DeterministicRandScope.Begin(
-                            pawn.Map,
-                            seed,
-                            0x13579B,
-                            ref randState,
-                            out randMap,
-                            ignoreGate: true);
-                        try
-                        {
-                            if (!Patch_MiliraWeaponMode.TryHandlePerspectiveShiftFire(pawn, cell))
-                                handleFiringMethod?.Invoke(state.runtimeAvatar, null);
-                        }
-                        finally
-                        {
-                            DeterministicRandScope.End(randState, randMap);
-                        }
+                        SyncFireAvatar(owner, pawn, epoch, cell);
                     }
                     else if (handleLeftClickIntMethod != null)
                     {
@@ -773,6 +1103,8 @@ namespace MP_MeowOnlineShop
                 }
                 else if (button == 1)
                 {
+                    state.pendingFire = false;
+                    state.pendingFireTarget = LocalTargetInfo.Invalid;
                     Thing carried = pawn.carryTracker?.CarriedThing;
                     if (!pawn.Drafted && carried != null && pawn.inventory != null &&
                         !(carried is Pawn) && !(carried is Corpse))
@@ -784,7 +1116,9 @@ namespace MP_MeowOnlineShop
                     }
                     else if (pawn.jobs?.curJob != null && pawn.jobs.curJob.def.playerInterruptible)
                     {
-                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                        pawn.jobs.EndCurrentJob(
+                            JobCondition.InterruptForced,
+                            startNewJob: false);
                     }
                 }
             }
@@ -802,8 +1136,173 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        public static void SyncFireAvatar(string owner, Pawn pawn, int epoch, IntVec3 cell)
+        {
+            LocalTargetInfo target = pawn?.Map != null && cell.InBounds(pawn.Map)
+                ? ResolvePerspectiveFireTarget(pawn, cell) : LocalTargetInfo.Invalid;
+            SyncAimAndFireAvatar(owner, pawn, epoch, target);
+        }
+
+        public static void SyncAimAndFireAvatar(string owner, Pawn pawn, int epoch, LocalTargetInfo aimedTarget)
+        {
+            if (!ValidateSynchronizedOwner(owner, nameof(SyncAimAndFireAvatar)))
+                return;
+            PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(owner, pawn, epoch);
+            if (state == null)
+                return;
+            // The newest intent supersedes the old one even if its target
+            // disappeared in transit; never execute an older buffered aim.
+            state.pendingFire = false;
+            state.pendingFireTarget = LocalTargetInfo.Invalid;
+            if (pawn.Map == null || !aimedTarget.IsValid || !aimedTarget.Cell.InBounds(pawn.Map))
+                return;
+            // One bounded intent, not an unbounded backlog of delayed shots.
+            // Capture target identity at input time so latency cannot select a
+            // different pawn that later walks into the clicked cell. MP's
+            // LocalTargetInfo serializer preserves thing-vs-cell identity:
+            // an unresolved Thing becomes Invalid, never a ground shot.
+            state.pendingFire = true;
+            state.pendingFireTarget = aimedTarget;
+            state.pendingFireUntil = Find.TickManager.TicksGame + 60;
+            ProcessPendingFire(state);
+        }
+
+        internal static void ProcessPendingFire(PerspectiveShiftControlledAvatar state)
+        {
+            if (!state.pendingFire)
+                return;
+            Pawn pawn = state.pawn;
+            if (!state.pendingFireTarget.IsValid || pawn == null || pawn.Dead || pawn.Downed || !pawn.Spawned ||
+                pawn.InMentalState || !pawn.Drafted || pawn.CurJob?.ability != null ||
+                Find.TickManager.TicksGame > state.pendingFireUntil)
+            {
+                state.pendingFire = false;
+                state.pendingFireTarget = LocalTargetInfo.Invalid;
+                return;
+            }
+            if (pawn.stances?.curStance is Stance_Busy)
+                return;
+            LocalTargetInfo intent = state.pendingFireTarget;
+            Thing target = intent.Thing;
+            IntVec3 cell = intent.Cell;
+            state.pendingFire = false;
+            state.pendingFireTarget = LocalTargetInfo.Invalid;
+            if (target != null && (target.Destroyed || !target.Spawned || target.Map != pawn.Map))
+                return;
+            ExecuteFireAvatar(state.owner, pawn, state.epoch, cell, target);
+        }
+
+        private static void ExecuteFireAvatar(string owner, Pawn pawn, int epoch, IntVec3 cell, Thing aimedTarget)
+        {
+            LogFireDiagnostic(
+                $"enter owner={owner} pawn={(pawn != null ? pawn.thingIDNumber.ToString() : "null")} " +
+                $"cell={cell} drafted={(pawn != null && pawn.Drafted)}");
+            PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(
+                owner,
+                pawn,
+                epoch);
+            if (state == null || state.pawn != pawn || state.epoch != epoch ||
+                pawn == null || pawn.Dead || pawn.Downed || pawn.InMentalState ||
+                pawn.Map == null || !cell.InBounds(pawn.Map) || !pawn.Drafted)
+            {
+                LogFireDiagnostic($"state-rejected pawn={(pawn != null ? pawn.thingIDNumber.ToString() : "null")}");
+                return;
+            }
+
+            if (pawn.WorkTagIsDisabled((WorkTags)8))
+            {
+                LogFireDiagnostic("violence-disabled");
+                return;
+            }
+
+            // Replayed input must obey the same busy/ability gate as the
+            // original HandleFiring, including delayed commands during bursts.
+            if (pawn.stances?.curStance is Stance_Busy || pawn.CurJob?.ability != null)
+                return;
+
+            LocalTargetInfo target = aimedTarget != null
+                ? new LocalTargetInfo(aimedTarget) : new LocalTargetInfo(cell);
+            cell = target.Cell;
+            LogFireDiagnostic(
+                $"target cell={cell} thing={(target.Thing != null ? target.Thing.thingIDNumber.ToString() : "cell")} " +
+                $"dist={pawn.Position.DistanceTo(cell):F2}");
+            int randState = 0;
+            Map randMap;
+            int seed = Gen.HashCombineInt(0x50534649, pawn.thingIDNumber);
+            seed = Gen.HashCombineInt(seed, state.epoch);
+            seed = Gen.HashCombineInt(seed, cell.x);
+            seed = Gen.HashCombineInt(seed, cell.z);
+            seed = Gen.HashCombineInt(seed, Find.TickManager?.TicksGame ?? 0);
+            DeterministicRandScope.Begin(
+                pawn.Map,
+                seed,
+                0x13579B,
+                ref randState,
+                out randMap,
+                ignoreGate: true);
+            try
+            {
+                Vector3 targetPos = target.Thing != null
+                    ? target.Thing.Position.ToVector3Shifted()
+                    : cell.ToVector3Shifted();
+                Vector3 direction = targetPos - pawn.Position.ToVector3Shifted();
+                if (direction.sqrMagnitude > 0.01f)
+                {
+                    pawn.Rotation = Rot4.FromAngleFlat(
+                        Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg);
+                }
+
+                if (pawn.Position.DistanceTo(cell) <= 1.42f && target.Thing != null)
+                {
+                    bool meleeResult = pawn.meleeVerbs?.TryMeleeAttack(target.Thing, null, false) ?? false;
+                    LogFireDiagnostic(
+                        $"melee result={meleeResult} stance={pawn.stances?.curStance?.GetType().Name ?? "null"}");
+                    return;
+                }
+
+                Verb verb = ResolveActiveVerb(pawn);
+                LogFireDiagnostic(
+                    $"ranged verb={(verb != null ? verb.GetType().Name : "null")} " +
+                    $"canHit={verb != null && verb.CanHitTarget(target)}");
+                if (verb == null || !verb.Available() || verb.verbProps.IsMeleeAttack ||
+                    pawn.WorkTagIsDisabled((WorkTags)524288) ||
+                    !verb.CanHitTarget(target))
+                    return;
+                verb.TryStartCastOn(target, false, true, false, false);
+            }
+            finally
+            {
+                DeterministicRandScope.End(randState, randMap);
+            }
+        }
+
+        private static LocalTargetInfo ResolvePerspectiveFireTarget(Pawn pawn, IntVec3 cell)
+        {
+            List<Thing> things = cell.GetThingList(pawn.Map)
+                .Where(t => t != null).OrderBy(t => t.thingIDNumber).ToList();
+            Thing target = things.FirstOrDefault(t => t is Pawn && t != pawn)
+                ?? things.FirstOrDefault(t =>
+                    t != null &&
+                    ((int)t.def.category == (int)ThingCategory.Building ||
+                     (int)t.def.category == (int)ThingCategory.Plant));
+            return target != null ? new LocalTargetInfo(target) : new LocalTargetInfo(cell);
+        }
+
+        private static Verb ResolveActiveVerb(Pawn pawn)
+        {
+            Verb verb = pawn.equipment?.PrimaryEq?.PrimaryVerb;
+            if (verb == null || verb.verbProps.IsMeleeAttack)
+            {
+                verb = pawn.VerbTracker?.AllVerbs?
+                    .FirstOrDefault(candidate => candidate is Verb_MeleeAttack && candidate.Available());
+            }
+            return verb;
+        }
+
         public static bool SetAvatarPrefix(Pawn pawn)
         {
+            InvalidateLocalAvatarCache();
+            InvalidateControlledCache();
             if (!MP.IsInMultiplayer || !Active)
                 return true;
 
@@ -811,17 +1310,30 @@ namespace MP_MeowOnlineShop
             {
                 string owner = CurrentCommandOwnerOrLocalPlayer();
                 if (!string.IsNullOrEmpty(owner))
-                    SyncClaimAvatar(owner, pawn);
+                    SyncClaimAvatarWithMode(owner, pawn, LocalRetainOnDowned());
             }
             return false;
         }
 
         public static bool ClearAvatarPrefix()
         {
+            InvalidateLocalAvatarCache();
+            InvalidateControlledCache();
             if (clearingLocalView)
                 return true;
             if (!MP.IsInMultiplayer || !Active)
                 return true;
+            if (!MP.InInterface && !MP.IsExecutingSyncCommand)
+                return false;
+
+            // Automatic health revocation has a pawn-based executor. A tick
+            // or world cleanup must never infer authority from this peer's UI.
+            if (!MP.InInterface && !MP.IsExecutingSyncCommand)
+            {
+                if (Current.ProgramState != ProgramState.Playing)
+                    ClearLocalViewOnly();
+                return false;
+            }
 
             string owner = CurrentCommandOwnerOrLocalPlayer();
             if (string.IsNullOrEmpty(owner))
@@ -832,6 +1344,44 @@ namespace MP_MeowOnlineShop
                 SyncReleaseAvatar(owner, state.epoch);
             else if (string.Equals(owner, MP.PlayerName, StringComparison.Ordinal))
                 ClearLocalViewOnly();
+            return false;
+        }
+
+        public static bool RevokeControlPrefix(Pawn pawn, DamageInfo? dinfo, Hediff hediff)
+        {
+            if (!MP.IsInMultiplayer || !Active)
+                return true;
+            PerspectiveShiftMpComponent component = CurrentComponent();
+            PerspectiveShiftControlledAvatar state = component?.ForPawn(pawn);
+            if (state == null)
+                return false;
+
+            bool localOwner = string.Equals(state.owner, MP.PlayerName, StringComparison.Ordinal);
+            bool authenticDeath = state.retainOnDowned && (pawn.Dead || pawn.IsKidnapped());
+            component.RevokeForHealth(pawn);
+            InvalidateControlledCache();
+            // Original revocation checks the local Avatar then calls a UI
+            // release command during simulation. Never run that branch.
+            if (localOwner)
+            {
+                Game notificationGame = Current.Game;
+                bool showLostControl = !state.retainOnDowned;
+                localHealthNotifications.Enqueue(() =>
+                {
+                    if (!ReferenceEquals(Current.Game, notificationGame))
+                        return;
+                    if (authenticDeath)
+                    {
+                        AccessTools.Field(stateType, "pendingDeathMenu")?.SetValue(null, true);
+                        Type dialogType = AccessTools.TypeByName("PerspectiveShift.Dialog_YouDied");
+                        if (dialogType != null)
+                            Find.WindowStack.Add((Window)Activator.CreateInstance(dialogType,
+                                new object[] { pawn, dinfo, hediff }));
+                    }
+                    else if (showLostControl)
+                        Messages.Message("PS_LostControl".Translate(), MessageTypeDefOf.NegativeEvent, false);
+                });
+            }
             return false;
         }
 
@@ -887,41 +1437,57 @@ namespace MP_MeowOnlineShop
             return false;
         }
 
+        private static readonly Queue<Action> localHealthNotifications = new Queue<Action>();
+
         public static void StateUpdatePrefix()
         {
             EnsureLocalAvatarView("Update");
+            if (MP.IsInMultiplayer && (!MP.InInterface || MP.IsExecutingSyncCommand))
+                return;
+            while (localHealthNotifications.Count > 0)
+            {
+                Action notification = localHealthNotifications.Dequeue();
+                // UI feedback must not allocate shared message IDs/history or
+                // consume simulation randomness inside a health callback.
+                Rand.PushState();
+                try { notification(); }
+                finally { Rand.PopState(); }
+            }
         }
 
         public static bool StateTickPrefix()
         {
-            if (!MP.IsInMultiplayer || !Active || iteratingControlledAvatars)
-                return true;
+            // MP calls DoSingleTick for world time; map simulation has its own
+            // Tick path even with async time disabled. Never tick a map pawn here.
+            return !MP.IsInMultiplayer || !Active;
+        }
 
-            EnsureLocalAvatarView("Tick");
-
+        public static void AvatarMapPostTick(Map __instance)
+        {
+            if (!MP.IsInMultiplayer || !Active || !HasControlledAvatars() ||
+                iteratingControlledAvatars ||
+                !ReferenceEquals(asyncTickingMapField?.GetValue(null), __instance))
+                return;
             PerspectiveShiftMpComponent component = CurrentComponent();
             if (component == null || avatarTickMethod == null)
-                return false;
-
-            Map tickingMap = asyncTickingMapField?.GetValue(null) as Map;
-            bool asyncTime = MpRuntimeInfo.TryGetAsyncTimeActive(out bool asyncActive) && asyncActive;
-            if (asyncTime && tickingMap != null)
-                component.TickForMap(tickingMap);
+                return;
 
             object localAvatar = stateAvatarField.GetValue(null);
             iteratingControlledAvatars = true;
             try
             {
+                component.TickForMap(__instance);
                 foreach (PerspectiveShiftControlledAvatar state in component.OrderedStates)
                 {
                     if (state.pawn == null || state.pawn.Dead)
                         continue;
-                    if (asyncTime && (tickingMap == null || state.pawn.Map != tickingMap))
+                    if (state.pawn.Map != __instance)
                         continue;
 
                     EnsureRuntimeAvatar(state);
                     CopyIntentToRuntime(state);
                     stateAvatarField.SetValue(null, state.runtimeAvatar);
+                    ProcessPendingFire(state);
                     avatarTickMethod.Invoke(state.runtimeAvatar, null);
                 }
             }
@@ -935,8 +1501,6 @@ namespace MP_MeowOnlineShop
                 RestoreLocalAvatarContext(localAvatar);
                 iteratingControlledAvatars = false;
             }
-
-            return false;
         }
 
         public static bool UpdatePhysicsPrefix(object __instance)
@@ -944,13 +1508,13 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active)
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
-            PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
-            if (pawn != null && state == null && MP.IsHosting && !MP.IsExecutingSyncCommand)
+            Pawn pawn = AvatarPawnOf(__instance);
+            PerspectiveShiftControlledAvatar state = CurrentOwnerState();
+            if (pawn != null && state == null && MayPreserveHostMigrationAvatar(__instance))
             {
                 // Migrate a pre-existing single-player Perspective Shift avatar
                 // when that save is first hosted. Only the host may seed it.
-                SyncClaimAvatar(MP.PlayerName, pawn);
+                SyncClaimAvatarWithMode(MP.PlayerName, pawn, LocalRetainOnDowned());
                 return false;
             }
             if (pawn == null || state == null || state.pawn != pawn)
@@ -997,14 +1561,19 @@ namespace MP_MeowOnlineShop
                 {
                 }
 
-                Log.Message(
-                    $"[MP-MeowOnlineShop] Perspective Shift local movement input accepted: " +
-                    $"owner={MP.PlayerName}, pawn={pawn.thingIDNumber}, input=({moveX},{moveZ}), " +
-                    $"targetControlsFrozen={targetControlsFrozen}.");
+                if (ModDebug.EnablePerspectiveShiftTrace)
+                {
+                    Log.Message(
+                        $"[MP-MeowOnlineShop] Perspective Shift local movement input accepted: " +
+                        $"owner={MP.PlayerName}, pawn={pawn.thingIDNumber}, input=({moveX},{moveZ}), " +
+                        $"targetControlsFrozen={targetControlsFrozen}.");
+                }
             }
 
             float realtime = Time.realtimeSinceStartup;
+            int inputGameTick = Find.TickManager.TicksGame;
             if (!sentInput || realtime - lastSentInputRealtime >= InputHeartbeatSeconds ||
+                inputGameTick - lastSentInputGameTick >= 30 ||
                 moveX != lastMoveX || moveZ != lastMoveZ ||
                 sprint != lastSprint || walk != lastWalk)
             {
@@ -1014,6 +1583,7 @@ namespace MP_MeowOnlineShop
                 lastWalk = walk;
                 sentInput = true;
                 lastSentInputRealtime = realtime;
+                lastSentInputGameTick = inputGameTick;
                 int inputSequence = localPrediction.Queue(
                     state,
                     moveX,
@@ -1041,10 +1611,11 @@ namespace MP_MeowOnlineShop
             out CameraPredictionSwap __state)
         {
             __state = default(CameraPredictionSwap);
-            if (!MP.IsInMultiplayer || !Active || physicsPositionField == null)
+            if (!MP.IsInMultiplayer || !Active ||
+                !HasControlledAvatars() || physicsPositionField == null)
                 return;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state =
                 CurrentComponent()?.ForOwner(MP.PlayerName);
             if (!IsExclusiveLocalOwnership(state) || state.pawn != pawn ||
@@ -1101,11 +1672,12 @@ namespace MP_MeowOnlineShop
 
         public static bool HandleSelectorClickPrefix(object __instance, ref bool __result)
         {
-            if (!MP.IsInMultiplayer || !Active || MP.IsExecutingSyncCommand)
+            if (!MP.IsInMultiplayer || !Active ||
+                !HasControlledAvatars() || MP.IsExecutingSyncCommand)
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
-            PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
+            Pawn pawn = AvatarPawnOf(__instance);
+            PerspectiveShiftControlledAvatar state = CurrentOwnerState();
             Event currentEvent = Event.current;
             if (pawn == null || state == null || state.pawn != pawn || currentEvent == null ||
                 currentEvent.type != EventType.MouseDown || (currentEvent.button != 0 && currentEvent.button != 1))
@@ -1120,14 +1692,18 @@ namespace MP_MeowOnlineShop
                 return false;
             }
 
-            if (currentEvent.button == 0 && pawn.Drafted)
-                lastSentFireRealtime = Time.realtimeSinceStartup;
-
-            SyncAvatarMapClick(
+            IntVec3 clickCell = UI.MouseCell();
+            if (currentEvent.button == 0 && pawn.Drafted && pawn.Map != null && clickCell.InBounds(pawn.Map))
+            {
+                SyncAimAndFireAvatar(MP.PlayerName, pawn, state.epoch,
+                    ResolvePerspectiveFireTarget(pawn, clickCell));
+            }
+            else
+                SyncAvatarMapClick(
                 MP.PlayerName,
                 pawn,
                 state.epoch,
-                UI.MouseCell(),
+                clickCell,
                 currentEvent.button,
                 currentEvent.clickCount);
             __result = true;
@@ -1136,11 +1712,12 @@ namespace MP_MeowOnlineShop
 
         public static bool HandleFiringPrefix(object __instance)
         {
-            if (!MP.IsInMultiplayer || !Active || MP.IsExecutingSyncCommand)
+            if (!MP.IsInMultiplayer || !Active ||
+                !HasControlledAvatars() || MP.IsExecutingSyncCommand)
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
-            PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
+            Pawn pawn = AvatarPawnOf(__instance);
+            PerspectiveShiftControlledAvatar state = CurrentOwnerState();
             if (pawn == null || state == null || state.pawn != pawn || !pawn.Drafted ||
                 pawn.Downed || pawn.InMentalState || Find.Targeter.IsTargeting || Find.TickManager.Paused)
                 return false;
@@ -1164,18 +1741,25 @@ namespace MP_MeowOnlineShop
                 }
             }
 
-            float realtime = Time.realtimeSinceStartup;
-            if (realtime - lastSentFireRealtime < HoldFireRepeatSeconds)
+            int now = Find.TickManager?.TicksGame ?? 0;
+            bool targetChanged = state.lastFireCell != targetCell;
+            if (!targetChanged && now - state.lastFireTick < 5)
                 return false;
 
-            lastSentFireRealtime = realtime;
-            SyncAvatarMapClick(MP.PlayerName, pawn, state.epoch, targetCell, 0, 1);
+            // Custom weapon Available/CanHitTarget implementations may mutate
+            // caches or consume Rand. Evaluate them only in the replayed command.
+
+            state.lastFireCell = targetCell;
+            state.lastFireTick = now;
+            SyncAimAndFireAvatar(MP.PlayerName, pawn, state.epoch,
+                ResolvePerspectiveFireTarget(pawn, targetCell));
             return false;
         }
 
         public static void WarmupTimePostfix(Verb __instance, ref float __result)
         {
-            if (!MP.IsInMultiplayer || !Active || __result <= 0f || __instance == null ||
+            if (!MP.IsInMultiplayer || !Active ||
+                !HasControlledAvatars() || __result <= 0f || __instance == null ||
                 __instance.EquipmentCompSource == null || !__instance.CasterIsPawn ||
                 __instance is IAbilityVerb)
                 return;
@@ -1203,7 +1787,7 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || !Active || !(thing is Building_Storage storage))
                 return true;
 
-            Pawn pawn = avatarPawnField?.GetValue(__instance) as Pawn;
+            Pawn pawn = AvatarPawnOf(__instance);
             if (pawn == null || pawn.Map == null || storage.Map != pawn.Map)
             {
                 __result = false;
@@ -1270,7 +1854,9 @@ namespace MP_MeowOnlineShop
                              .Where(candidate => candidate != null && candidate != pawn)
                              .OrderBy(candidate => candidate.thingIDNumber))
                 {
-                    reserver.jobs?.EndCurrentJob(JobCondition.InterruptForced);
+                    reserver.jobs?.EndCurrentJob(
+                        JobCondition.InterruptForced,
+                        startNewJob: false);
                 }
 
                 pawn.Map.reservationManager.ReleaseAllForTarget(storedItem);
@@ -1295,35 +1881,42 @@ namespace MP_MeowOnlineShop
 
         public static bool BypassPerspectiveShiftCellFinderPrefix(ref bool __result)
         {
-            if (!MP.IsInMultiplayer || !Active)
+            if (!MP.IsInMultiplayer || !Active || !HasControlledAvatars())
                 return true;
 
             __result = true;
             return false;
         }
 
-        public static bool ReplacePerspectiveShiftTweenerPrefix(object[] __args, ref bool __result)
+        public static bool ReplacePerspectiveShiftTweenerPrefix(object __0, ref bool __result)
         {
-            if (!MP.IsInMultiplayer || !Active)
+            if (!MP.IsInMultiplayer || !Active || !HasControlledAvatars())
                 return true;
 
-            object tweener = __args != null && __args.Length > 0 ? __args[0] : null;
-            Pawn pawn = tweener == null ? null : AccessTools.Field(tweener.GetType(), "pawn")?.GetValue(tweener) as Pawn;
-            object localAvatar = stateAvatarField?.GetValue(null);
-            Pawn localPawn = localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
-            bool hasPrediction = localAvatar != null && physicsPositionField?.GetValue(localAvatar) != null;
+            object tweener = __0;
+            Pawn pawn = tweener == null
+                ? null
+                : _tweenerPawnRef != null
+                    ? _tweenerPawnRef(tweener)
+                    : AccessTools.Field(tweener.GetType(), "pawn")?.GetValue(tweener) as Pawn;
+            object localAvatar = LocalAvatarObject();
+            Pawn localPawn = AvatarPawnOf(localAvatar);
+            bool hasPrediction = localAvatar != null &&
+                                 (_physicsPositionGetter != null
+                                     ? _physicsPositionGetter(localAvatar)
+                                     : physicsPositionField?.GetValue(localAvatar)) != null;
             __result = pawn == null || pawn != localPawn || !hasPrediction;
             return false;
         }
 
         public static bool SkipInMultiplayerPrefix()
         {
-            return !MP.IsInMultiplayer || !Active;
+            return !MP.IsInMultiplayer || !Active || !HasControlledAvatars();
         }
 
         public static bool SuppressTargetBoolPatchPrefix(ref bool __result)
         {
-            if (!MP.IsInMultiplayer || !Active)
+            if (!MP.IsInMultiplayer || !Active || !HasControlledAvatars())
                 return true;
 
             // The patched method is itself a Harmony prefix. Returning true from it
@@ -1332,36 +1925,49 @@ namespace MP_MeowOnlineShop
             return false;
         }
 
+        public static bool ControlledWaitAutoAttackPrefix(JobDriver_Wait __instance)
+        {
+            if (!MP.IsInMultiplayer || !Active || __instance == null)
+                return true;
+
+            Pawn pawn = _jobDriverPawnRef != null
+                ? _jobDriverPawnRef(__instance)
+                : AccessTools.Field(typeof(JobDriver), "pawn")?.GetValue(__instance) as Pawn;
+            if (pawn == null)
+                return true;
+
+            // Perspective Shift's original prefix reads its local Avatar singleton.
+            // Use the synchronized ownership registry instead, so every peer makes
+            // the same decision before vanilla CheckForAutoAttack consumes Rand.
+            return CurrentComponent()?.IsControlled(pawn) != true;
+        }
+
         public static bool LocalAvatarOnlyTargetBoolPrefix(object[] __args, ref bool __result)
         {
             if (!MP.IsInMultiplayer || !Active)
                 return true;
+
+            // DrawPos is also the real projectile origin. Only rendering may
+            // substitute the owning client's smoothed lean for vanilla state.
+            if (!MP.InInterface || MP.IsExecutingSyncCommand || !HasControlledAvatars())
+            {
+                __result = true;
+                return false;
+            }
 
             Pawn targetPawn = null;
             if (__args != null)
             {
                 foreach (object arg in __args)
                 {
-                    if (arg is Pawn directPawn)
-                    {
-                        targetPawn = directPawn;
+                    targetPawn = ResolvePawnArg(arg);
+                    if (targetPawn != null)
                         break;
-                    }
-
-                    if (arg != null)
-                    {
-                        FieldInfo pawnField = AccessTools.Field(arg.GetType(), "pawn");
-                        if (pawnField?.GetValue(arg) is Pawn nestedPawn)
-                        {
-                            targetPawn = nestedPawn;
-                            break;
-                        }
-                    }
                 }
             }
 
-            object localAvatar = stateAvatarField?.GetValue(null);
-            Pawn localPawn = localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
+            object localAvatar = LocalAvatarObject();
+            Pawn localPawn = AvatarPawnOf(localAvatar);
             if (targetPawn != null && targetPawn == localPawn)
                 return true;
 
@@ -1371,31 +1977,61 @@ namespace MP_MeowOnlineShop
             return false;
         }
 
+        private static void RenderPawnPrefix(object __instance, out RenderLeanContext __state)
+        {
+            __state = default;
+            if (!MP.IsInMultiplayer || !Active)
+                return;
+            PawnLeaner leaner = AvatarPawnOf(__instance)?.Drawer?.leaner;
+            if (leaner == null)
+                return;
+            __state.leaner = leaner;
+            __state.shootSourceOffset = _shootSourceOffsetRef(leaner);
+        }
+
+        private static Exception RenderPawnFinalizer(Exception __exception, RenderLeanContext __state)
+        {
+            // RenderPawn writes this simulation field from local LeanTarget.
+            // Retain its visual smoothing, but restore the offset established
+            // by Notify_WarmingCastAlongLine even when rendering throws.
+            if (__state.leaner != null)
+                _shootSourceOffsetRef(__state.leaner) = __state.shootSourceOffset;
+            return __exception;
+        }
+
         public static bool EndJobPostfixContextPrefix(object[] __args, out object __state)
         {
             __state = null;
-            if (!MP.IsInMultiplayer || !Active)
+            if (!MP.IsInMultiplayer || !Active || !HasControlledAvatars())
                 return true;
 
             Pawn_JobTracker tracker = __args?.OfType<Pawn_JobTracker>().FirstOrDefault();
             Pawn trackerPawn = tracker == null
                 ? null
-                : AccessTools.Field(typeof(Pawn_JobTracker), "pawn")?.GetValue(tracker) as Pawn;
+                : _jobTrackerPawnRef != null
+                    ? _jobTrackerPawnRef(tracker)
+                    : AccessTools.Field(typeof(Pawn_JobTracker), "pawn")?.GetValue(tracker) as Pawn;
             PerspectiveShiftControlledAvatar controlledState = CurrentComponent()?.ForPawn(trackerPawn);
             if (controlledState == null)
                 return false;
 
             EnsureRuntimeAvatar(controlledState);
             CopyIntentToRuntime(controlledState);
-            __state = stateAvatarField.GetValue(null);
+            __state = new AvatarContext { previous = stateAvatarField.GetValue(null) };
             stateAvatarField.SetValue(null, controlledState.runtimeAvatar);
             return true;
         }
 
-        public static void EndJobPostfixContextPostfix(object __state)
+        public static Exception EndJobPostfixContextFinalizer(Exception __exception, object __state)
         {
-            if (MP.IsInMultiplayer && Active && stateAvatarField != null)
-                RestoreLocalAvatarContext(__state);
+            // Restore the caller's simulation context, not this client's UI
+            // avatar. The finalizer also runs when InteractWith throws.
+            if (__state is AvatarContext context)
+            {
+                stateAvatarField.SetValue(null, context.previous);
+                InvalidateLocalAvatarCache();
+            }
+            return __exception;
         }
 
         public static void EnsureRuntimeAvatar(PerspectiveShiftControlledAvatar state)
@@ -1507,7 +2143,9 @@ namespace MP_MeowOnlineShop
 
         private static void EnsureLocalAvatarView(string source)
         {
-            if (!MP.IsInMultiplayer || !Active || stateAvatarField == null || avatarPawnField == null)
+            if (!MP.IsInMultiplayer || !Active ||
+                !HasControlledAvatars() ||
+                stateAvatarField == null || avatarPawnField == null)
                 return;
 
             PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
@@ -1544,6 +2182,8 @@ namespace MP_MeowOnlineShop
 
         private static void RestoreLocalAvatarContext(object previousAvatar)
         {
+            InvalidateLocalAvatarCache();
+            InvalidateControlledCache();
             PerspectiveShiftControlledAvatar localState = CurrentComponent()?.ForOwner(MP.PlayerName);
             if (IsExclusiveLocalOwnership(localState))
             {
@@ -1573,7 +2213,7 @@ namespace MP_MeowOnlineShop
             Pawn pawn = avatarPawnField.GetValue(avatar) as Pawn;
             PerspectiveShiftMpComponent component = CurrentComponent();
             return pawn != null && component != null &&
-                   !component.hadOwnershipRecordsAtLoad &&
+                   component.CanMigrateSinglePlayerAvatar && !pawn.Dead && !pawn.Downed &&
                    component.ForPawn(pawn) == null;
         }
 
@@ -1594,7 +2234,12 @@ namespace MP_MeowOnlineShop
 
         private static void ClearLocalViewOnly()
         {
-            stateAvatarField?.SetValue(null, null);
+            InvalidateLocalAvatarCache();
+            InvalidateControlledCache();
+            if (_stateAvatarSetter != null)
+                _stateAvatarSetter(null);
+            else
+                stateAvatarField?.SetValue(null, null);
             sentInput = false;
             localPrediction.Clear();
             ClearHeldMovementKeys();
@@ -1617,13 +2262,202 @@ namespace MP_MeowOnlineShop
 
         private static PerspectiveShiftMpComponent CurrentComponent()
         {
-            return Current.Game?.GetComponent<PerspectiveShiftMpComponent>();
+            Game game = Current.Game;
+            if (!_componentCacheValid || !ReferenceEquals(game, _componentCacheGame))
+            {
+                _componentCache = game?.GetComponent<PerspectiveShiftMpComponent>();
+                _componentCacheGame = game;
+                _componentCacheValid = true;
+            }
+
+            return _componentCache;
+        }
+
+        private static PerspectiveShiftControlledAvatar CurrentOwnerState()
+        {
+            int frame = Time.frameCount;
+            string owner = MP.PlayerName;
+            if (_ownerStateCacheFrame == frame &&
+                string.Equals(_ownerStateCacheOwner, owner, StringComparison.Ordinal))
+            {
+                return _ownerStateCache;
+            }
+
+            _ownerStateCacheFrame = frame;
+            _ownerStateCacheOwner = owner;
+            _ownerStateCache = CurrentComponent()?.ForOwner(owner);
+            return _ownerStateCache;
+        }
+
+        private static AccessTools.FieldRef<object, T> TryGetInstanceFieldRef<T>(
+            Type type,
+            string name)
+        {
+            if (type == null)
+                return null;
+            try
+            {
+                return AccessTools.FieldRefAccess<T>(type, name);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object> TryCompileStaticFieldGetter(FieldInfo field)
+        {
+            if (field == null)
+                return null;
+            try
+            {
+                var body = Expression.Convert(
+                    Expression.Field(null, field),
+                    typeof(object));
+                return Expression.Lambda<Func<object>>(body).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Action<object> TryCompileStaticFieldSetter(FieldInfo field)
+        {
+            if (field == null)
+                return null;
+            try
+            {
+                var value = Expression.Parameter(typeof(object), "value");
+                var body = Expression.Assign(
+                    Expression.Field(null, field),
+                    Expression.Convert(value, field.FieldType));
+                return Expression.Lambda<Action<object>>(body, value).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object, object> TryCompileInstanceFieldGetter(
+            Type type,
+            FieldInfo field)
+        {
+            if (type == null || field == null)
+                return null;
+            try
+            {
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var body = Expression.Convert(
+                    Expression.Field(Expression.Convert(instance, type), field),
+                    typeof(object));
+                return Expression.Lambda<Func<object, object>>(body, instance).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Pawn ResolvePawnArg(object arg)
+        {
+            if (arg is Pawn pawn)
+                return pawn;
+            if (arg == null)
+                return null;
+
+            var accessor = GetNestedPawnRef(arg.GetType());
+            if (accessor == null)
+                return null;
+            try
+            {
+                return accessor(arg);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AccessTools.FieldRef<object, Pawn> GetNestedPawnRef(Type type)
+        {
+            lock (NestedPawnRefCacheLock)
+            {
+                AccessTools.FieldRef<object, Pawn> cached;
+                if (NestedPawnRefCache.TryGetValue(type, out cached))
+                    return cached;
+
+                AccessTools.FieldRef<object, Pawn> accessor = null;
+                try
+                {
+                    accessor = AccessTools.FieldRefAccess<Pawn>(type, "pawn");
+                }
+                catch
+                {
+                    accessor = null;
+                }
+
+                NestedPawnRefCache[type] = accessor;
+                if (NestedPawnRefCache.Count > 256)
+                    NestedPawnRefCache.Clear();
+                return accessor;
+            }
         }
 
         private static Pawn LocalAvatarPawn()
         {
-            object localAvatar = stateAvatarField?.GetValue(null);
-            return localAvatar == null ? null : avatarPawnField?.GetValue(localAvatar) as Pawn;
+            LocalAvatarObject();
+            return _localAvatarCacheFrame == Time.frameCount
+                ? _localAvatarCachePawn
+                : null;
+        }
+
+        private static object LocalAvatarObject()
+        {
+            int frame = Time.frameCount;
+            if (_localAvatarCacheFrame == frame &&
+                _localAvatarCacheObject != null)
+            {
+                return _localAvatarCacheObject;
+            }
+
+            object avatar = _stateAvatarGetter != null
+                ? _stateAvatarGetter()
+                : stateAvatarField?.GetValue(null);
+            _localAvatarCacheFrame = frame;
+            _localAvatarCacheObject = avatar;
+            _localAvatarCachePawn = AvatarPawnOf(avatar);
+            return avatar;
+        }
+
+        private static Pawn AvatarPawnOf(object avatar)
+        {
+            if (avatar == null)
+                return null;
+            return _avatarPawnRef != null
+                ? _avatarPawnRef(avatar)
+                : avatarPawnField?.GetValue(avatar) as Pawn;
+        }
+
+        private static void InvalidateLocalAvatarCache()
+        {
+            _localAvatarCacheFrame = -1;
+            _localAvatarCacheObject = null;
+            _localAvatarCachePawn = null;
+        }
+
+        private static bool HasControlledAvatars()
+        {
+            // This gates AI/combat, not just rendering. Death/release can occur
+            // between ticks in one frame, and peers render at different rates.
+            return CurrentComponent()?.HasControlledAvatars == true;
+        }
+
+        private static void InvalidateControlledCache()
+        {
+            _ownerStateCacheFrame = -1;
+            _ownerStateCache = null;
         }
 
         private static bool KeyDown(string defName, bool eventHeld)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <packageId>local.mp.racecompatibilityplus</packageId>
-  <modVersion>3.0.115</modVersion>
+  <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
+  <modVersion>3.0.125</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
@@ -18,6 +18,17 @@ MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch col
     </li>
   </modDependencies>
   <loadAfter>
+    <li>keeptpa.NivarianRace</li>
+    <li>ASEL.MonolynRace</li>
+    <li>hatena.VoiceroidAsAnimal</li>
+    <li>ZuoYao.RavenRace</li>
+    <li>MelonDove.WolfeinRace</li>
+    <li>JL.WolfeinGFIExpanded</li>
+    <li>Ancot.WolfeinRaceGenePatch</li>
+    <li>leopoko.wolfeinallegiance</li>
+    <li>WolfeinExpand.BlackScience</li>
+    <li>eddie.wolfein.imperialdataanalysis.tweaks</li>
+    <li>co.uk.epicguru.meleeanimation</li>
     <li>rwmt.Multiplayer</li>
     <li>HaiLuan.CustomQuestFramework</li>
     <li>HenTaiLoliTeam.Axolotl</li>
@@ -39,3 +50,4 @@ MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch col
     <li>ferny.PerspectiveShift</li>
   </loadAfter>
 </ModMetaData>
+

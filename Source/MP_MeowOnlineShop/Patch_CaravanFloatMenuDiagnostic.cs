@@ -60,10 +60,13 @@ namespace MP_MeowOnlineShop
                                          !t.IsAbstract &&
                                          typeof(WorldObject).IsAssignableFrom(t)))
                 {
-                    MethodInfo method = AccessTools.Method(
-                        type,
+                    MethodInfo method = type.GetMethod(
                         "GetFloatMenuOptions",
-                        new[] { typeof(Caravan) });
+                        BindingFlags.Instance | BindingFlags.Public |
+                        BindingFlags.NonPublic | BindingFlags.DeclaredOnly,
+                        null,
+                        new[] { typeof(Caravan) },
+                        null);
                     if (method == null || method.IsAbstract)
                         continue;
 

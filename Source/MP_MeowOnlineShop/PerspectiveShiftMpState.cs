@@ -20,6 +20,7 @@ namespace MP_MeowOnlineShop
         public string owner;
         public Pawn pawn;
         public int epoch;
+        public bool retainOnDowned;
         public int moveX;
         public int moveZ;
         public bool sprint;
@@ -34,10 +35,15 @@ namespace MP_MeowOnlineShop
         public bool wasFullyRested;
         public bool passedOut;
         public Dictionary<string, bool> needsAlerted = new Dictionary<string, bool>();
+        public bool pendingFire;
+        public LocalTargetInfo pendingFireTarget = LocalTargetInfo.Invalid;
+        public int pendingFireUntil;
 
         [Unsaved] public object runtimeAvatar;
         [Unsaved] public int movementDiagnosticTick = -1;
         [Unsaved] public IntVec3 movementDiagnosticStart = IntVec3.Invalid;
+        [Unsaved] public IntVec3 lastFireCell = IntVec3.Invalid;
+        [Unsaved] public int lastFireTick = -999;
 
         public void ExposeData()
         {
@@ -47,6 +53,7 @@ namespace MP_MeowOnlineShop
             Scribe_Values.Look(ref owner, "owner");
             Scribe_References.Look(ref pawn, "pawn", true);
             Scribe_Values.Look(ref epoch, "epoch");
+            Scribe_Values.Look(ref retainOnDowned, "retainOnDowned");
             Scribe_Values.Look(ref moveX, "moveX");
             Scribe_Values.Look(ref moveZ, "moveZ");
             Scribe_Values.Look(ref sprint, "sprint");
@@ -55,6 +62,9 @@ namespace MP_MeowOnlineShop
             Scribe_Values.Look(ref lastInputTick, "lastInputTick", -1);
             Scribe_Values.Look(ref lastAppliedInputSequence, "lastAppliedInputSequence");
             Scribe_Values.Look(ref nextMovementJobTick, "nextMovementJobTick");
+            Scribe_Values.Look(ref pendingFire, "pendingFire");
+            Scribe_TargetInfo.Look(ref pendingFireTarget, "pendingFireTarget");
+            Scribe_Values.Look(ref pendingFireUntil, "pendingFireUntil");
             Scribe_References.Look(ref savedLord, "savedLord");
             Scribe_References.Look(ref pendingMinifiedPickup, "pendingMinifiedPickup");
             Scribe_References.Look(ref interactingDoor, "interactingDoor");
@@ -69,7 +79,9 @@ namespace MP_MeowOnlineShop
     public sealed class PerspectiveShiftMpComponent : GameComponent
     {
         private List<PerspectiveShiftControlledAvatar> controlled = new List<PerspectiveShiftControlledAvatar>();
+        private int lastOwnershipEpoch;
         [Unsaved] internal bool hadOwnershipRecordsAtLoad;
+        public HashSet<int> seekAtWillPawnIds = new HashSet<int>();
 
         public PerspectiveShiftMpComponent(Game game)
         {
@@ -80,6 +92,31 @@ namespace MP_MeowOnlineShop
                 .Where(s => s != null && s.pawn != null && !string.IsNullOrEmpty(s.owner))
                 .OrderBy(s => s.pawn.thingIDNumber)
                 .ThenBy(s => s.owner, StringComparer.Ordinal);
+
+        public bool HasControlledAvatars => controlled.Count > 0;
+        public bool CanMigrateSinglePlayerAvatar => lastOwnershipEpoch == 0 && !hadOwnershipRecordsAtLoad;
+
+        public bool IsSeekAtWill(Pawn pawn)
+        {
+            return pawn != null &&
+                   !IsControlled(pawn) &&
+                   !pawn.InMentalState &&
+                   !pawn.Drafted &&
+                   pawn.Faction == Faction.OfPlayer &&
+                   !pawn.RaceProps.Animal &&
+                   seekAtWillPawnIds != null &&
+                   seekAtWillPawnIds.Contains(pawn.thingIDNumber);
+        }
+
+        public void ToggleSeekAtWill(Pawn pawn)
+        {
+            if (pawn == null || pawn.thingIDNumber < 0)
+                return;
+            if (seekAtWillPawnIds == null)
+                seekAtWillPawnIds = new HashSet<int>();
+            if (!seekAtWillPawnIds.Remove(pawn.thingIDNumber))
+                seekAtWillPawnIds.Add(pawn.thingIDNumber);
+        }
 
         public PerspectiveShiftControlledAvatar ForOwner(string owner)
         {
@@ -119,7 +156,10 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            int nextEpoch = previous == null ? 1 : previous.epoch + 1;
+            // A released lease must never be reused by delayed movement/fire.
+            if (lastOwnershipEpoch == int.MaxValue)
+                return;
+            int nextEpoch = ++lastOwnershipEpoch;
             if (previous != null)
                 ReleaseState(previous, restoreLord: true);
 
@@ -137,6 +177,21 @@ namespace MP_MeowOnlineShop
             Patch_PerspectiveShiftMp.SetLocalAvatarIfOwned(state);
         }
 
+        public PerspectiveShiftControlledAvatar EnsureState(
+            string owner,
+            Pawn pawn,
+            int epoch)
+        {
+            if (string.IsNullOrEmpty(owner) || pawn == null || pawn.Destroyed)
+                return null;
+
+            // MP snapshots already contain the registry. Only Claim creates
+            // ownership; a late input cannot resurrect a released avatar.
+            PerspectiveShiftControlledAvatar existing = ForOwner(owner);
+            return existing != null && existing.pawn == pawn && existing.epoch == epoch &&
+                   ReferenceEquals(ForPawn(pawn), existing) ? existing : null;
+        }
+
         public void Release(string owner, int epoch)
         {
             PerspectiveShiftControlledAvatar state = ForOwner(owner);
@@ -144,6 +199,21 @@ namespace MP_MeowOnlineShop
                 return;
 
             ReleaseState(state, restoreLord: true);
+        }
+
+        // Health callbacks execute on every peer, including when another
+        // player's command caused the injury. Resolve the victim's lease.
+        public void RevokeForHealth(Pawn pawn)
+        {
+            PerspectiveShiftControlledAvatar state = ForPawn(pawn);
+            if (state == null)
+                return;
+            state.moveX = state.moveZ = 0;
+            state.pendingFire = false;
+            state.pendingFireTarget = LocalTargetInfo.Invalid;
+            state.movementJobId = -1; // The health tracker owns the downed/death job.
+            if (!state.retainOnDowned || pawn.Dead || pawn.Destroyed || pawn.IsKidnapped())
+                ReleaseState(state, restoreLord: !pawn.Dead && !pawn.Destroyed);
         }
 
         public void SetMoveIntent(
@@ -199,13 +269,20 @@ namespace MP_MeowOnlineShop
 
         public override void GameComponentTick()
         {
+            // Map-owned work is driven by AvatarMapPostTick with MP's map clock,
+            // faction and Rand context, never from the shared world tick.
             if (!MP.IsInMultiplayer || !Patch_PerspectiveShiftMp.Active)
                 return;
-
-            if (MpRuntimeInfo.TryGetAsyncTimeActive(out bool asyncTime) && asyncTime)
-                return;
-
-            TickStates(OrderedStates.ToList());
+            // Dead pawns in corpses no longer belong to a ticking map. Remove
+            // only ownership metadata here; living travelling pawns retain it.
+            foreach (PerspectiveShiftControlledAvatar state in controlled.ToList())
+                if (state == null)
+                    controlled.Remove(state);
+                else if (state.pawn == null || state.pawn.Destroyed || state.pawn.Dead)
+                {
+                    controlled.Remove(state);
+                    Patch_PerspectiveShiftMp.ClearLocalAvatarIfOwned(state.owner);
+                }
         }
 
         public void TickForMap(Map map)
@@ -238,6 +315,9 @@ namespace MP_MeowOnlineShop
                     state.moveZ = 0;
                     state.sprint = false;
                     state.walk = false;
+                    // This now runs in the pawn's deterministic map tick.
+                    // Forgetting the ID alone left the old Goto walking after
+                    // focus loss or a prolonged gap in input heartbeats.
                     StopMovementJob(state);
                     Patch_PerspectiveShiftMp.CopyIntentToRuntime(state);
                     continue;
@@ -245,16 +325,18 @@ namespace MP_MeowOnlineShop
 
                 if (state.moveX != 0 || state.moveZ != 0)
                 {
-                    EnsureMovementJob(state, forceNew: false);
                     if (state.movementDiagnosticTick >= 0 && now >= state.movementDiagnosticTick)
                     {
                         state.movementDiagnosticTick = -1;
-                        Log.Message(
-                            $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
-                            $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
-                            $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
-                            $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
-                            $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                        if (ModDebug.EnablePerspectiveShiftTrace)
+                        {
+                            Log.Message(
+                                $"[MP-MeowOnlineShop] Perspective Shift movement checkpoint: " +
+                                $"owner={state.owner}, pawn={pawn.thingIDNumber}, " +
+                                $"position={state.movementDiagnosticStart}->{pawn.Position}, " +
+                                $"job={pawn.CurJob?.def?.defName ?? "<null>"}#{pawn.CurJob?.loadID ?? -1}, " +
+                                $"trackedJob={state.movementJobId}, moving={pawn.pather.Moving}.");
+                        }
                     }
                 }
             }
@@ -264,6 +346,7 @@ namespace MP_MeowOnlineShop
         {
             base.FinalizeInit();
             NormalizeLoadedRegistry();
+            Patch_PerspectiveShiftMp.SyncStaticSeekAtWillFromComponent();
             foreach (PerspectiveShiftControlledAvatar state in OrderedStates)
                 Patch_PerspectiveShiftMp.EnsureRuntimeAvatar(state);
 
@@ -272,6 +355,9 @@ namespace MP_MeowOnlineShop
 
         private void NormalizeLoadedRegistry()
         {
+            lastOwnershipEpoch = Math.Max(lastOwnershipEpoch,
+                controlled.Where(state => state != null).Select(state => state.epoch)
+                    .DefaultIfEmpty(0).Max());
             hadOwnershipRecordsAtLoad = controlled.Any(state => state != null);
             var valid = controlled
                 .Where(state =>
@@ -332,9 +418,13 @@ namespace MP_MeowOnlineShop
 
         public override void ExposeData()
         {
+            Scribe_Values.Look(ref lastOwnershipEpoch, "mp_perspective_shift_last_epoch");
             Scribe_Collections.Look(ref controlled, "mp_perspective_shift_controlled", LookMode.Deep);
             if (controlled == null)
                 controlled = new List<PerspectiveShiftControlledAvatar>();
+            Scribe_Collections.Look(ref seekAtWillPawnIds, "seekAtWillPawnIds", LookMode.Value);
+            if (seekAtWillPawnIds == null)
+                seekAtWillPawnIds = new HashSet<int>();
         }
 
         private void PreparePawnForControl(PerspectiveShiftControlledAvatar state)
@@ -342,13 +432,12 @@ namespace MP_MeowOnlineShop
             Pawn pawn = state.pawn;
             if (pawn.jobs != null && pawn.Spawned)
             {
-                pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
                 pawn.pather?.StopDead();
 
                 Job wait = JobMaker.MakeJob(JobDefOf.Wait);
                 wait.expiryInterval = 60;
                 wait.checkOverrideOnExpire = true;
-                pawn.jobs.TryTakeOrderedJob(wait);
+                pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
             }
 
             Lord lord = pawn.GetLord();
@@ -387,7 +476,12 @@ namespace MP_MeowOnlineShop
         private static void StopMovementJob(PerspectiveShiftControlledAvatar state)
         {
             if (IsMovementJob(state))
-                state.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+            {
+                Job wait = JobMaker.MakeJob(JobDefOf.Wait);
+                wait.expiryInterval = 60;
+                wait.checkOverrideOnExpire = true;
+                state.pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
+            }
             state.movementJobId = -1;
         }
 
@@ -437,22 +531,20 @@ namespace MP_MeowOnlineShop
             if (!destination.IsValid || destination == pawn.Position)
                 return;
 
-            if (forceNew && pawn.CurJob != null &&
-                (IsMovementJob(state) ||
-                 pawn.CurJob.def == JobDefOf.Wait ||
-                 pawn.CurJob.def == JobDefOf.Wait_Combat))
-            {
-                pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                state.movementJobId = -1;
-            }
-
             Job job = JobMaker.MakeJob(JobDefOf.Goto, destination);
             job.playerForced = true;
             job.expiryInterval = 240;
             job.checkOverrideOnExpire = true;
             job.locomotionUrgency = MovementUrgency(state);
 
-            bool accepted = pawn.jobs.TryTakeOrderedJob(job);
+            // StartJob replaces the current job atomically. EndCurrentJob and
+            // TryTakeOrderedJob both let the pawn's think tree pick an
+            // intermediate job first, which allocates a JobID/hediff under the
+            // map Rand stream; a drafted Milira weapon pawn can pick
+            // JobGiver_Orders on one peer and JobGiver_MoveToStandable on the
+            // other (Desync-06). StartJob gives every peer the same Goto job.
+            pawn.jobs.StartJob(job, JobCondition.InterruptForced);
+            bool accepted = pawn.CurJob == job;
             if (accepted)
             {
                 state.movementJobId = job.loadID;
@@ -462,12 +554,15 @@ namespace MP_MeowOnlineShop
 
             if (forceNew)
             {
-                Log.Message(
-                    $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
-                    $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
-                    $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
-                    $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
-                    $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+                if (ModDebug.EnablePerspectiveShiftTrace)
+                {
+                    Log.Message(
+                        $"[MP-MeowOnlineShop] Perspective Shift movement job request: " +
+                        $"owner={state.owner}, pawn={pawn.thingIDNumber}, from={pawn.Position}, " +
+                        $"destination={destination}, input=({state.moveX},{state.moveZ}), " +
+                        $"accepted={accepted}, currentJob={pawn.CurJob?.def?.defName ?? "<null>"}" +
+                        $"#{pawn.CurJob?.loadID ?? -1}, trackedJob={state.movementJobId}.");
+                }
             }
         }
 

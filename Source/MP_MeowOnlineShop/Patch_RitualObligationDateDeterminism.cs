@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -33,6 +34,13 @@ namespace MP_MeowOnlineShop
         private static bool _applied;
         private static bool _loggedActive;
         private static FieldInfo _ofPlayerField;
+        private static AccessTools.FieldRef<FactionManager, Faction> _ofPlayerRef;
+        private static readonly Dictionary<Ideo, Faction> OwnerFactionCache =
+            new Dictionary<Ideo, Faction>();
+        private static readonly object OwnerFactionCacheLock = new object();
+        private static bool _multifactionCacheValid;
+        private static bool _cachedMultifaction;
+        private static int _multifactionCacheTick = int.MinValue;
 
         internal static void Apply(Harmony harmony)
         {
@@ -53,6 +61,7 @@ namespace MP_MeowOnlineShop
 
                 _ofPlayerField = AccessTools.Field(
                     typeof(FactionManager), "ofPlayer");
+                _ofPlayerRef = TryGetOfPlayerRef(_ofPlayerField);
 
                 if (target == null || prefix == null || finalizer == null ||
                     _ofPlayerField == null)
@@ -94,8 +103,7 @@ namespace MP_MeowOnlineShop
             __state = null;
             if (!MP.IsInMultiplayer || __instance?.ritual?.ideo == null)
                 return;
-            if (!MpRuntimeInfo.TryGetMultifactionActive(out bool multifaction) ||
-                !multifaction)
+            if (!IsMultifactionActive())
             {
                 return;
             }
@@ -107,8 +115,16 @@ namespace MP_MeowOnlineShop
                 if (owner == null || factionManager == null)
                     return;
 
-                __state = _ofPlayerField.GetValue(factionManager) as Faction;
-                _ofPlayerField.SetValue(factionManager, owner);
+                if (_ofPlayerRef != null)
+                {
+                    __state = _ofPlayerRef(factionManager);
+                    _ofPlayerRef(factionManager) = owner;
+                }
+                else
+                {
+                    __state = _ofPlayerField.GetValue(factionManager) as Faction;
+                    _ofPlayerField.SetValue(factionManager, owner);
+                }
 
                 if (!_loggedActive)
                 {
@@ -133,7 +149,12 @@ namespace MP_MeowOnlineShop
             {
                 FactionManager factionManager = Find.FactionManager;
                 if (factionManager != null)
-                    _ofPlayerField.SetValue(factionManager, __state);
+                {
+                    if (_ofPlayerRef != null)
+                        _ofPlayerRef(factionManager) = __state;
+                    else
+                        _ofPlayerField.SetValue(factionManager, __state);
+                }
             }
             catch
             {
@@ -143,10 +164,58 @@ namespace MP_MeowOnlineShop
 
         private static Faction FindOwnerFaction(Ideo ideo)
         {
-            return Find.FactionManager?.AllFactionsListForReading?
+            if (ideo == null)
+                return null;
+
+            lock (OwnerFactionCacheLock)
+            {
+                Faction cached;
+                if (OwnerFactionCache.TryGetValue(ideo, out cached))
+                    return cached;
+            }
+
+            Faction owner = Find.FactionManager?.AllFactionsListForReading?
                 .Where(faction => faction?.ideos != null && faction.ideos.Has(ideo))
                 .OrderBy(faction => faction.loadID)
                 .FirstOrDefault();
+
+            lock (OwnerFactionCacheLock)
+            {
+                if (OwnerFactionCache.Count >= 128)
+                    OwnerFactionCache.Clear();
+                OwnerFactionCache[ideo] = owner;
+            }
+
+            return owner;
+        }
+
+        private static bool IsMultifactionActive()
+        {
+            int tick = Find.TickManager?.TicksGame ?? 0;
+            if (!_multifactionCacheValid ||
+                tick - _multifactionCacheTick >= 600)
+            {
+                _multifactionCacheValid =
+                    MpRuntimeInfo.TryGetMultifactionActive(out _cachedMultifaction);
+                _multifactionCacheTick = tick;
+            }
+
+            return _multifactionCacheValid && _cachedMultifaction;
+        }
+
+        private static AccessTools.FieldRef<FactionManager, Faction> TryGetOfPlayerRef(
+            FieldInfo field)
+        {
+            if (field == null)
+                return null;
+            try
+            {
+                return AccessTools.FieldRefAccess<FactionManager, Faction>(field);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

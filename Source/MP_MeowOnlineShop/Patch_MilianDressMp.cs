@@ -84,14 +84,16 @@ namespace MP_MeowOnlineShop
                     "DoEffect",
                     new[] { typeof(Pawn) },
                     "CompTargetable.DoEffect",
-                    RequireTargetableInstance);
+                    RequireTargetableInstance,
+                    nameof(FactionScopeDoEffectPrefix));
                 patched += TryPatch(
                     harmony,
                     _dressEffectType,
                     "DoEffectOn",
                     new[] { typeof(Pawn), typeof(Thing) },
                     "CompTargetEffect_DressMilian.DoEffectOn",
-                    null);
+                    null,
+                    nameof(FactionScopeDoEffectOnPrefix));
 
                 Log.Message(
                     "[MP-MeowOnlineShop] Milian dress MP determinism active: " +
@@ -113,7 +115,8 @@ namespace MP_MeowOnlineShop
             string methodName,
             Type[] parameterTypes,
             string label,
-            InstanceFilter filter)
+            InstanceFilter filter,
+            string prefixName)
         {
             try
             {
@@ -123,7 +126,7 @@ namespace MP_MeowOnlineShop
                     parameterTypes);
                 MethodInfo prefix = AccessTools.Method(
                     typeof(Patch_MilianDressMp),
-                    nameof(FactionScopePrefix));
+                    prefixName);
                 MethodInfo finalizer = AccessTools.Method(
                     typeof(Patch_MilianDressMp),
                     nameof(FactionScopeFinalizer));
@@ -169,9 +172,27 @@ namespace MP_MeowOnlineShop
                    _targetableType.IsInstanceOfType(instance);
         }
 
-        private static void FactionScopePrefix(
+        private static void FactionScopeDoEffectPrefix(
             object __instance,
-            Pawn userOrUsedBy,
+            Pawn usedBy,
+            ref Faction __state,
+            MethodBase __originalMethod)
+        {
+            ApplyFactionScope(__instance, usedBy, ref __state, __originalMethod);
+        }
+
+        private static void FactionScopeDoEffectOnPrefix(
+            object __instance,
+            Pawn user,
+            ref Faction __state,
+            MethodBase __originalMethod)
+        {
+            ApplyFactionScope(__instance, user, ref __state, __originalMethod);
+        }
+
+        private static void ApplyFactionScope(
+            object __instance,
+            Pawn user,
             ref Faction __state,
             MethodBase __originalMethod)
         {
@@ -194,7 +215,7 @@ namespace MP_MeowOnlineShop
             }
 
             Faction context =
-                userOrUsedBy?.Faction ?? TryGetSpectatorFaction();
+                user?.Faction ?? TryGetSpectatorFaction();
             FactionManager factionManager = Find.FactionManager;
             if (context == null || factionManager == null ||
                 _ofPlayerField == null)

@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
 
 namespace MP_MeowOnlineShop
@@ -726,15 +727,13 @@ namespace MP_MeowOnlineShop
             int tick = Find.TickManager?.TicksGame ?? 0;
             if (tick < 0) return;
             int seed = Gen.HashCombineInt(Gen.HashCombineInt(tick, map.Index), Gen.HashCombineInt(building.thingIDNumber, SeedOffsetCasketTick));
-            Rand.PushState(seed);
-            __state |= StateStaticRand;
-            if (PushMapRand(map, seed))
-            {
-                _tickMapForRandPop = map;
-                __state |= StateMapRand;
-            }
-            if (PushWorldRand(seed + ZoneWorldSeedOffset))
-                __state |= StateWorldRand;
+            DeterministicRandScope.Begin(
+                map,
+                seed,
+                ZoneWorldSeedOffset,
+                ref __state,
+                out _tickMapForRandPop,
+                ignoreGate: true);
         }
 
         public static void CasketTickFinalizer(int __state)
@@ -742,15 +741,13 @@ namespace MP_MeowOnlineShop
             if (__state == 0) return;
             try
             {
-                if ((__state & StateWorldRand) != 0) PopWorldRand();
-                if ((__state & StateMapRand) != 0 && _tickMapForRandPop != null)
-                {
-                    PopMapRand(_tickMapForRandPop);
-                    _tickMapForRandPop = null;
-                }
-                if ((__state & StateStaticRand) != 0) Rand.PopState();
+                DeterministicRandScope.End(__state, _tickMapForRandPop);
             }
             catch { }
+            finally
+            {
+                _tickMapForRandPop = null;
+            }
         }
 
         // ----- CompYinAndMalevolent.CompTick -----
@@ -768,15 +765,13 @@ namespace MP_MeowOnlineShop
             int tick = Find.TickManager?.TicksGame ?? 0;
             if (tick < 0) return;
             int seed = Gen.HashCombineInt(Gen.HashCombineInt(tick, map.Index), Gen.HashCombineInt(comp.parent.thingIDNumber, SeedOffsetCompTick));
-            Rand.PushState(seed);
-            __state |= StateStaticRand;
-            if (PushMapRand(map, seed))
-            {
-                _compTickMapForRandPop = map;
-                __state |= StateMapRand;
-            }
-            if (PushWorldRand(seed + ZoneWorldSeedOffset))
-                __state |= StateWorldRand;
+            DeterministicRandScope.Begin(
+                map,
+                seed,
+                ZoneWorldSeedOffset,
+                ref __state,
+                out _compTickMapForRandPop,
+                ignoreGate: true);
         }
 
         public static void CompYinTickFinalizer(int __state)
@@ -784,15 +779,13 @@ namespace MP_MeowOnlineShop
             if (__state == 0) return;
             try
             {
-                if ((__state & StateWorldRand) != 0) PopWorldRand();
-                if ((__state & StateMapRand) != 0 && _compTickMapForRandPop != null)
-                {
-                    PopMapRand(_compTickMapForRandPop);
-                    _compTickMapForRandPop = null;
-                }
-                if ((__state & StateStaticRand) != 0) Rand.PopState();
+                DeterministicRandScope.End(__state, _compTickMapForRandPop);
             }
             catch { }
+            finally
+            {
+                _compTickMapForRandPop = null;
+            }
         }
 
         // ----- GetGizmos / CompGetGizmosExtra（棺材、阴煞气、换装）-----
@@ -1703,6 +1696,8 @@ namespace MP_MeowOnlineShop
         internal static ISyncMethod SyncStoryChooseOptionMethod;
         internal static ISyncMethod SyncStoryCloseMethod;
         internal static ISyncMethod SyncZombieMutantAbilityCastMethod;
+        internal static ISyncMethod SyncZombieQuestSignalMethod;
+        private static MethodInfo RigorMortisForceEndQuestOfSiteMethod;
 
         private static readonly Dictionary<string, string> CqfActionPrefixByType = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -1850,6 +1845,7 @@ namespace MP_MeowOnlineShop
                 SyncCqfUnlockTraderMethod = RegisterSyncMethodByName(nameof(SyncCqfUnlockTrader));
                 SyncCqfSendLetterMethod = RegisterSyncMethodByName(nameof(SyncCqfSendLetter));
                 SyncZombieMutantAbilityCastMethod = RegisterSyncMethodByName(nameof(SyncZombieMutantAbilityCast));
+                SyncZombieQuestSignalMethod = RegisterSyncMethodByName(nameof(SyncZombieQuestSignal));
                 Log.Message("[MP-MeowOnlineShop] RigorMortis: CQF story sync signatures => "
                     + $"{StoryMethodSignature(nameof(SyncStoryChooseOption))}; "
                     + $"{StoryMethodSignature(nameof(SyncStoryClose))}; "
@@ -1862,7 +1858,8 @@ namespace MP_MeowOnlineShop
                     + $"{StoryMethodSignature(nameof(SyncCqfAdjustRelation))}; "
                     + $"{StoryMethodSignature(nameof(SyncCqfSwitchEntrance))}; "
                     + $"{StoryMethodSignature(nameof(SyncCqfUnlockTrader))}; "
-                    + $"{StoryMethodSignature(nameof(SyncCqfSendLetter))}");
+                    + $"{StoryMethodSignature(nameof(SyncCqfSendLetter))}; "
+                    + $"{StoryMethodSignature(nameof(SyncZombieQuestSignal))}");
                 Log.Message("[MP-MeowOnlineShop] RigorMortis: CQF story sync methods registered.");
             }
             catch (Exception e)
@@ -1949,6 +1946,97 @@ namespace MP_MeowOnlineShop
             if (method == null)
                 throw new MissingMethodException(typeof(Patch_RigorMortis).FullName, methodName);
             return MP.RegisterSyncMethod(method, null);
+        }
+
+        /// <summary>
+        /// Synchronizes the natural zombie-quest signal path. Rigor Mortis calls
+        /// RMUtility.ForceEndQuestOfSite with force=false after the last hostile
+        /// zombie dies; that method dispatches QuestUtility signals directly and
+        /// has no Multiplayer sync boundary of its own.
+        ///
+        /// Deliberately leave force=true alone: debug/forced quest completion is
+        /// not the natural completion path this patch is intended to repair.
+        /// </summary>
+        internal static void ApplyZombieQuestCompletionPatch(Harmony harmony)
+        {
+            if (harmony == null)
+                return;
+
+            try
+            {
+                var rmUtilityType = AccessTools.TypeByName("RigorMortis.RMUtility");
+                var target = AccessTools.Method(
+                    rmUtilityType,
+                    "ForceEndQuestOfSite",
+                    new[] { typeof(Site), typeof(QuestEndOutcome), typeof(bool) });
+                var prefix = AccessTools.Method(typeof(Patch_RigorMortis), nameof(RigorMortisForceEndQuestOfSitePrefix));
+                if (target == null || prefix == null)
+                {
+                    Log.Warning("[MP-MeowOnlineShop] RigorMortis zombie quest completion patch skipped: ForceEndQuestOfSite or prefix not found.");
+                    return;
+                }
+
+                RigorMortisForceEndQuestOfSiteMethod = target;
+                harmony.Patch(target, prefix: new HarmonyMethod(prefix));
+                Log.Message("[MP-MeowOnlineShop] RigorMortis zombie quest completion sync patch applied to RMUtility.ForceEndQuestOfSite.");
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"[MP-MeowOnlineShop] RigorMortis zombie quest completion sync patch failed: {e.Message}");
+            }
+        }
+
+        public static bool RigorMortisForceEndQuestOfSitePrefix(Site site, QuestEndOutcome outcome, bool force)
+        {
+            if (!MP.enabled || !MP.IsInMultiplayer || MP.IsExecutingSyncCommand || force)
+                return true;
+
+            if (outcome != QuestEndOutcome.Success && outcome != QuestEndOutcome.Fail)
+                return true;
+
+            if (SyncZombieQuestSignalMethod == null)
+            {
+                Log.Warning("[MP-MeowOnlineShop] RigorMortis zombie quest signal sync missing; block local completion to avoid divergent quest state.");
+                return false;
+            }
+
+            try
+            {
+                Log.Message($"[MP-MeowOnlineShop] RigorMortis zombie quest signal intercepted: site={site?.ID ?? -1} outcome={outcome}.");
+                SyncZombieQuestSignalMethod.DoSync(null, site, (int)outcome);
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"[MP-MeowOnlineShop] RigorMortis zombie quest signal dispatch failed: {e.Message}");
+            }
+
+            return false;
+        }
+
+        public static void SyncZombieQuestSignal(WorldObject siteObject, int outcomeValue)
+        {
+            var site = siteObject as Site;
+            if (site == null ||
+                (outcomeValue != (int)QuestEndOutcome.Success && outcomeValue != (int)QuestEndOutcome.Fail))
+                return;
+
+            if (RigorMortisForceEndQuestOfSiteMethod == null)
+            {
+                Log.Warning("[MP-MeowOnlineShop] RigorMortis ForceEndQuestOfSite target unavailable while executing zombie quest signal sync.");
+                return;
+            }
+
+            try
+            {
+                RigorMortisForceEndQuestOfSiteMethod.Invoke(
+                    null,
+                    new object[] { site, (QuestEndOutcome)outcomeValue, false });
+            }
+            catch (TargetInvocationException e)
+            {
+                Log.Warning($"[MP-MeowOnlineShop] RigorMortis synced zombie quest signal failed: {e.InnerException?.Message ?? e.Message}");
+                throw e.InnerException ?? e;
+            }
         }
 
         internal static void ApplyStoryActionPatches(Harmony harmony)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using HarmonyLib;
 using Verse;
 
@@ -11,9 +12,11 @@ namespace MP_MeowOnlineShop
         public const int StateMapRand = 2;
         public const int StateWorldRand = 4;
 
-        private static readonly Func<object> WorldRandGetter = TryGetWorldRandGetter();
         private static readonly object RandReflectionCacheLock = new object();
         private static readonly Dictionary<Type, AccessorCache> MapRandAccessorCacheByType = new Dictionary<Type, AccessorCache>();
+        private static object _cachedWorld;
+        private static object _cachedWorldRand;
+        private static AccessorCache _cachedWorldCache;
 
         private sealed class AccessorCache
         {
@@ -60,39 +63,14 @@ namespace MP_MeowOnlineShop
                 Rand.PopState();
         }
 
-        private static Func<object> TryGetWorldRandGetter()
+        internal static bool TryPushWorldRand(int seed)
         {
             try
             {
-                return () =>
-                {
-                    var world = Find.World;
-                    if (world == null)
-                        return null;
-
-                    var worldType = world.GetType();
-                    return AccessTools.Property(worldType, "Rand")?.GetValue(world)
-                           ?? AccessTools.Property(worldType, "rand")?.GetValue(world)
-                           ?? AccessTools.Field(worldType, "Rand")?.GetValue(world)
-                           ?? AccessTools.Field(worldType, "rand")?.GetValue(world);
-                };
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static bool TryPushWorldRand(int seed)
-        {
-            try
-            {
-                if (WorldRandGetter == null)
-                    return false;
-                var rand = WorldRandGetter();
+                var rand = TryGetWorldRand();
                 if (rand == null)
                     return false;
-                var cache = GetOrBuildAccessorCache(rand.GetType());
+                var cache = _cachedWorldCache;
                 if (cache.pushState == null)
                     return false;
                 cache.pushState(rand, seed);
@@ -104,20 +82,54 @@ namespace MP_MeowOnlineShop
             }
         }
 
-        private static void TryPopWorldRand()
+        internal static void TryPopWorldRand()
         {
             try
             {
-                if (WorldRandGetter == null)
-                    return;
-                var rand = WorldRandGetter();
+                var rand = TryGetWorldRand();
                 if (rand == null)
                     return;
-                var cache = GetOrBuildAccessorCache(rand.GetType());
+                var cache = _cachedWorldCache;
                 cache.popState?.Invoke(rand);
             }
             catch
             {
+            }
+        }
+
+        private static object TryGetWorldRand()
+        {
+            var world = Find.World;
+            if (world == null)
+            {
+                _cachedWorld = null;
+                _cachedWorldRand = null;
+                _cachedWorldCache = null;
+                return null;
+            }
+
+            if (ReferenceEquals(world, _cachedWorld) &&
+                _cachedWorldRand != null &&
+                _cachedWorldCache != null)
+            {
+                return _cachedWorldRand;
+            }
+
+            try
+            {
+                var cache = GetOrBuildAccessorCache(world.GetType());
+                var rand = cache.getRand?.Invoke(world);
+                _cachedWorld = world;
+                _cachedWorldRand = rand;
+                _cachedWorldCache = cache;
+                return rand;
+            }
+            catch
+            {
+                _cachedWorld = world;
+                _cachedWorldRand = null;
+                _cachedWorldCache = null;
+                return null;
             }
         }
 
@@ -178,19 +190,46 @@ namespace MP_MeowOnlineShop
             var prop = AccessTools.Property(type, "Rand") ?? AccessTools.Property(type, "rand");
             var field = AccessTools.Field(type, "Rand") ?? AccessTools.Field(type, "rand");
 
-            if (prop != null)
-                cache.getRand = instance => prop.GetValue(instance);
-            else if (field != null)
-                cache.getRand = instance => field.GetValue(instance);
-
             Type randType = null;
-            try
+            if (prop != null)
             {
-                randType = prop?.PropertyType ?? field?.FieldType;
+                randType = prop.PropertyType;
+                var getter = prop.GetGetMethod(true);
+                if (getter != null)
+                {
+                    try
+                    {
+                        var instance = Expression.Parameter(typeof(object), "instance");
+                        var body = Expression.Convert(
+                            Expression.Call(Expression.Convert(instance, type), getter),
+                            typeof(object));
+                        cache.getRand = Expression.Lambda<Func<object, object>>(body, instance).Compile();
+                    }
+                    catch
+                    {
+                        cache.getRand = instance => prop.GetValue(instance);
+                    }
+                }
+                else
+                {
+                    cache.getRand = instance => prop.GetValue(instance);
+                }
             }
-            catch
+            else if (field != null)
             {
-                randType = null;
+                randType = field.FieldType;
+                try
+                {
+                    var instance = Expression.Parameter(typeof(object), "instance");
+                    var body = Expression.Convert(
+                        Expression.Field(Expression.Convert(instance, type), field),
+                        typeof(object));
+                    cache.getRand = Expression.Lambda<Func<object, object>>(body, instance).Compile();
+                }
+                catch
+                {
+                    cache.getRand = instance => field.GetValue(instance);
+                }
             }
 
             if (randType != null)
@@ -198,9 +237,35 @@ namespace MP_MeowOnlineShop
                 var push = randType.GetMethod("PushState", new[] { typeof(int) });
                 var pop = randType.GetMethod("PopState", Type.EmptyTypes);
                 if (push != null)
-                    cache.pushState = (instance, seed) => push.Invoke(instance, new object[] { seed });
+                {
+                    try
+                    {
+                        var instance = Expression.Parameter(typeof(object), "rand");
+                        var seed = Expression.Parameter(typeof(int), "seed");
+                        var body = Expression.Call(
+                            Expression.Convert(instance, randType),
+                            push,
+                            seed);
+                        cache.pushState = Expression.Lambda<Action<object, int>>(body, instance, seed).Compile();
+                    }
+                    catch
+                    {
+                        cache.pushState = (instance, seed) => push.Invoke(instance, new object[] { seed });
+                    }
+                }
                 if (pop != null)
-                    cache.popState = instance => pop.Invoke(instance, null);
+                {
+                    try
+                    {
+                        var instance = Expression.Parameter(typeof(object), "rand");
+                        var body = Expression.Call(Expression.Convert(instance, randType), pop);
+                        cache.popState = Expression.Lambda<Action<object>>(body, instance).Compile();
+                    }
+                    catch
+                    {
+                        cache.popState = instance => pop.Invoke(instance, null);
+                    }
+                }
             }
 
             return cache;

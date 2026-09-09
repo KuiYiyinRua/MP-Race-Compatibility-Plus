@@ -1,0 +1,57 @@
+[
+  {
+    "bytes": 2027,
+    "path": "About/About.xml",
+    "sha256": "58835D7EFAED391ED23C2D4A65F1938523EB73D4CDCD45C969E7A34C2ADC2D34"
+  },
+  {
+    "bytes": 2374775,
+    "path": "About/Preview.png",
+    "sha256": "4160FD8D7C1C35F8F8D881DD5C2977F231F568DE07208EB1F44FB134A18928DF"
+  },
+  {
+    "bytes": 10,
+    "path": "About/PublishedFileId.txt",
+    "sha256": "5AEE7BD0D26BC8243DA775B3399F9C29AF56566227588FA9EFE6351A036CD6DE"
+  },
+  {
+    "bytes": 261,
+    "path": "LoadFolders.xml",
+    "sha256": "5679FA0820DECF1A1245CF1183194CF237003D5DDCA470CAE30F1F79089124C2"
+  },
+  {
+    "bytes": 1870336,
+    "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+    "sha256": "225F73DD8A17FC57CA298A62D6378E1BD918AB93541A4C032319465365112354"
+  },
+  {
+    "bytes": 37376,
+    "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
+    "sha256": "D5B8080B53F9628C9C1843907458BDB4AACA43958FC83CFD272719914164F497"
+  },
+  {
+    "bytes": 394,
+    "path": "1.6/Patches/CommsConsole_MeowPatch.xml",
+    "sha256": "D1D015F07FD04C282C3CC9989BD5CD60E89DAE47B0A6072C477729A4264C4584"
+  },
+  {
+    "bytes": 402,
+    "path": "Patches/CommsConsole_MeowPatch.xml",
+    "sha256": "53849659F7B0951CF0CB71B0D4B2C6FF22F91B86B4D57A7939A7EE881AB414B4"
+  },
+  {
+    "bytes": 375,
+    "path": "Languages/ChineseSimplified/Keyed/Actions.xml",
+    "sha256": "C1A159F20DAD5B2814E7A20C311B7CC05C0F9821F0DEAD6D5A51AF0EF0165B1F"
+  },
+  {
+    "bytes": 58880,
+    "path": "MeleeAnimation/Assemblies/MP_MeowOnlineShop.MeleeAnimation.dll",
+    "sha256": "2FC449C67ECC944AC37099806068474B29C2CA19EECA8DF643DA53F44201BD32"
+  },
+  {
+    "bytes": 184832,
+    "path": "RavenCompatibility/Assemblies/Meow.RavenCompatibility.dll",
+    "sha256": "D42E802A4BC15080706BCE9D788EB7A6D53E3AA7E5E5BECF19EF0F03DEC23B74"
+  }
+]

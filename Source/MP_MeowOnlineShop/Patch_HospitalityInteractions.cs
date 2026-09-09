@@ -16,7 +16,6 @@ namespace MP_MeowOnlineShop
     /// </summary>
     internal static class Patch_HospitalityInteractions
     {
-        private const string PackageId = "Orion.Hospitality";
         private const string ReplacementTypeName =
             "Hospitality.Patches.Pawn_InteractionsTracker_Patch+TryInteractRandomly";
 
@@ -26,7 +25,7 @@ namespace MP_MeowOnlineShop
         {
             if (harmony == null)
                 throw new ArgumentNullException(nameof(harmony));
-            if (!ModsConfig.IsActive(PackageId))
+            if (!IsHospitalityActive())
                 return;
 
             var replacementType = AccessTools.TypeByName(ReplacementTypeName);
@@ -52,9 +51,9 @@ namespace MP_MeowOnlineShop
 
             if (_shuffleReplacements == 1)
             {
-                Log.Message(
-                    "[MP-MeowOnlineShop][Hospitality] stabilized random-interaction " +
-                    "candidate order before its existing shuffle.");
+            Log.Message(
+                "[MP-MeowOnlineShop][Hospitality] stabilized random-interaction " +
+                "candidate order before its existing shuffle.");
             }
             else
             {
@@ -62,6 +61,14 @@ namespace MP_MeowOnlineShop
                     "[MP-MeowOnlineShop][Hospitality] expected one pawn Shuffle call in " +
                     $"TryInteractRandomly.Replacement, found {_shuffleReplacements}.");
             }
+        }
+
+        private static bool IsHospitalityActive()
+        {
+            // Nagisa.Orion.Hospitality is a translation-only package with no
+            // assembly or declared dependency. It must not make us assume the
+            // actual Hospitality simulation mod is active.
+            return ModsConfig.IsActive("Orion.Hospitality");
         }
 
         private static IEnumerable<CodeInstruction> StableShuffleTranspiler(

@@ -227,18 +227,46 @@ namespace MP_MeowOnlineShop
                 return;
 
             var gizmoOnGui = AccessTools.Method(gizmoType, "GizmoOnGUI");
-            if (gizmoOnGui == null)
-                return;
+            if (gizmoOnGui != null)
+            {
+                try
+                {
+                    harmony.Patch(gizmoOnGui, transpiler: new HarmonyMethod(LotlQiGizmoTranspilerMethod));
+                    _patchedMethods++;
+                }
+                catch (Exception e)
+                {
+                    Log.Warning($"[MP-MeowOnlineShop] Axolotl LotlQi patch: failed to transpile {gizmoType.FullName}.GizmoOnGUI: {e.Message}");
+                }
+            }
 
-            try
+            // The five LotlQi buttons mutate the energy comp inside compiler-generated
+            // local functions, which are separate methods and invisible to the
+            // GizmoOnGUI transpiler. Apply the same replacement to each local action.
+            var localActionMethods = gizmoType
+                .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                .Where(m => m != null
+                            && m.GetMethodBody() != null
+                            && (m.Name?.IndexOf("<GizmoOnGUI>g__Do", StringComparison.Ordinal) ?? -1) >= 0
+                            && m.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                .ToList();
+
+            foreach (var method in localActionMethods)
             {
-                harmony.Patch(gizmoOnGui, transpiler: new HarmonyMethod(LotlQiGizmoTranspilerMethod));
-                _patchedMethods++;
+                try
+                {
+                    harmony.Patch(method, transpiler: new HarmonyMethod(LotlQiGizmoTranspilerMethod));
+                    _patchedMethods++;
+                }
+                catch (Exception e)
+                {
+                    Log.Warning($"[MP-MeowOnlineShop] Axolotl LotlQi patch: failed to transpile local action {method.Name}: {e.Message}");
+                }
             }
-            catch (Exception e)
-            {
-                Log.Warning($"[MP-MeowOnlineShop] Axolotl LotlQi patch: failed to transpile {gizmoType.FullName}.GizmoOnGUI: {e.Message}");
-            }
+
+            Log.Message($"[MP-MeowOnlineShop] Axolotl LotlQi patch active: gizmoOnGui={gizmoOnGui != null}, localActionMethods={localActionMethods.Count}.");
+            if (localActionMethods.Count == 0)
+                Log.Warning("[MP-MeowOnlineShop] Axolotl LotlQi patch: no GizmoOnGUI local action methods resolved; LotlQi UI clicks may not be synchronized.");
         }
 
         private static void ApplyModeToggleSyncPatch(Harmony harmony, Type compType, MethodInfo modeTranspiler)

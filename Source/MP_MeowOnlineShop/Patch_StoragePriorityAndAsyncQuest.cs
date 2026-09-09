@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
@@ -24,6 +25,7 @@ namespace MP_MeowOnlineShop
 
         private static FieldInfo _settingsField;
         private static FieldInfo _priorityField;
+        private static FieldInfo _settingsClosureField;
         private static int _warningCount;
 
         public static void Apply(Harmony harmony)
@@ -51,12 +53,22 @@ namespace MP_MeowOnlineShop
 
         private static MethodInfo FindVanillaPriorityCallback()
         {
-            foreach (Type nested in typeof(ITab_Storage).GetNestedTypes(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+            Type[] nestedTypes = typeof(ITab_Storage).GetNestedTypes(
+                BindingFlags.Instance | BindingFlags.Static |
+                BindingFlags.Public | BindingFlags.NonPublic);
+            foreach (Type nested in nestedTypes)
             {
-                FieldInfo settings = nested.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .FirstOrDefault(field => field.FieldType == typeof(StorageSettings));
                 FieldInfo priority = nested.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .FirstOrDefault(field => field.FieldType == typeof(StoragePriority));
+                if (priority == null)
+                    continue;
+
+                FieldInfo closure = nested.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .FirstOrDefault(field => nestedTypes.Contains(field.FieldType));
+                Type settingsOwner = closure?.FieldType ?? nested;
+                FieldInfo settings = settingsOwner
+                    .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .FirstOrDefault(field => field.FieldType == typeof(StorageSettings));
                 if (settings == null || priority == null)
                     continue;
 
@@ -69,6 +81,7 @@ namespace MP_MeowOnlineShop
 
                 _settingsField = settings;
                 _priorityField = priority;
+                _settingsClosureField = closure;
                 return callback;
             }
 
@@ -80,7 +93,10 @@ namespace MP_MeowOnlineShop
             if (!MP.IsInMultiplayer || MP.IsExecutingSyncCommand || __instance == null)
                 return true;
 
-            StorageSettings settings = _settingsField?.GetValue(__instance) as StorageSettings;
+            object settingsOwner = _settingsClosureField == null
+                ? __instance
+                : _settingsClosureField.GetValue(__instance);
+            StorageSettings settings = _settingsField?.GetValue(settingsOwner) as StorageSettings;
             if (settings?.owner == null || _priorityField == null)
             {
                 Warn("Priority callback had no resolvable StorageSettings owner; falling back to vanilla behavior.");
@@ -194,6 +210,23 @@ namespace MP_MeowOnlineShop
     {
         private const int QuestTickSeedOffset = 0x51554954;
 
+        private static bool _loggedDuplicateQuestCacheEntry;
+
+        private sealed class QuestReferenceComparer : IEqualityComparer<Quest>
+        {
+            internal static readonly QuestReferenceComparer Instance = new QuestReferenceComparer();
+
+            public bool Equals(Quest left, Quest right)
+            {
+                return ReferenceEquals(left, right);
+            }
+
+            public int GetHashCode(Quest quest)
+            {
+                return quest == null ? 0 : RuntimeHelpers.GetHashCode(quest);
+            }
+        }
+
         [ThreadStatic]
         private static Map _questMapForPop;
 
@@ -226,7 +259,7 @@ namespace MP_MeowOnlineShop
                 });
             Log.Message(
                 "[MP-MeowOnlineShop] MultiplayerAsyncQuest.TickQuests(IEnumerable<Quest>) " +
-                "snapshot/order/Rand guard patched for world and per-map quest caches.");
+                "snapshot/order/dedup/Rand guard patched for world and per-map quest caches.");
         }
 
         private static void TickQuestsPrefix(
@@ -236,21 +269,74 @@ namespace MP_MeowOnlineShop
             __state = 0;
             _questMapForPop = null;
 
-            if (__0 != null && !(__0 is Quest[]))
-                __0 = __0.ToArray();
+            Quest[] snapshot = __0 as Quest[];
+            if (snapshot == null && __0 != null)
+                snapshot = __0.ToArray();
+
+            // Multiplayer's SetContextForAccept calls CacheQuest again.  The
+            // upstream world-quest branch uses Add rather than an upsert, so
+            // accepting a world quest can leave the same Quest reference in
+            // worldQuestsCache twice.  That makes the same QuestTick (and any
+            // signal/event it emits) run twice per world tick.  Repair the
+            // backing List when possible and always pass a unique snapshot to
+            // the foreach below.
+            if (snapshot != null && snapshot.Length > 1)
+            {
+                var seen = new HashSet<Quest>(QuestReferenceComparer.Instance);
+                var unique = new List<Quest>(snapshot.Length);
+                int duplicateCount = 0;
+                for (int i = 0; i < snapshot.Length; i++)
+                {
+                    Quest quest = snapshot[i];
+                    if (seen.Add(quest))
+                        unique.Add(quest);
+                    else
+                        duplicateCount++;
+                }
+
+                if (duplicateCount > 0)
+                {
+                    snapshot = unique.ToArray();
+                    var cachedList = __0 as List<Quest>;
+                    if (cachedList != null)
+                    {
+                        cachedList.Clear();
+                        cachedList.AddRange(snapshot);
+                    }
+
+                    if (!_loggedDuplicateQuestCacheEntry)
+                    {
+                        _loggedDuplicateQuestCacheEntry = true;
+                        Log.Warning(
+                            "[MP-MeowOnlineShop] Removed duplicate Quest reference(s) from " +
+                            $"MultiplayerAsyncQuest cache before ticking: count={duplicateCount}, " +
+                            $"tick={Find.TickManager?.TicksAbs ?? 0}.");
+                    }
+                }
+            }
 
             // Desync-137: two quests (shuttle completion vs ritual-quest
             // refresh) consumed world Rand/letter IDs in a different order on
             // the two peers during the same world tick. Sort by stable Quest id
             // so every peer ticks the same quests in the same order regardless
             // of cache/list insertion order, then isolate the batch Rand.
-            if (__0 != null)
+            if (snapshot != null && snapshot.Length > 1)
             {
-                __0 = __0
-                    .OrderBy(quest => quest?.id ?? 0)
-                    .ThenBy(quest => quest?.GetUniqueLoadID() ?? string.Empty)
-                    .ToArray();
+                bool sorted = true;
+                for (int i = 1; i < snapshot.Length; i++)
+                {
+                    if ((snapshot[i - 1]?.id ?? 0) > (snapshot[i]?.id ?? 0))
+                    {
+                        sorted = false;
+                        break;
+                    }
+                }
+
+                if (!sorted)
+                    Array.Sort(snapshot, CompareQuestById);
             }
+
+            __0 = snapshot;
 
             if (!MP.IsInMultiplayer)
                 return;
@@ -276,6 +362,13 @@ namespace MP_MeowOnlineShop
                 __state = 0;
                 _questMapForPop = null;
             }
+        }
+
+        private static int CompareQuestById(Quest left, Quest right)
+        {
+            int leftId = left?.id ?? 0;
+            int rightId = right?.id ?? 0;
+            return leftId.CompareTo(rightId);
         }
 
         private static Exception TickQuestsFinalizer(

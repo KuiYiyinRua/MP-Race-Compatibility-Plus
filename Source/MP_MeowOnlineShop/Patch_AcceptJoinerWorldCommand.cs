@@ -16,7 +16,7 @@ namespace MP_MeowOnlineShop
     /// Replaying the click by option index is fragile under async time: if the letter's current
     /// node has fewer options on one peer (for example because its pawn is no longer spawned),
     /// the replay throws inside the map command and only the other peer mutates state. Route the
-    /// durable letter action (signal + letter removal) through a primitive-only global command.
+    /// durable signal and optional letter cleanup through a primitive-only global command; the signal must not depend on a peer-local Letter reference.
     /// </summary>
     internal static class Patch_AcceptJoinerWorldCommand
     {
@@ -46,7 +46,9 @@ namespace MP_MeowOnlineShop
             if (!MP.enabled)
                 return;
 
-            _persistentDialogType = AccessTools.TypeByName("Multiplayer.Client.Persistent.PersistentDialog");
+            _persistentDialogType =
+                AccessTools.TypeByName("Multiplayer.Client.PersistentDialog") ??
+                AccessTools.TypeByName("Multiplayer.Client.Persistent.PersistentDialog");
             _multiplayerMapCompType = AccessTools.TypeByName("Multiplayer.Client.MultiplayerMapComp")
                 ?? ResolveTypeBySimpleName("MultiplayerMapComp");
             _clickMethod = _persistentDialogType == null
@@ -85,7 +87,8 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            MP.RegisterSyncMethod(typeof(Patch_AcceptJoinerWorldCommand), nameof(SyncAcceptJoinerSignalGlobal));
+            MP.RegisterSyncMethod(typeof(Patch_AcceptJoinerWorldCommand), nameof(SyncAcceptJoinerSignalGlobal))
+                .SetContext(SyncContext.None);
             harmony.Patch(
                 _clickMethod,
                 prefix: new HarmonyMethod(typeof(Patch_AcceptJoinerWorldCommand), nameof(PersistentDialogClickPrefix))
@@ -107,7 +110,8 @@ namespace MP_MeowOnlineShop
                     out object letter,
                     out string signal,
                     out bool removeLetter,
-                    out bool requirePawnSpawned))
+                    out bool requirePawnSpawned,
+                    out bool pawnWasSpawned))
             {
                 return true;
             }
@@ -121,7 +125,14 @@ namespace MP_MeowOnlineShop
 
             int dialogId = (int)_idField.GetValue(__instance);
             int letterId = (int)_letterIdField.GetValue(letter);
-            SyncAcceptJoinerSignalGlobal(map.uniqueID, dialogId, letterId, signal, removeLetter, requirePawnSpawned);
+            SyncAcceptJoinerSignalGlobal(
+                map.uniqueID,
+                dialogId,
+                letterId,
+                signal,
+                removeLetter,
+                requirePawnSpawned,
+                pawnWasSpawned);
             return false;
         }
 
@@ -131,12 +142,14 @@ namespace MP_MeowOnlineShop
             out object letter,
             out string signal,
             out bool removeLetter,
-            out bool requirePawnSpawned)
+            out bool requirePawnSpawned,
+            out bool pawnWasSpawned)
         {
             letter = null;
             signal = null;
             removeLetter = false;
             requirePawnSpawned = false;
+            pawnWasSpawned = false;
 
             Dialog_NodeTree dialog = _dialogProperty.GetValue(session, null) as Dialog_NodeTree;
             DiaNode node = dialog == null ? null : _currentNodeField.GetValue(dialog) as DiaNode;
@@ -193,11 +206,25 @@ namespace MP_MeowOnlineShop
                     return false;
                 }
 
+                pawnWasSpawned = ReadCreepPawnSpawned(target);
                 letter = target;
                 return !string.IsNullOrEmpty(signal);
             }
 
             return false;
+        }
+
+        private static bool ReadCreepPawnSpawned(object letter)
+        {
+            try
+            {
+                Pawn pawn = _creepPawnField?.GetValue(letter) as Pawn;
+                return pawn != null && pawn.Spawned;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static string ReadSignal(object letter, FieldInfo field)
@@ -214,7 +241,7 @@ namespace MP_MeowOnlineShop
 
         /// <summary>
         /// All arguments are primitives/strings, deliberately leaving the Multiplayer
-        /// serialization context without a map so the command is scheduled as Global.
+        /// serialization context without a map so the command is scheduled as Global. The letter id is only used for optional cleanup; the click-time pawn-spawn result is synchronized.
         /// </summary>
         private static void SyncAcceptJoinerSignalGlobal(
             int mapUniqueId,
@@ -222,38 +249,25 @@ namespace MP_MeowOnlineShop
             int letterId,
             string signal,
             bool removeLetter,
-            bool requirePawnSpawned)
+            bool requirePawnSpawned,
+            bool pawnWasSpawned)
         {
             Letter letter = FindLetterById(letterId);
             if (letter == null)
             {
-                Warn($"AcceptJoiner global replay could not resolve letter id={letterId} map={mapUniqueId} dialog={dialogId}.");
-                return;
+                Warn($"AcceptJoiner global replay could not resolve letter id={letterId} map={mapUniqueId} dialog={dialogId}; continuing with the durable signal.");
             }
 
-            if (requirePawnSpawned && letter is ChoiceLetter_AcceptCreepJoiner creep)
+            if (requirePawnSpawned && !pawnWasSpawned)
             {
-                Pawn pawn = null;
-                try
-                {
-                    pawn = _creepPawnField?.GetValue(creep) as Pawn;
-                }
-                catch
-                {
-                    // treated as not spawned below
-                }
-
-                if (pawn == null || !pawn.Spawned)
-                {
-                    Warn($"AcceptJoiner global replay skipped letter id={letterId}: creep joiner pawn is not spawned.");
-                    return;
-                }
+                Warn($"AcceptJoiner global replay skipped letter id={letterId}: creep joiner pawn was not spawned when clicked.");
+                return;
             }
 
             if (!string.IsNullOrEmpty(signal))
                 Find.SignalManager.SendSignal(new Signal(signal));
 
-            if (removeLetter)
+            if (removeLetter && letter != null)
                 Find.LetterStack.RemoveLetter(letter);
 
             CloseDialog(mapUniqueId, dialogId);
@@ -261,10 +275,12 @@ namespace MP_MeowOnlineShop
 
         private static void CloseDialog(int mapUniqueId, int dialogId)
         {
+            Map map = null;
+            object session = null;
             try
             {
-                Map map = Find.Maps?.FirstOrDefault(candidate => candidate != null && candidate.uniqueID == mapUniqueId);
-                object session = map == null ? null : ResolveDialogSession(map, dialogId);
+                map = Find.Maps?.FirstOrDefault(candidate => candidate != null && candidate.uniqueID == mapUniqueId);
+                session = map == null ? null : ResolveDialogSession(map, dialogId);
                 Dialog_NodeTree dialog = session == null
                     ? null
                     : _dialogProperty.GetValue(session, null) as Dialog_NodeTree;
@@ -274,6 +290,34 @@ namespace MP_MeowOnlineShop
             catch
             {
                 // dialog close is presentation-only; never fail the replay
+            }
+            finally
+            {
+                // A global replay can run while this peer is on another map, so the
+                // dialog may not be in the local WindowStack. Always remove the
+                // persistent session or Multiplayer's ForceShowDialogs will reopen it.
+                RemoveDialogSession(map, session);
+            }
+        }
+
+        private static void RemoveDialogSession(Map map, object session)
+        {
+            if (map == null || session == null || _multiplayerMapCompType == null || _dialogsField == null)
+                return;
+
+            try
+            {
+                MapComponent comp = map.components?.FirstOrDefault(
+                    candidate => candidate != null && _multiplayerMapCompType.IsInstanceOfType(candidate));
+                if (comp == null)
+                    return;
+
+                if (_dialogsField.GetValue(comp) is System.Collections.IList sessions)
+                    sessions.Remove(session);
+            }
+            catch
+            {
+                // Cleanup is best effort and must not change the signal replay result.
             }
         }
 

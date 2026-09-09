@@ -12,10 +12,6 @@ namespace MP_MeowOnlineShop
     /// </summary>
     internal static class Patch_AxolotlCombatStability
     {
-        private const int StateStaticRand = 1;
-        private const int StateMapRand = 2;
-        private const int StateWorldRand = 4;
-
         private const int SeedOffsetMeleeEnhance = 0x7E4D;
         private const int WorldSeedOffset = 0x5D1A;
 
@@ -51,22 +47,21 @@ namespace MP_MeowOnlineShop
                 return;
 
             int seed = SeedOffsetMeleeEnhance;
-            seed = Gen.HashCombineInt(seed, map.Index);
+            // Map.Index is a session-local list position. It can differ after
+            // a rejoin or map add/remove, while uniqueID is the stable map
+            // identity required for a cross-peer Rand scope.
+            seed = Gen.HashCombineInt(seed, map.uniqueID);
             seed = Gen.HashCombineInt(seed, instigator.thingIDNumber);
             seed = Gen.HashCombineInt(seed, parent?.thingIDNumber ?? 0);
             seed = Gen.HashCombineInt(seed, targetThing?.thingIDNumber ?? 0);
 
-            Rand.PushState(seed);
-            __state |= StateStaticRand;
-
-            if (PushMapRand(map, seed))
-            {
-                _mapForRandPop = map;
-                __state |= StateMapRand;
-            }
-
-            if (PushWorldRand(seed + WorldSeedOffset))
-                __state |= StateWorldRand;
+            DeterministicRandScope.Begin(
+                map,
+                seed,
+                WorldSeedOffset,
+                ref __state,
+                out _mapForRandPop,
+                ignoreGate: true);
         }
 
         public static void MeleeEnhanceFinalizer(int __state)
@@ -76,98 +71,15 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                if ((__state & StateWorldRand) != 0)
-                    PopWorldRand();
-
-                if ((__state & StateMapRand) != 0 && _mapForRandPop != null)
-                {
-                    PopMapRand(_mapForRandPop);
-                    _mapForRandPop = null;
-                }
-
-                if ((__state & StateStaticRand) != 0)
-                    Rand.PopState();
+                DeterministicRandScope.End(__state, _mapForRandPop);
             }
             catch
             {
             }
-        }
-
-        private static bool PushMapRand(Map map, int seed)
-        {
-            if (map == null) return false;
-            try
+            finally
             {
-                var t = map.GetType();
-                var mapRand = AccessTools.Property(t, "Rand")?.GetValue(map) ?? AccessTools.Property(t, "rand")?.GetValue(map)
-                    ?? AccessTools.Field(t, "Rand")?.GetValue(map) ?? AccessTools.Field(t, "rand")?.GetValue(map);
-                if (mapRand == null) return false;
-                var push = mapRand.GetType().GetMethod("PushState", new[] { typeof(int) });
-                if (push == null) return false;
-                push.Invoke(mapRand, new object[] { seed });
-                return true;
+                _mapForRandPop = null;
             }
-            catch { return false; }
-        }
-
-        private static void PopMapRand(Map map)
-        {
-            if (map == null) return;
-            try
-            {
-                var t = map.GetType();
-                var mapRand = AccessTools.Property(t, "Rand")?.GetValue(map) ?? AccessTools.Property(t, "rand")?.GetValue(map)
-                    ?? AccessTools.Field(t, "Rand")?.GetValue(map) ?? AccessTools.Field(t, "rand")?.GetValue(map);
-                mapRand?.GetType().GetMethod("PopState", Type.EmptyTypes)?.Invoke(mapRand, null);
-            }
-            catch { }
-        }
-
-        private static readonly Func<object> WorldRandGetter = TryGetWorldRandGetter();
-
-        private static Func<object> TryGetWorldRandGetter()
-        {
-            try
-            {
-                return () =>
-                {
-                    var world = Find.World;
-                    if (world == null) return null;
-                    var t = world.GetType();
-                    return AccessTools.Property(t, "Rand")?.GetValue(world)
-                           ?? AccessTools.Property(t, "rand")?.GetValue(world)
-                           ?? AccessTools.Field(t, "Rand")?.GetValue(world)
-                           ?? AccessTools.Field(t, "rand")?.GetValue(world);
-                };
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static bool PushWorldRand(int seed)
-        {
-            if (WorldRandGetter == null) return false;
-            try
-            {
-                var worldRand = WorldRandGetter();
-                if (worldRand == null) return false;
-                worldRand.GetType().GetMethod("PushState", new[] { typeof(int) })?.Invoke(worldRand, new object[] { seed });
-                return true;
-            }
-            catch { return false; }
-        }
-
-        private static void PopWorldRand()
-        {
-            if (WorldRandGetter == null) return;
-            try
-            {
-                var worldRand = WorldRandGetter();
-                worldRand?.GetType().GetMethod("PopState", Type.EmptyTypes)?.Invoke(worldRand, null);
-            }
-            catch { }
         }
     }
 }

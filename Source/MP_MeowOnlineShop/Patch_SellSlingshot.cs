@@ -43,10 +43,12 @@ namespace MP_MeowOnlineShop
         public static readonly bool EnableCaravanUiRandTrace = false;
         /// <summary>true 时输出 Axolotl 修炼功法切换 send/replay 与派生数值快照日志（默认 false）。</summary>
         public static readonly bool EnableAxolotlCultivationToggleTrace = false;
+        public static readonly bool EnableAxolotlCommsTrace = false;
         /// <summary>true 时输出通讯台 Gizmo/FloatMenu 三层 Rand 包裹日志（默认 false）。</summary>
         public static readonly bool EnableCommsRandTrace = false;
         /// <summary>true 时输出 World/Zone Rand Push-Pop 配对计数日志（默认 false）。</summary>
         public static readonly bool EnableWorldRandScopeTrace = false;
+        public static readonly bool EnablePerspectiveShiftTrace = false;
     }
 
     /// <summary>
@@ -91,29 +93,74 @@ namespace MP_MeowOnlineShop
             {
                 LogBuildIdentity();
 
+                // Install God Hands at the first stable startup boundary. An
+                // exception in an unrelated optional patch must not prevent its
+                // designator/controller sync layer from being registered (the
+                // failure captured by Desync-737 did exactly that).
+                ApplyOptionalPatch(
+                    "GodHands multiplayer compatibility",
+                    () => Patch_GodHands.Apply(Harmony));
+
+                // These two boundaries must be registered before optional or
+                // signature-sensitive patches.  Desync-730..734 showed that
+                // Ancot's landing designator exception aborted this method
+                // before EliteRaid and the raid-map context patches ran.
+                Patch_EliteRaidDeterminism.Apply(Harmony);
+                Patch_IncidentRaidFactionContext.Apply(Harmony);
+
                 // 与 Meow Framework 无关的联机补丁：始终尝试应用（内部按类型是否存在再决定是否打补丁）
                 ApplyWorldRandStabilizerPatches();
-                Patch_GravshipAbandonQueue.Apply(Harmony);
+                Patch_GravshipOrphanCommands.Apply(Harmony);
+                Patch_GravshipLandingMp.Apply(Harmony);
+                // Patch_GravshipOrphanCommands is the single owner of the
+                // synchronized takeoff/abandon lifecycle. Applying the old
+                // queue-based guard as well duplicated TakeoffEnded, TravelTo
+                // and TickList rebuild callbacks (visible as paired
+                // GRAVSHIP_* lines) and could defer/remove the same map twice.
+                Patch_InvalidMapIndexSafety.Apply(Harmony);
+                Patch_PawnComponentRepair.Apply(Harmony);
                 Patch_TransportShipUnloadMp.Apply(Harmony);
+                Patch_TransporterLoadingSessionMp.Apply(Harmony);
+                Patch_CaravanShuttleMp.Apply(Harmony);
+                Patch_TransportLaunchBoundary.Apply(Harmony);
+                Patch_TransportArrivalDeterminism.Apply(Harmony);
+                Patch_TransportVisitSiteMp.Apply(Harmony);
+                Patch_MultifactionSingleFactionMigration.Apply(Harmony);
+                Patch_MpServerLagLogThrottle.Apply(Harmony);
                 ApplyCaravanFormingDiagnostics();
                 ApplyVehicleFrameworkCaravanProxyGuard();
+                ApplyOptionalPatch(
+                    "Caravan map-removal safety",
+                    () => Patch_CaravanMapRemovalSafety.Apply(Harmony));
                 Patch_MpDesyncTraceBudget.Apply(Harmony);
                 Patch_AsyncRandStateDiagnostic.Apply(Harmony);
                 Patch_PerformanceOptimizerMp.Apply(Harmony);
                 Patch_SlowerPawnTickRateMp.Apply(Harmony);
                 Patch_ThirdPartyPerformanceMp.Apply(Harmony);
                 Patch_MultiplayerVtrContextGuard.Apply(Harmony);
+                Patch_MpThreatSpeedUnlock.Apply(Harmony);
+                Patch_AsyncTickSchedulerPhase.Apply(Harmony);
                 Patch_DateNotifierMultifactionDeterminism.Apply(Harmony);
                 Patch_StoragePriorityMp.Apply(Harmony);
                 Patch_MultiplayerAsyncQuestSnapshot.Apply(Harmony);
                 Patch_AcceptJoinerWorldCommand.Apply(Harmony);
                 Patch_AncientAmorphousThreatMp.Apply(Harmony);
+                Patch_AnomalyChimeraAssaultDeterminism.Apply(Harmony);
+                Patch_AnomalyVoidMonolithEndingMp.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Cinders of the Embergarden regen Rand determinism",
+                    () => Patch_EmbergardenRegenMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Cinders of the Embergarden weapon mode sync",
+                    () => Patch_EmbergardenWeaponSwitchMp.Apply(Harmony));
                 Patch_PerspectiveShiftMp.Apply(Harmony);
                 Patch_MpSafeAlertThrottling.Apply(Harmony);
+                Patch_MissileGirlPort.Apply();
                 Patch_NaturalGoodwillMultifactionDeterminism.Apply(Harmony);
                 Patch_DubsMintMenusPlant.Apply(Harmony);
                 Patch_MiliraActiveDropPod.Apply(Harmony);
                 Patch_MiliraFallenAngelQuest.Apply(Harmony);
+                Patch_MiliraCaravanRaidFactionContext.Apply(Harmony);
                 Patch_MiliraTaleStorytellerDeterminism.Apply(Harmony);
                 Patch_MiliraSupplyMp.Apply(Harmony);
                 Patch_MiliraMultifactionRelations.Apply(Harmony);
@@ -127,6 +174,13 @@ namespace MP_MeowOnlineShop
                 Patch_InsectGirlPermanentWoundMp.Apply(Harmony);
                 Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony);
                 Patch_DeterministicTickList.Apply(Harmony);
+                Patch_TickListOrderNormalizer.Apply(Harmony);
+                Patch_ThrownFleckEmitterRandIsolation.Apply(Harmony);
+                Patch_AncotTrailFleckRandIsolation.Apply(Harmony);
+                Patch_AncotBeamMoteSaveCompat.Apply(Harmony);
+                Patch_MoteLifecycleMp.Apply(Harmony);
+                Patch_RitualMoteCleanupMp.Apply(Harmony);
+                Patch_OrderedJobMultifactionContext.Apply(Harmony);
                 Patch_MapStateOrderNormalizer.Apply(Harmony);
                 Patch_CommandOrderDeterminism.Apply(Harmony);
                 Patch_AsyncTimeMapLoadSafety.Apply(Harmony);
@@ -144,22 +198,177 @@ namespace MP_MeowOnlineShop
                 Patch_CaravanFloatMenuDiagnostic.Apply(Harmony);
                 Patch_CaravanFloatMenuNullGuard.Apply(Harmony);
                 Patch_CaravansBattlefieldVictoryDeterminism.Apply(Harmony);
+                Patch_SettlementDefeatTaleRandDeterminism.Apply(Harmony);
                 Patch_RpgDialogMp.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Shella Backgrounds multiplayer UI compatibility",
+                    () => Patch_ShellaBackgroundsMp.Apply(Harmony));
                 Patch_FishShadowRandIsolation.Apply(Harmony);
                 Patch_SimpleFxSplashesRandIsolation.Apply(Harmony);
+                Patch_SnowGridRandIsolation.Apply(Harmony);
+                Patch_MoteConstructionRandIsolation.Apply(Harmony);
                 Patch_StaticQualityDeterminism.Apply(Harmony);
                 Patch_InspirationScheduleMp.Apply(Harmony);
                 Patch_ChildcareRandMp.Apply(Harmony);
                 Patch_RitualVisualEffectRandIsolation.Apply(Harmony);
+                Patch_AncotTurretRandIsolation.Apply(Harmony);
+                Patch_AncotSpinTurretMp.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Ancot aerocraft multiplayer compatibility",
+                    () => Patch_AncotAerocraftMp.Apply(Harmony));
+                Patch_AncotTurretFireAtWillMp.Apply(Harmony);
+                Patch_MiliraRocketDeterminism.Apply(Harmony);
+                Patch_BiotechMechAttackRandIsolation.Apply(Harmony);
+                Patch_AncotIntegrationWeaponMp.Apply(Harmony);
+                Patch_AncotMechAutoFightMp.Apply(Harmony);
                 Patch_PsychicRitualVfxRandIsolation.Apply(Harmony);
                 Patch_PsychicRitualSkipAbductionMultifaction.Apply(Harmony);
-                Patch_EliteRaidDeterminism.Apply(Harmony);
                 Patch_KiiroStoryEventsMp.Apply(Harmony);
                 Patch_SearchAndDestroyMp.Apply(Harmony);
                 Patch_DefensivePositionsMp.Apply(Harmony);
+                Patch_TargetingModesMp.Apply(Harmony);
+                Patch_TacticalCrawlingMp.Apply(Harmony);
+                Patch_VanillaMeleeModesMp.Apply(Harmony);
+                Patch_DraftAnythingMp.Apply(Harmony);
+                Patch_AutoBlinkMp.Apply(Harmony);
+                Patch_SmartPistolMp.Apply(Harmony);
+                Patch_ComeBackColonyMp.Apply(Harmony);
+                Patch_OgreStackMp.Apply(Harmony);
+                Patch_GoExploreMp.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Almost There fork multiplayer compatibility",
+                    () => Patch_AlmostThereMp.Apply(Harmony));
+                ApplyOptionalPatch("UF series multiplayer compatibility", () => Patch_UFSeriesMp.Apply(Harmony));
+                ApplyOptionalPatch("Vehicle Framework synchronous paths", () => Patch_VehiclePathMp.Apply(Harmony));
+                ApplyOptionalPatch("UF and Miho random scopes", () => Patch_UFMihoRandomMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Dead Man's Switch multiplayer compatibility",
+                    () => Patch_DeadMansSwitchMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Cluster Projection multiplayer compatibility",
+                    () => Patch_ClusterProjectionMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Fulton Extraction multiplayer compatibility",
+                    () => Patch_FultonExtractionMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Sandevistan multiplayer compatibility",
+                    () => Patch_SandevistanMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "QW Archotech Implants multiplayer compatibility",
+                    () => Patch_QwArchotechImplantsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "DMS Power Armor Expanded multiplayer compatibility",
+                    () => Patch_DmsPowerArmorMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Ratkin Knights multiplayer compatibility",
+                    () => Patch_RatkinKnightsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Monolyn multiplayer compatibility",
+                    () => Patch_AselMonolynMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Oberonia Snowstorm multiplayer compatibility",
+                    () => Patch_OberoniaSnowstormMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Smelted Loong multiplayer compatibility",
+                    () => Patch_SmeltedLoongMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Dragonian Mix multiplayer compatibility",
+                    () => Patch_DragonianMixMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Sylvie Race multiplayer compatibility",
+                    () => Patch_SylvieRaceMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Adaptive Storage Global Settings multiplayer compatibility",
+                    () => Patch_AdaptiveStorageGlobalSettingsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Custom ChoiceLetter multiplayer compatibility",
+                    () => Patch_CustomChoiceLettersMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Hardworking Kz multiplayer compatibility",
+                    () => Patch_HardworkingKzMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Maru Item Form Change multiplayer compatibility",
+                    () => Patch_MaruItemFormChangeMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Maru Trap multiplayer compatibility",
+                    () => Patch_MaruTrapMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Wolfein Allegiance multiplayer compatibility",
+                    () => Patch_WolfeinAllegianceMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Ling Item Cuter multiplayer compatibility",
+                    () => Patch_LingCuterMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "More Torture multiplayer compatibility",
+                    () => Patch_MoreTortureMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Eternal Pawns multiplayer compatibility",
+                    () => Patch_EternalPawnsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Quarry multiplayer compatibility",
+                    () => Patch_QuarryMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Down For Me multiplayer compatibility",
+                    () => Patch_DownForMeMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "More Mechanoids Work Modes multiplayer compatibility",
+                    () => Patch_MoreMechanoidsWorkModesMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Blueprints multiplayer compatibility",
+                    () => Patch_BlueprintsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Achtung stable executor multiplayer compatibility",
+                    () => Patch_AchtungMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "MVCF ShowWeaponTallies multiplayer compatibility",
+                    () => Patch_ShowWeaponTalliesMvcfMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "RimmuNation Security multiplayer compatibility",
+                    () => Patch_RimmuNationSecurityMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Vanilla Mushrooms multiplayer compatibility",
+                    () => Patch_VanillaMushroomsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "RimWorld Columns multiplayer compatibility",
+                    () => Patch_RimWorldColumnsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Equal Milking multiplayer compatibility",
+                    () => Patch_EqualMilkingMp.Apply(Harmony));
                 ApplyOptionalPatch(
                     "RatkinWeapons deterministic bayonet guard",
                     () => Patch_RatkinWeaponsMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Ratkin race weapon/search toggles and caravan dialog multiplayer compatibility",
+                    () => Patch_RatkinRaceMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Ratkin Underground radio dialogue multiplayer compatibility",
+                    () => Patch_RatkinUndergroundMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Ratkin Underground backpack radio launch multiplayer compatibility",
+                    () => Patch_RatkinBackpackRadioMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Race saved toggle multiplayer compatibility",
+                    () => Patch_RaceTogglesMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Wolfein chargeable shield multiplayer compatibility",
+                    () => Patch_WolfeinToolsMp.Apply(Harmony));
+                ApplyOptionalPatch("Wolfein GFI multiplayer compatibility", () => Patch_WolfeinGfiMp.Apply(Harmony));
+                ApplyOptionalPatch("Wolfein Black Science multiplayer compatibility", () => Patch_WolfeinBlackScienceMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Oberonia science ship multiplayer compatibility",
+                    () => Patch_OberoniaScienceShipMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Oberonia Aurea GameComponent deterministic ticker",
+                    () => Patch_OberoniaGameComponentMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Oberonia Frame trade/sale request multiplayer compatibility",
+                    () => Patch_OberoniaFrameMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Asel Monolyn toggles and grav cannon multiplayer compatibility",
+                    () => Patch_AselTogglesMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Asel constructor/teleport/transform targeting multiplayer compatibility",
+                    () => Patch_AselTargetingMp.Apply(Harmony));
                 ApplyMpConfigHotSyncPatch();
                 Patch_QuestAndIdeologyMp.Apply();
                 Patch_MiningDiscoveryMp.Apply();
@@ -169,22 +378,40 @@ namespace MP_MeowOnlineShop
                 Patch_StorageGroupSync.Apply(Harmony);
                 Patch_TechprintMpDiagnostic.Apply(Harmony);
                 Patch_OberoniaBirthdayMp.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Plant-to-grow warning suppression",
+                    () => Patch_PlantToGrowMessageMp.Apply(Harmony));
                 Patch_StorytellerRandomQuestDeterminism.Apply(Harmony);
                 Patch_StorytellerIntervalDeterminism.Apply(Harmony);
+                Patch_OnetimeNotificationDeterminism.Apply(Harmony);
                 Patch_MilianDressMp.Apply(Harmony);
                 Patch_HarbingerTreeSpawnExecutionDeterminism.Apply(Harmony);
                 Patch_RitualObligationDateDeterminism.Apply(Harmony);
                 Patch_RitualRoleChangeMultifactionPersistence.Apply(Harmony);
                 Patch_GoodwillRecalcMultifactionDeterminism.Apply(Harmony);
                 Patch_TraderStockDeterminism.Apply(Harmony);
+                Patch_TradeSessionRejoinMp.Apply(Harmony);
+                Patch_TradeExecutionSnapshot.Apply(Harmony);
+                Patch_JobEndDiagnostic.Apply(Harmony);
+                Patch_WorldPauseDiagnostic.Apply(Harmony);
                 Patch_InsectGirlSpawnFactionDeterminism.Apply(Harmony);
                 Patch_RWBeheadingRandIsolation.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Visual Brutality multiplayer determinism",
+                    () => Patch_VisualBrutalityMp.Apply(Harmony));
+                ApplyOptionalPatch(
+                    "Dynamic Portraits multiplayer work-item UI guard",
+                    () => Patch_DynamicPortraitMp.Apply(Harmony));
                 Patch_PollutionIncidentMp.Apply();
                 Patch_BattleReferenceSaveFix.Apply(Harmony);
+                ApplyOptionalPatch(
+                    "Projectile launcher save reference and Ancot impact determinism",
+                    () => Patch_ProjectileLauncherDeterminism.Apply(Harmony));
                 ApplyDesignatorShapesCompatPatches();
                 ApplyMultifactionTpsOptimizePatches();
                 ApplyRigorMortisPatches();
                 Patch_AncotCommandMode.Apply(Harmony);
+                Patch_TrueShootingWallMp.Apply();
                 ApplyMiliraWeaponModePatches();
                 ApplyMiliraShieldModePatches();
                 ApplyMiliraFlightModePatches();
@@ -202,6 +429,7 @@ namespace MP_MeowOnlineShop
                 Patch_SecretaryNexusMp.Apply(Harmony);
                 Patch_FacialAnimationMp.Apply(Harmony);
                 ApplyAxolotlWeaponModePatches();
+                ApplyAxolotlJumpModeSyncPatches();
                 ApplyAxolotlCultivationReadPatches();
                 ApplyAxolotlCombatStabilityPatches();
                 ApplyAxolotlJumpLandingPatches();
@@ -209,6 +437,9 @@ namespace MP_MeowOnlineShop
                 ApplyAxolotlVerbSaveFixPatches();
                 ApplyAxolotlCommsPatches();
                 Patch_AxolotlAlchemyStoveMp.Apply();
+                Patch_AxolotlMoteRandIsolation.Apply(Harmony);
+                Patch_AxolotlCrossbowVerbDeterminism.Apply(Harmony);
+                Patch_MedicalSurgeryCompat.Apply(Harmony);
 
                 if (!ModsConfig.IsActive(MeowFrameworkPackageId))
                 {
@@ -242,7 +473,7 @@ namespace MP_MeowOnlineShop
             {
                 Log.Warning(
                     "[MP-MeowOnlineShop] Optional patch failed; continuing " +
-                    $"startup: {patchName}. {e.Message}");
+                    $"startup: {patchName}. {e}");
             }
         }
 
@@ -297,16 +528,12 @@ namespace MP_MeowOnlineShop
         /// <summary>RimJobWorld: sync uncovered RMB callbacks and stabilize baby trait inheritance RNG.</summary>
         private static void ApplyRimJobWorldPatches()
         {
-            try
-            {
-                Patch_RimJobWorld.Apply(Harmony);
-                Patch_RjwAddons.Apply(Harmony);
-                Patch_RjwSerializationRandIsolation.Apply(Harmony);
-            }
-            catch (Exception e)
-            {
-                Log.Warning($"[MP-MeowOnlineShop][RJW] compatibility patch failed: {e}");
-            }
+            ApplyOptionalPatch("RJW RimJobWorld", () => Patch_RimJobWorld.Apply(Harmony));
+            ApplyOptionalPatch("RJW addons", () => Patch_RjwAddons.Apply(Harmony));
+            ApplyOptionalPatch("RJW P1", () => Patch_RjwP1.Apply(Harmony));
+            ApplyOptionalPatch(
+                "RJW serialization Rand isolation",
+                () => Patch_RjwSerializationRandIsolation.Apply(Harmony));
         }
 
         /// <summary>
@@ -349,6 +576,19 @@ namespace MP_MeowOnlineShop
             catch (Exception e)
             {
                 Log.Warning($"[MP-MeowOnlineShop] Axolotl weapon mode patch failed: {e.Message}");
+            }
+        }
+
+        /// <summary>Axolotl 广域俯冲模式：同步 CompJumpChange 的 Gizmo 点击状态。</summary>
+        private static void ApplyAxolotlJumpModeSyncPatches()
+        {
+            try
+            {
+                Patch_AxolotlJumpModeSync.Apply();
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"[MP-MeowOnlineShop] Axolotl jump mode sync patch failed: {e.Message}");
             }
         }
 
@@ -474,23 +714,10 @@ namespace MP_MeowOnlineShop
         {
             try
             {
-                var worldType = AccessTools.TypeByName("Verse.World");
-                if (worldType != null)
-                {
-                    var worldTick = AccessTools.Method(worldType, "Tick");
-                    if (worldTick != null)
-                    {
-                        var wtPrefix = typeof(Patch_WorldRandStabilizer.Patch_WorldTick).GetMethod("Prefix", BindingFlags.Public | BindingFlags.Static);
-                        var wtFinalizer = typeof(Patch_WorldRandStabilizer.Patch_WorldTick).GetMethod("Finalizer", BindingFlags.Public | BindingFlags.Static);
-                        if (wtPrefix != null && wtFinalizer != null)
-                        {
-                            Harmony.Patch(worldTick,
-                                prefix: new HarmonyMethod(wtPrefix),
-                                finalizer: new HarmonyMethod(wtFinalizer));
-                        }
-                    }
-                }
-
+                // Do not wrap the whole World.Tick loop. Multiplayer already
+                // validates world Rand, and a broad per-tick reset can hide the
+                // first divergent consumer while changing unrelated gameplay.
+                // Only the proven UI/callback boundaries below are isolated.
                 ApplyZoneGetGizmosPatch("RimWorld.Zone_Growing");
                 ApplyZoneGetGizmosPatch("RimWorld.Zone_Fishing");
                 ApplyZoneGetGizmosPatch("RimWorld.Zone_Stockpile");
@@ -575,7 +802,9 @@ namespace MP_MeowOnlineShop
         }
 
         /// <summary>
-        /// Multiplayer 加入窗口：仅配置不一致时自动热同步并继续加入，避免强制重启。
+        /// Join window config hot sync: verifiable items are hot-applied before
+        /// download; unverifiable items fall back to the native restart flow.
+        /// Use -mpmeowhotcfg=false to disable this patch entirely.
         /// </summary>
         private static void ApplyMpConfigHotSyncPatch()
         {
@@ -1465,6 +1694,8 @@ namespace MP_MeowOnlineShop
 
                 ApplyRigorMortisSongCommonalityGuard();
                 Patch_RigorMortisStateActions.Apply(harmonyRM);
+                Patch_RigorMortisChimeraCombat.Apply(harmonyRM);
+                Patch_RigorMortisPaintedSkinRand.Apply(harmonyRM);
 
                 try
                 {
@@ -1521,6 +1752,7 @@ namespace MP_MeowOnlineShop
                 {
                     Log.Message("[MP-MeowOnlineShop] RigorMortis: registering CQF story sync methods...");
                     Patch_RigorMortis.RegisterStorySyncMethods();
+                    Patch_RigorMortis.ApplyZombieQuestCompletionPatch(harmonyRM);
 
                     // Synchronize the real CQF option selection. CQF RealWork actions then execute
                     // once under that command; intercepting every RealWork would duplicate actions
@@ -1528,6 +1760,7 @@ namespace MP_MeowOnlineShop
                     Log.Message("[MP-MeowOnlineShop] RigorMortis: applying CQF real-option sync patches...");
                 Patch_RigorMortisStoryDialogs.Apply(harmonyRM);
                 Patch_RigorMortisUtilityWindows.Apply(harmonyRM);
+                Patch_RigorMortisChangeApparel.Apply(harmonyRM);
                 }
                 catch (Exception exStory)
                 {

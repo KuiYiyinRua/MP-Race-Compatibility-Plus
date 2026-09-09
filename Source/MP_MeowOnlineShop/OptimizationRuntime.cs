@@ -12,6 +12,11 @@ namespace MP_MeowOnlineShop
         public static bool IsTelemetryEnabled => MpMeowOnlineShopMod.Settings?.enableOptimizationTelemetry ?? true;
         public static bool IsUiBatchingEnabled => MpMeowOnlineShopMod.Settings?.enableUiActionBatching ?? true;
         public static bool IsDeterministicRandScopeEnabled => MpMeowOnlineShopMod.Settings?.enableDeterministicRandRefactor ?? true;
+        public static bool IsTickListFullReconcileEnabled => MpMeowOnlineShopMod.Settings?.enableTickListFullReconcile ?? false;
+        public static bool IsThirdPartyPerfCleanupEnabled => MpMeowOnlineShopMod.Settings?.enableThirdPartyPerfCleanup ?? false;
+        public static bool IsMpServerLagThrottleEnabled => MpMeowOnlineShopMod.Settings?.enableMpServerLagThrottle ?? false;
+        public static bool IsProjectileLauncherDeterminismEnabled => MpMeowOnlineShopMod.Settings?.enableProjectileLauncherDeterminism ?? false;
+        public static bool IsMiliraWeaponModeCompatEnabled => MpMeowOnlineShopMod.Settings?.enableMiliraWeaponModeCompat ?? false;
         public static bool IsExperimentalTickSchedulerEnabled => MpMeowOnlineShopMod.Settings?.enableExperimentalTickScheduler ?? false;
 
         public static bool AllowUiOptimization => MP.IsInMultiplayer && !MP.IsExecutingSyncCommand;

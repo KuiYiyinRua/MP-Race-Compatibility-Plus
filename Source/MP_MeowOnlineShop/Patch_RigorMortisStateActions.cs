@@ -51,6 +51,7 @@ namespace MP_MeowOnlineShop
         private static readonly FieldInfo TaoistCastingCompassField = AccessTools.Field(TaoistCastingType, "compass");
         private static readonly PropertyInfo YinContainedThingProperty = AccessTools.Property(YinCompType, "ContainedThing");
         private static readonly PropertyInfo YinLevelProperty = AccessTools.Property(YinCompType, "Level");
+        private static readonly FieldInfo YinDamageDictField = AccessTools.Field(YinCompType, "damageDict");
 
         private static readonly MethodInfo BoardGetGizmosMethod = AccessTools.Method(BuildingCallBoardType, "GetGizmos");
         private static readonly MethodInfo ComponentExposeDataMethod = AccessTools.Method(RmComponentType, "ExposeData");
@@ -180,6 +181,7 @@ namespace MP_MeowOnlineShop
                 ,{ "RMUtility.AnyZombieThreat(Map,out int)", AnyZombieThreatWithLevelMethod }
                 ,{ "CompYinAndMalevolent.ContainedThing", YinContainedThingProperty }
                 ,{ "CompYinAndMalevolent.Level", YinLevelProperty }
+                ,{ "CompYinAndMalevolent.damageDict", YinDamageDictField }
             };
             for (int i = 0; i < IntegerSettingFields.Length; i++)
                 required.Add("RMSettings." + IntegerSettingNames[i], IntegerSettingFields[i]);
@@ -216,7 +218,7 @@ namespace MP_MeowOnlineShop
                     prefix: new HarmonyMethod(typeof(Patch_RigorMortisStateActions), nameof(ComponentWorldUpdatePrefix))
                     { priority = Priority.First });
                 harmony.Patch(ComponentRecordKillMethod,
-                    transpiler: new HarmonyMethod(typeof(Patch_RigorMortisStateActions), nameof(SortDamagePawnKeysTranspiler)));
+                    prefix: new HarmonyMethod(typeof(Patch_RigorMortisStateActions), nameof(RecordOneKillPrefix)));
                 harmony.Patch(ArtifactGizmoOnGuiMethod,
                     prefix: new HarmonyMethod(typeof(Patch_RigorMortisStateActions), nameof(ArtifactGizmoPrefix))
                     { priority = Priority.First },
@@ -267,7 +269,7 @@ namespace MP_MeowOnlineShop
                 ApplyOptionalCrimson(harmony);
                 Log.Message($"{LogTag}: ready; requiredSymbols={required.Count}, uiSync=board/artifact/equip, " +
                             $"settingsSync={IntegerSettingFields.Length + BooleanSettingFields.Length}, " +
-                            $"postLoadNpcCache=true, dictionaryOrder=world/apprentice/damage, renderRandIsolation=1, " +
+                            $"postLoadNpcCache=true, dictionaryOrder=world/apprentice, damageSort=prefix, renderRandIsolation=1, " +
                             $"yinGizmoSync=true, taoistCompassScribed=true, apprenticeEventGuard=2, mapThreatCache=true, " +
                             $"debugMethods={debugMethods + 3}, crimson={CrimsonCompGetGizmosMethod != null}.");
             }
@@ -950,29 +952,6 @@ namespace MP_MeowOnlineShop
             return list;
         }
 
-        public static IEnumerable<CodeInstruction> SortDamagePawnKeysTranspiler(
-            IEnumerable<CodeInstruction> instructions, MethodBase __originalMethod)
-        {
-            var list = instructions.ToList();
-            MethodInfo replacement = AccessTools.Method(
-                typeof(Patch_RigorMortisStateActions), nameof(SortedDamagePawnKeys));
-            int replaced = 0;
-            foreach (CodeInstruction instruction in list)
-            {
-                if (instruction.operand is MethodInfo method && method.Name == "get_Keys" &&
-                    method.DeclaringType == typeof(Dictionary<Pawn, float>))
-                {
-                    instruction.opcode = OpCodes.Call;
-                    instruction.operand = replacement;
-                    replaced++;
-                }
-            }
-            if (replaced != 1)
-                Log.Error($"{LogTag}: expected one damage dictionary key read in " +
-                          $"{__originalMethod?.DeclaringType?.FullName}.{__originalMethod?.Name}, found {replaced}.");
-            return list;
-        }
-
         public static IEnumerable<Pawn> SortedNamedPawnKeys(Dictionary<Pawn, string> dictionary)
         {
             if (dictionary == null)
@@ -980,11 +959,30 @@ namespace MP_MeowOnlineShop
             return dictionary.Keys.Where(p => p != null).OrderBy(p => p.thingIDNumber);
         }
 
-        public static IEnumerable<Pawn> SortedDamagePawnKeys(Dictionary<Pawn, float> dictionary)
+        // RecordOneKill iterates damageDict.Keys directly. Rebuilding the dictionary with a
+        // deterministic insertion order keeps that loop deterministic without rewriting its IL.
+        public static bool RecordOneKillPrefix(Pawn killed)
         {
-            if (dictionary == null)
-                return Enumerable.Empty<Pawn>();
-            return dictionary.Keys.Where(p => p != null).OrderBy(p => p.thingIDNumber);
+            if (!MP.enabled || !MP.IsInMultiplayer)
+                return true;
+            try
+            {
+                ThingComp comp = killed?.AllComps?.FirstOrDefault(c => c != null && YinCompType.IsInstanceOfType(c));
+                if (comp == null)
+                    return true;
+                if (!(YinDamageDictField.GetValue(comp) is Dictionary<Pawn, float> damageDict) || damageDict.Count <= 1)
+                    return true;
+
+                Dictionary<Pawn, float> sorted = new Dictionary<Pawn, float>(damageDict.Count);
+                foreach (KeyValuePair<Pawn, float> pair in damageDict.OrderBy(p => p.Key?.thingIDNumber ?? int.MaxValue))
+                    sorted.Add(pair.Key, pair.Value);
+                YinDamageDictField.SetValue(comp, sorted);
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"{LogTag}: RecordOneKill deterministic damageDict sort failed: {e.Message}");
+            }
+            return true;
         }
 
         private static ThingComp FindTaoistComp(Pawn pawn)

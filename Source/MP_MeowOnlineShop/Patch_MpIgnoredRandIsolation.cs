@@ -27,6 +27,7 @@ namespace MP_MeowOnlineShop
         private const int SaltSteam = 0x53544541; // "STEA"
 
         private static bool _applied;
+        private static bool _loggedTempTerrainSkipped;
 
         internal static void Apply(Harmony harmony)
         {
@@ -116,11 +117,30 @@ namespace MP_MeowOnlineShop
             BeginMapScope(___map, SaltSteady, ref __state);
         }
 
-        private static void TempPrefix(
+        private static bool TempPrefix(
             Map ___map,
             ref bool __state)
         {
+            if (!CanTickTempTerrain(___map))
+            {
+                __state = false;
+                if (!_loggedTempTerrainSkipped)
+                {
+                    _loggedTempTerrainSkipped = true;
+                    Log.Warning(
+                        "[MP-MeowOnlineShop] Skipped TempTerrainManager.Tick for " +
+                        "a map without a valid map reference.");
+                }
+                return false;
+            }
+
             BeginMapScope(___map, SaltTemp, ref __state);
+            return true;
+        }
+
+        private static bool CanTickTempTerrain(Map map)
+        {
+            return map != null && !map.Disposed;
         }
 
         private static void SteamPrefix(

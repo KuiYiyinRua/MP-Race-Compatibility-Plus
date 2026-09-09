@@ -155,8 +155,13 @@ namespace MP_MeowOnlineShop
                     instruction.operand is ConstructorInfo ctor &&
                     ctor == randomCtor)
                 {
-                    yield return new CodeInstruction(OpCodes.Call, factory);
-                    continue;
+                    // Mutate the existing instruction so Harmony labels and
+                    // exception blocks attached to the newobj are preserved.
+                    // Replacing it with a fresh CodeInstruction caused the
+                    // installed RatkinWeapons build to fail IL validation with
+                    // an invalid branch label.
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = factory;
                 }
 
                 yield return instruction;

@@ -16,7 +16,11 @@ namespace MP_MeowOnlineShop
     {
         private static readonly Type VerbTrackerType = AccessTools.TypeByName("Verse.VerbTracker");
         private static readonly MethodInfo ExposeDataMethod = AccessTools.Method(VerbTrackerType, "ExposeData");
-        private static readonly FieldInfo AllVerbsField = AccessTools.Field(VerbTrackerType, "allVerbs");
+        // RimWorld 1.6 stores the list in VerbTracker.verbs. Older versions and
+        // early decompilations called it allVerbs, so keep that as a fallback.
+        private static readonly FieldInfo VerbsField =
+            AccessTools.Field(VerbTrackerType, "verbs") ??
+            AccessTools.Field(VerbTrackerType, "allVerbs");
         private static readonly FieldInfo DirectOwnerField = AccessTools.Field(VerbTrackerType, "directOwner");
 
         private static bool _patched;
@@ -28,7 +32,7 @@ namespace MP_MeowOnlineShop
             if (harmony == null || _patched)
                 return;
 
-            if (VerbTrackerType == null || ExposeDataMethod == null || AllVerbsField == null)
+            if (VerbTrackerType == null || ExposeDataMethod == null || VerbsField == null)
             {
                 Log.Warning("[MP-MeowOnlineShop] Axolotl verb save fix skipped: signatures not resolved.");
                 return;
@@ -55,7 +59,7 @@ namespace MP_MeowOnlineShop
             if (!ShouldProcessTracker(__instance))
                 return;
 
-            if (!(AllVerbsField.GetValue(__instance) is IList list) || list.Count <= 1)
+            if (!(VerbsField.GetValue(__instance) is IList list) || list.Count <= 1)
                 return;
 
             var seenRefs = new HashSet<object>();

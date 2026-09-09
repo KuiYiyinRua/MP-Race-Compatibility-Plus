@@ -82,19 +82,37 @@ namespace MP_MeowOnlineShop
 
         private static int PatchPicker(Harmony harmony, Type gizmoType)
         {
-            // FloatMenuOption is declared on the closed generic base type; asking
-            // the derived runtime type lets Harmony patch the actual instantiation.
-            MethodInfo target = gizmoType?.GetMethod(
-                "FloatMenuOption",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            if (target == null || target.ReturnType != typeof(FloatMenuOption) ||
-                target.GetParameters().Length != 1)
+            // Harmony rejects a MethodInfo reflected through a derived type.  It
+            // requires the declared method, whose ReflectedType and DeclaringType
+            // are both the closed generic base.  MilkingGizmo also has an
+            // intermediate generic base, so walk up until the declaration exists.
+            MethodInfo target = null;
+            for (Type current = gizmoType; current != null; current = current.BaseType)
+            {
+                MethodInfo candidate = current.GetMethod(
+                    "FloatMenuOption",
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if (candidate == null || candidate.ReturnType != typeof(FloatMenuOption) ||
+                    candidate.GetParameters().Length != 1)
+                    continue;
+                target = candidate;
+                break;
+            }
+            if (target == null)
                 return 0;
 
-            harmony.Patch(
-                target,
-                postfix: new HarmonyMethod(AccessTools.Method(
-                    typeof(Patch_RjwOnaholeModes), nameof(ModeOptionPostfix))));
+            try
+            {
+                harmony.Patch(
+                    target,
+                    postfix: new HarmonyMethod(AccessTools.Method(
+                        typeof(Patch_RjwOnaholeModes), nameof(ModeOptionPostfix))));
+            }
+            catch (Exception e)
+            {
+                Log.Warning("[MP-MeowOnlineShop][RJW-Onahole] mode picker patch failed: " + e.Message);
+                return 0;
+            }
             return 1;
         }
 

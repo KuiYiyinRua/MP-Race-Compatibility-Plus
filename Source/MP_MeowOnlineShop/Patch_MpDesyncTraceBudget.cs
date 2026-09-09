@@ -16,6 +16,8 @@ namespace MP_MeowOnlineShop
         private const int MaxTraceHashesPerOpinion = 1_000_000;
         private static bool _applied;
         private static bool _loggedBudgetHit;
+        private static FieldInfo _currentOpinionField;
+        private static FieldInfo _desyncStackTraceHashesField;
 
         internal static void Apply(Harmony harmony)
         {
@@ -27,6 +29,8 @@ namespace MP_MeowOnlineShop
             {
                 var coordinatorType = AccessTools.TypeByName("Multiplayer.Client.SyncCoordinator");
                 var opinionType = AccessTools.TypeByName("Multiplayer.Client.ClientSyncOpinion");
+                _currentOpinionField = AccessTools.Field(coordinatorType, "currentOpinion");
+                _desyncStackTraceHashesField = AccessTools.Field(opinionType, "desyncStackTraceHashes");
                 var collectionPrefix = AccessTools.Method(
                     typeof(Patch_MpDesyncTraceBudget),
                     nameof(TraceCollectionPrefix));
@@ -74,8 +78,7 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                var currentOpinion = AccessTools.Field(__instance.GetType(), "currentOpinion")
-                    ?.GetValue(__instance);
+                var currentOpinion = _currentOpinionField?.GetValue(__instance);
                 if (currentOpinion == null)
                     return true;
 
@@ -99,8 +102,7 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                var hashes = AccessTools.Field(__instance.GetType(), "desyncStackTraceHashes")
-                    ?.GetValue(__instance);
+                var hashes = _desyncStackTraceHashesField?.GetValue(__instance);
                 if (!(hashes is IList list) || list.Count <= MaxTraceHashesPerOpinion)
                     return;
 
@@ -135,8 +137,7 @@ namespace MP_MeowOnlineShop
 
         private static int GetTraceHashCount(object opinion)
         {
-            var hashes = AccessTools.Field(opinion.GetType(), "desyncStackTraceHashes")
-                ?.GetValue(opinion) as ICollection;
+            var hashes = _desyncStackTraceHashesField?.GetValue(opinion) as ICollection;
             return hashes?.Count ?? 0;
         }
 

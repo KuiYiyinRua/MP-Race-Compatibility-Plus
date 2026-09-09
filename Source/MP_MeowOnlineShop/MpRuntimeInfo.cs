@@ -30,6 +30,9 @@ namespace MP_MeowOnlineShop
         private static FieldInfo _mapCompFactionDataField;
         private static FieldInfo _mapCompCustomFactionDataField;
 
+        private static Type _tickPatchType;
+        private static PropertyInfo _tickPatchTimerProperty;
+
         private static Type _apiBridgeType;
         private static FieldInfo _apiBridgeInstanceField;
         private static PropertyInfo _apiBridgeIsHostingProperty;
@@ -65,6 +68,11 @@ namespace MP_MeowOnlineShop
                     _mapCompCustomFactionDataField = AccessTools.Field(mapCompType, "customFactionData");
                 }
 
+                _tickPatchType = AccessTools.TypeByName("Multiplayer.Client.TickPatch");
+                _tickPatchTimerProperty = _tickPatchType == null
+                    ? null
+                    : AccessTools.Property(_tickPatchType, "Timer");
+
                 _apiBridgeType = AccessTools.TypeByName("Multiplayer.Common.MultiplayerAPIBridge");
                 _apiBridgeInstanceField = AccessTools.Field(_apiBridgeType, "Instance");
                 var apiInterfaceType = AccessTools.TypeByName("Multiplayer.API.IAPI");
@@ -77,6 +85,34 @@ namespace MP_MeowOnlineShop
 
             if (forceLog || !_loggedInitSummary)
                 LogInitSummary();
+        }
+
+        /// <summary>
+        /// Multiplayer 的共享逻辑时钟（TickPatch.Timer）。两端在同一共享 tick 上对齐，
+        /// 是 async time 下唯一可靠的确定性时钟（TicksGame 会被各端地图 tick 覆盖）。
+        /// 反射失败时返回 false，调用方应 fail-open 回原版行为。
+        /// </summary>
+        internal static bool TryGetMpTimerTick(out int tick)
+        {
+            EnsureInitialized();
+            tick = -1;
+            if (_tickPatchTimerProperty == null)
+                return false;
+
+            try
+            {
+                var value = _tickPatchTimerProperty.GetValue(null, null);
+                if (value is int timer)
+                {
+                    tick = timer;
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         internal static bool TryGetAsyncTimeActive(out bool active)
@@ -277,7 +313,8 @@ namespace MP_MeowOnlineShop
                 "[MP-MeowOnlineShop] MP runtime symbols resolved: " +
                 $"gameComp={(_gameCompProperty != null)}, asyncField={(_asyncTimeField != null)}, multifactionField={(_multifactionField != null)}, " +
                 $"mpCompMethod={(_mpCompMethod != null)}, factionDataField={(_mapCompFactionDataField != null)}, customFactionDataField={(_mapCompCustomFactionDataField != null)}, " +
-                $"apiBridgeHost={(_apiBridgeInstanceField != null && _apiBridgeIsHostingProperty != null)}.");
+                $"tickPatchTimer={(_tickPatchTimerProperty != null)}, apiBridgeHost={(_apiBridgeInstanceField != null && _apiBridgeIsHostingProperty != null)}.");
         }
     }
 }
+

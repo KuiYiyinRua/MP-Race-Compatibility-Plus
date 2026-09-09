@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -22,6 +23,8 @@ namespace MP_MeowOnlineShop
         private const string CompCultivationTypeName = "Axolotl.Comp_Cultivation";
         private const string MoeLotlQiSkillUtilityTypeName = "Axolotl.MoeLotlQiSkillUtility";
         private const int SeedOffsetReadRotation = 0x6F31;
+        private const int TargetReadSeedOffset = 0x54415247; // "TARG"
+        private const int TargetReadSeedWorldOffset = 0x54415257; // "TARW"
 
         private static readonly MethodInfo RandRangeIntMethod = AccessTools.Method(typeof(Rand), nameof(Rand.Range), new[] { typeof(int), typeof(int) });
         private static readonly MethodInfo DeterministicRangeMethod = AccessTools.Method(typeof(Patch_AxolotlCultivationRead), nameof(DeterministicReadRotationRange));
@@ -34,6 +37,9 @@ namespace MP_MeowOnlineShop
         private static bool _syncMethodRegistered;
         private static MethodInfo _installSkillMethod;
         private static MethodInfo _uninstallSkillMethod;
+        private static FieldInfo _allLearnedSkillsField;
+        private static FieldInfo _skillInstallListField;
+        private static FieldInfo _skillDefField;
         private static int _toggleTraceCount;
         private const int MaxToggleTraceCount = 60;
 
@@ -57,6 +63,91 @@ namespace MP_MeowOnlineShop
 
             try { ApplyBookListOrderPatch(harmony); }
             catch (Exception e) { Log.Warning($"[MP-MeowOnlineShop] Axolotl cultivation list-order patch failed: {e.Message}"); }
+
+            try { ApplyCompTickGuardPatch(harmony); }
+            catch (Exception e) { Log.Warning($"[MP-MeowOnlineShop] Axolotl cultivation tick guard patch failed: {e.Message}"); }
+        }
+
+        private static void ApplyCompTickGuardPatch(Harmony harmony)
+        {
+            Type compType = AccessTools.TypeByName(CompCultivationTypeName);
+            Type skillType = AccessTools.TypeByName("Axolotl.MoeLotlQiSkill");
+            MethodInfo compTick = compType == null
+                ? null
+                : AccessTools.Method(compType, "CompTick", Type.EmptyTypes);
+            MethodInfo prefix = AccessTools.Method(
+                typeof(Patch_AxolotlCultivationRead),
+                nameof(CompTickGuardPrefix));
+
+            _allLearnedSkillsField = AccessTools.Field(compType, "AllLearnedSkills");
+            _skillInstallListField = AccessTools.Field(compType, "SkillInstallList");
+            _skillDefField = AccessTools.Field(skillType, "def");
+
+            if (compTick == null || prefix == null ||
+                _allLearnedSkillsField == null ||
+                _skillInstallListField == null || _skillDefField == null)
+            {
+                return;
+            }
+
+            harmony.Patch(
+                compTick,
+                prefix: new HarmonyMethod(prefix)
+                {
+                    priority = Priority.First
+                });
+
+            Log.Message(
+                "[MP-MeowOnlineShop] Axolotl cultivation tick guard active: " +
+                "stale SkillInstallList entries are reconciled before CompTick.");
+        }
+
+        private static bool CompTickGuardPrefix(ThingComp __instance)
+        {
+            if (!MP.IsInMultiplayer || __instance == null ||
+                _allLearnedSkillsField == null ||
+                _skillInstallListField == null || _skillDefField == null)
+            {
+                return true;
+            }
+
+            try
+            {
+                if (!(_allLearnedSkillsField.GetValue(__instance) is IList learned) ||
+                    !(_skillInstallListField.GetValue(__instance) is IList installs))
+                {
+                    return true;
+                }
+
+                if (learned.Count == 0 || installs.Count == 0)
+                    return true;
+
+                var learnedDefs = new HashSet<object>();
+                for (int i = 0; i < learned.Count; i++)
+                {
+                    object skill = learned[i];
+                    object def = skill == null
+                        ? null
+                        : _skillDefField.GetValue(skill);
+                    if (def != null)
+                        learnedDefs.Add(def);
+                }
+
+                for (int i = installs.Count - 1; i >= 0; i--)
+                {
+                    if (installs[i] == null ||
+                        !learnedDefs.Contains(installs[i]))
+                    {
+                        installs.RemoveAt(i);
+                    }
+                }
+            }
+            catch
+            {
+                // Reconcile is best-effort; vanilla CompTick still runs.
+            }
+
+            return true;
         }
 
         private static void TryRegisterSyncMethods()
@@ -440,7 +531,11 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            ApplyTargetReadBookAndInterrupt(compObj, targetReadBookDef);
+            // 不再在 UI 回调里先行执行本地副作用：ApplyTargetReadBookAndInterrupt 里的
+            // EndCurrentJob 会触发换工作（ThinkNode_PrioritySorter）并消费 map/world
+            // 随机，若只在发起端执行一次必然分叉（Desync-526 的 host/local trace 正是
+            // 一端在命令里消费随机、另一端在地图 tick 里消费随机）。改为只发送同步命令，
+            // 由命令回放在所有端（含发起端）统一执行一次。
             SyncSetTargetReadBook(map.Index, pawn.thingIDNumber, targetReadBookDef?.defName);
         }
 
@@ -514,7 +609,36 @@ namespace MP_MeowOnlineShop
             {
                 var jobDef = pawn.CurJobDef;
                 if (jobDef != null && string.Equals(jobDef.defName, "Axolotl_ReadMoeLotlQiSkillBooks", StringComparison.Ordinal))
-                    pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true, true);
+                {
+                    // EndCurrentJob -> TryFindAndStartJob -> DetermineNextJob 会经
+                    // ThinkNode_PrioritySorter 消费 map/world 随机（Desync-526 首个分叉
+                    // trace 正是 SyncSetTargetReadBook 命令里的 Rand.Range）。在同步命令
+                    // 内该消费必须确定化：包进确定性种子作用域，不触碰共享随机流。
+                    int state = 0;
+                    Map mapForPop = null;
+                    bool scoped = false;
+                    if (MP.IsInMultiplayer)
+                    {
+                        int seed = BuildTargetReadSeed(pawn, targetReadBookDef);
+                        scoped = DeterministicRandScope.Begin(
+                            pawn.Map,
+                            seed,
+                            TargetReadSeedWorldOffset,
+                            ref state,
+                            out mapForPop,
+                            ignoreGate: true);
+                    }
+
+                    try
+                    {
+                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true, true);
+                    }
+                    finally
+                    {
+                        if (scoped)
+                            DeterministicRandScope.End(state, mapForPop);
+                    }
+                }
             }
             catch
             {
@@ -628,6 +752,16 @@ namespace MP_MeowOnlineShop
                 else
                     yield return code;
             }
+        }
+
+        private static int BuildTargetReadSeed(Pawn pawn, ThingDef targetReadBookDef)
+        {
+            int seed = TargetReadSeedOffset;
+            var map = pawn?.Map;
+            seed = Gen.HashCombineInt(seed, map?.Index ?? -1);
+            seed = Gen.HashCombineInt(seed, pawn?.thingIDNumber ?? 0);
+            seed = Gen.HashCombineInt(seed, DeterministicStringHash(targetReadBookDef?.defName));
+            return seed;
         }
 
         public static int DeterministicReadRotationRange(int minInclusive, int maxExclusive)

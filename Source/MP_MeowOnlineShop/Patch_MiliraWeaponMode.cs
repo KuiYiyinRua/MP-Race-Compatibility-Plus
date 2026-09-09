@@ -25,6 +25,14 @@ namespace MP_MeowOnlineShop
         private const int SeedOffsetCompGizmo = 0x6B11;
         private const int SeedOffsetCompInit = 0x6B19;
         private const int WorldSeedOffset = 0x6C23;
+        private const int SustainedFireSeedSalt = 0x53555346; // "SUSF"
+        private const int SustainedFireWorldSeedOffset = 0x53555357; // "SUSW"
+        private const string SustainedChargeVerbTypeName =
+            "AncotLibrary.Verb_ChargeShootSustained";
+        private const int MaxPerspectiveFireCooldownEntries = 1024;
+
+        private static readonly Dictionary<long, int> PerspectiveFireCooldownUntil =
+            new Dictionary<long, int>();
 
         private static readonly string[] TargetCompTypeNames =
         {
@@ -103,6 +111,7 @@ namespace MP_MeowOnlineShop
 
         [ThreadStatic] private static Map _mapForRandPop;
         [ThreadStatic] private static bool _executingSyncedCommand;
+        [ThreadStatic] private static Map _sustainedFireMapForRandPop;
 
         private static bool _syncMethodRegistered;
         private static readonly HashSet<MethodBase> PatchedCommandProcessMethods = new HashSet<MethodBase>();
@@ -127,6 +136,15 @@ namespace MP_MeowOnlineShop
         {
             if (harmony == null || !MP.enabled)
                 return;
+
+            if (!OptimizationGate.IsMiliraWeaponModeCompatEnabled)
+            {
+                OptimizationGate.LogOnce(
+                    "milira.weapon.mode.disabled",
+                    "[MP-MeowOnlineShop] Milira weapon-mode compat patch is disabled; " +
+                    "Milira weapons keep vanilla firing/gizmo behavior.");
+                return;
+            }
 
             if (!_syncMethodRegistered)
             {
@@ -169,6 +187,7 @@ namespace MP_MeowOnlineShop
             }
 
             RegisterSustainedTargetingOverride();
+            PatchSustainedFireRand(harmony);
 
             if (commandPrefix != null)
             {
@@ -236,6 +255,95 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        private static void PatchSustainedFireRand(Harmony harmony)
+        {
+            Type sustainedVerb = AccessTools.TypeByName(SustainedChargeVerbTypeName);
+            if (sustainedVerb == null)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Milira sustained-charge verb Rand " +
+                    "isolation target not resolved; skipped.");
+                return;
+            }
+
+            MethodInfo tryCastShot = AccessTools.Method(
+                sustainedVerb,
+                "TryCastShot",
+                Type.EmptyTypes);
+            if (tryCastShot == null ||
+                tryCastShot.DeclaringType != sustainedVerb)
+            {
+                Log.Warning(
+                    "[MP-MeowOnlineShop] Milira sustained-charge TryCastShot " +
+                    "target not resolved or inherited; skipped.");
+                return;
+            }
+
+            harmony.Patch(
+                tryCastShot,
+                prefix: new HarmonyMethod(
+                    typeof(Patch_MiliraWeaponMode),
+                    nameof(SustainedFireTryCastShotPrefix))
+                {
+                    priority = Priority.First
+                },
+                finalizer: new HarmonyMethod(
+                    typeof(Patch_MiliraWeaponMode),
+                    nameof(SustainedFireTryCastShotFinalizer))
+                {
+                    priority = Priority.Last
+                });
+
+            Log.Message(
+                "[MP-MeowOnlineShop] Milira sustained-charge firing Rand " +
+                "isolation active.");
+        }
+
+        private static void SustainedFireTryCastShotPrefix(
+            Verb __instance,
+            ref int __state)
+        {
+            __state = 0;
+            _sustainedFireMapForRandPop = null;
+            if (!MP.IsInMultiplayer || __instance == null)
+                return;
+
+            Thing caster = __instance.caster;
+            if (caster == null || caster.Map == null)
+                return;
+
+            int seed = Gen.HashCombineInt(
+                SustainedFireSeedSalt,
+                caster.Map.uniqueID);
+            seed = Gen.HashCombineInt(seed, caster.thingIDNumber);
+            seed = Gen.HashCombineInt(seed, Find.TickManager.TicksGame);
+
+            if (DeterministicRandScope.Begin(
+                    caster.Map,
+                    seed,
+                    SustainedFireWorldSeedOffset,
+                    ref __state,
+                    out var mapForPop,
+                    ignoreGate: true))
+            {
+                _sustainedFireMapForRandPop = mapForPop;
+            }
+            else
+            {
+                __state = 0;
+            }
+        }
+
+        private static Exception SustainedFireTryCastShotFinalizer(
+            Exception __exception,
+            int __state)
+        {
+            if (__state != 0)
+                DeterministicRandScope.End(__state, _sustainedFireMapForRandPop);
+            _sustainedFireMapForRandPop = null;
+            return __exception;
+        }
+
         /// <summary>
         /// Executes Perspective Shift firing for Milira weapons without
         /// re-entering its UI-oriented HandleFiring method. The caller already
@@ -243,6 +351,9 @@ namespace MP_MeowOnlineShop
         /// </summary>
         internal static bool TryHandlePerspectiveShiftFire(Pawn pawn, IntVec3 cell)
         {
+            if (!OptimizationGate.IsMiliraWeaponModeCompatEnabled)
+                return false;
+
             Thing weapon = pawn?.equipment?.Primary;
             if (weapon?.def == null ||
                 !MiliraWeaponDefNames.Contains(weapon.def.defName))
@@ -255,6 +366,12 @@ namespace MP_MeowOnlineShop
             {
                 return true;
             }
+
+            // The original Avatar.HandleFiring blocks every shot while the pawn
+            // is in a warmup or cooldown stance; without this gate the ordered
+            // fire commands would keep calling TryStartCastOn during cooldown.
+            if (pawn.stances?.curStance is Stance_Busy)
+                return true;
 
             Thing targetThing = pawn.Map.thingGrid.ThingsListAt(cell)
                 .Where(t => t != null && t != pawn &&
@@ -287,10 +404,57 @@ namespace MP_MeowOnlineShop
             if (verb != null && !verb.verbProps.IsMeleeAttack &&
                 verb.Available() && verb.CanHitTarget(target))
             {
-                verb.TryStartCastOn(target, false, true, false, false);
+                int pawnId = pawn.thingIDNumber;
+                int weaponId = weapon.thingIDNumber;
+                int now = Find.TickManager.TicksGame;
+                if (now < GetPerspectiveFireCooldownUntil(pawnId, weaponId))
+                    return true;
+                if (verb.TryStartCastOn(target, false, true, false, false))
+                    SetPerspectiveFireCooldown(
+                        pawnId,
+                        weaponId,
+                        now + verb.verbProps.AdjustedCooldownTicks(verb, pawn));
             }
 
             return true;
+        }
+
+        private static long PerspectiveFireKey(int pawnId, int weaponId)
+        {
+            return ((long)pawnId << 32) ^ (uint)weaponId;
+        }
+
+        private static int GetPerspectiveFireCooldownUntil(int pawnId, int weaponId)
+        {
+            return PerspectiveFireCooldownUntil.TryGetValue(
+                PerspectiveFireKey(pawnId, weaponId),
+                out int until)
+                ? until
+                : 0;
+        }
+
+        private static void SetPerspectiveFireCooldown(int pawnId, int weaponId, int untilTick)
+        {
+            long key = PerspectiveFireKey(pawnId, weaponId);
+            PerspectiveFireCooldownUntil[key] = untilTick;
+            if (PerspectiveFireCooldownUntil.Count <= MaxPerspectiveFireCooldownEntries)
+                return;
+
+            int now = Find.TickManager.TicksGame;
+            List<long> stale = null;
+            foreach (KeyValuePair<long, int> pair in PerspectiveFireCooldownUntil)
+            {
+                if (pair.Value <= now)
+                {
+                    if (stale == null)
+                        stale = new List<long>();
+                    stale.Add(pair.Key);
+                }
+            }
+            if (stale == null)
+                return;
+            for (int i = 0; i < stale.Count; i++)
+                PerspectiveFireCooldownUntil.Remove(stale[i]);
         }
 
         private static void PatchCompMethod(Harmony harmony, Type compType, string methodName, MethodInfo prefix, MethodInfo finalizer, MethodInfo postfix)

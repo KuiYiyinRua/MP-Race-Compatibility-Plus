@@ -3,5 +3,7 @@
   <v1.6>
     <li>1.6</li>
     <li>/</li>
+    <li IfModActive="co.uk.epicguru.meleeanimation">MeleeAnimation</li>
+    <li IfModActive="ZuoYao.RavenRace">RavenCompatibility</li>
   </v1.6>
 </loadFolders>

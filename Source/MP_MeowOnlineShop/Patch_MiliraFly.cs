@@ -11,12 +11,13 @@ using Verse.AI;
 namespace MP_MeowOnlineShop
 {
     /// <summary>
-    /// Multiplayer compatibility for Milira flight abilities (CastJump + Verb_CastAbilityMiliraFly*).
+    /// Multiplayer compatibility for Milira flight and weapon-skill abilities (CastJump + Milira jump/charge verbs).
     /// Root cause: TryTakeOrderedJob sync serializes Job.verbToUse as a cross-ref, but the Verb is not in the same deep-save graph →
     /// "verbToUse is referenced but is not deep-saved" and null verb on replay → JobDriver_CastJump NRE.
     /// Fix: register <see cref="Verb.OrderForceTarget"/> on all Milira fly verb types so the sync boundary is the verb method
     /// (each client runs OrderJump → TryTakeOrderedJob locally). Optional: register <c>MiliraFlyUtility.OrderJump</c> if present.
-    /// Fallback: repair <see cref="Job.verbToUse"/> on CastJump when null by resolving a matching Milira fly verb on the pawn.
+    /// The old late <see cref="Job.verbToUse"/> repair is intentionally disabled:
+    /// the Multiplayer serializer has already crossed that boundary.
     /// </summary>
     internal static class Patch_MiliraFly
     {
@@ -41,9 +42,10 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            TryPatchTryTakeOrderedJobRepair(harmony);
-
-            Log.Message($"[MP-MeowOnlineShop] Milira fly MP: registered OrderForceTarget sync for {registeredVerbs} declaring type(s).");
+            // Do not repair Job.verbToUse in TryTakeOrderedJob: Multiplayer has
+            // already serialized the Job by that point. Milian/Milira jump
+            // abilities use the stable-identity OrderJump boundary instead.
+            Log.Message($"[MP-MeowOnlineShop] Milira fly MP: registered OrderForceTarget sync for {registeredVerbs} declaring type(s); late CastJump repair disabled.");
         }
 
         private static void Info(string msg)
@@ -54,7 +56,7 @@ namespace MP_MeowOnlineShop
             Log.Message("[MP-MeowOnlineShop] Milira fly MP: " + msg);
         }
 
-        /// <summary>Registers MP sync on <c>OrderForceTarget(LocalTargetInfo)</c> for Milira fly verb types.</summary>
+        /// <summary>Registers MP sync on <c>OrderForceTarget(LocalTargetInfo)</c> for every Verb declared by the base Milira assembly.</summary>
         private static int RegisterMiliraFlyVerbSyncMethods()
         {
             int count = 0;
@@ -62,13 +64,18 @@ namespace MP_MeowOnlineShop
             if (baseType == null)
                 return 0;
 
-            var targetParam = new[] { typeof(LocalTargetInfo) };
-            // One registration per declaring type (base + any overrides), avoids duplicate MP entries.
+            // Weapon-skill verbs (Blade/Hammer/Lance/KnightCharge/Rook) inherit
+            // Verb_CastAbility directly instead of Milira.Verb_CastAbilityMiliraFly,
+            // so the old derived-type scan never reached their OrderForceTarget.
             var registeredDeclaringTypes = new HashSet<Type>();
-
-            foreach (var type in DiscoverMiliraFlyVerbTypes(baseType))
+            foreach (var type in DiscoverMiliraVerbTypes(baseType.Assembly))
             {
-                var m = AccessTools.Method(type, "OrderForceTarget", targetParam);
+                var m = type
+                    .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                    .FirstOrDefault(method =>
+                        string.Equals(method.Name, "OrderForceTarget", StringComparison.Ordinal) &&
+                        method.GetParameters().Length == 1 &&
+                        method.GetParameters()[0].ParameterType == typeof(LocalTargetInfo));
                 if (m == null)
                     continue;
 
@@ -86,42 +93,28 @@ namespace MP_MeowOnlineShop
             return count;
         }
 
-        private static IEnumerable<Type> DiscoverMiliraFlyVerbTypes(Type baseType)
+        private static IEnumerable<Type> DiscoverMiliraVerbTypes(Assembly miliraAssembly)
         {
-            var seen = new HashSet<Type>();
-            if (baseType != null && !baseType.IsAbstract)
+            if (miliraAssembly == null)
+                yield break;
+
+            Type[] types;
+            try
             {
-                seen.Add(baseType);
-                yield return baseType;
+                types = miliraAssembly.GetTypes();
+            }
+            catch
+            {
+                yield break;
             }
 
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            var seen = new HashSet<Type>();
+            foreach (var t in types)
             {
-                if (asm == null)
+                if (t == null || t.IsAbstract || !typeof(Verb).IsAssignableFrom(t))
                     continue;
-                string an = asm.GetName().Name ?? "";
-                if (an.IndexOf("Milira", StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-
-                Type[] types;
-                try
-                {
-                    types = asm.GetTypes();
-                }
-                catch
-                {
-                    continue;
-                }
-
-                foreach (var t in types)
-                {
-                    if (t == null || t.IsAbstract || !typeof(Verb).IsAssignableFrom(t))
-                        continue;
-                    if (!baseType.IsAssignableFrom(t))
-                        continue;
-                    if (seen.Add(t))
-                        yield return t;
-                }
+                if (seen.Add(t))
+                    yield return t;
             }
         }
 
@@ -250,13 +243,14 @@ namespace MP_MeowOnlineShop
 
         private static bool IsMiliraFlyVerbType(Type t)
         {
-            if (t == null)
+            if (t == null || !typeof(Verb).IsAssignableFrom(t))
                 return false;
             string name = t.FullName ?? t.Name ?? "";
             if (name.IndexOf("Milira", StringComparison.OrdinalIgnoreCase) < 0)
                 return false;
-            return name.IndexOf("MiliraFly", StringComparison.OrdinalIgnoreCase) >= 0
-                   || name.IndexOf("CastAbilityMiliraFly", StringComparison.OrdinalIgnoreCase) >= 0;
+            return name.IndexOf("Jump", StringComparison.OrdinalIgnoreCase) >= 0
+                   || name.IndexOf("Fly", StringComparison.OrdinalIgnoreCase) >= 0
+                   || name.IndexOf("Charge", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 

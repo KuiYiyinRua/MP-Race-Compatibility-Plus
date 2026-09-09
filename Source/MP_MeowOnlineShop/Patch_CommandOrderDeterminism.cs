@@ -21,7 +21,6 @@ namespace MP_MeowOnlineShop
         private sealed class MapOrderState
         {
             internal List<Map> original;
-            internal int originalIndex;
         }
 
         private static bool _applied;
@@ -106,10 +105,7 @@ namespace MP_MeowOnlineShop
                 Map current = Find.CurrentMap;
                 MapOrderState state = new MapOrderState
                 {
-                    original = new List<Map>(Find.Maps),
-                    originalIndex = Current.Game != null
-                        ? Current.Game.currentMapIndex
-                        : 0
+                    original = new List<Map>(Find.Maps)
                 };
 
                 Find.Maps.Sort((left, right) =>
@@ -160,9 +156,40 @@ namespace MP_MeowOnlineShop
 
             try
             {
+                // The sorted snapshot is only an ordering hint. Commands inside
+                // RunCmds/DoTick can add or remove maps (caravan formation,
+                // gravship takeoff, quest site cleanup). Blindly restoring the
+                // pre-tick list resurrects disposed maps in Find.Maps, which
+                // makes ColonistBar.CheckRecacheEntries and Vehicle Framework
+                // scan every disposed map forever. Rebuild from the live
+                // membership, keep the original relative order for surviving
+                // maps, and append new maps deterministically.
+                Map currentMap = Find.CurrentMap;
+                List<Map> current = new List<Map>(Find.Maps);
+                List<Map> restored = new List<Map>(current.Count);
+                foreach (Map map in __state.original)
+                {
+                    if (current.Remove(map))
+                        restored.Add(map);
+                }
+
+                current.Sort((left, right) =>
+                {
+                    int leftId = left?.uniqueID ?? int.MaxValue;
+                    int rightId = right?.uniqueID ?? int.MaxValue;
+                    return leftId.CompareTo(rightId);
+                });
+                restored.AddRange(current);
+
                 Find.Maps.Clear();
-                Find.Maps.AddRange(__state.original);
-                Current.Game.currentMapIndex = (sbyte)__state.originalIndex;
+                Find.Maps.AddRange(restored);
+
+                int restoredIndex = currentMap != null
+                    ? restored.IndexOf(currentMap)
+                    : -1;
+                if (restoredIndex < 0)
+                    restoredIndex = 0;
+                Current.Game.currentMapIndex = (sbyte)restoredIndex;
             }
             catch
             {
