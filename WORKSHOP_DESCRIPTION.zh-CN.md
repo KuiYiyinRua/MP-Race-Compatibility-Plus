@@ -2,13 +2,13 @@
 
 联机交流群：432965131
 
-面向 RimWorld 1.6 Multiplayer（`rwmt.Multiplayer`）的 Harmony 兼容补丁合集，不替代官方 Multiplayer Compatibility。包含以下 Mod 的专项兼容补丁：
+适用于 RimWorld 1.6 Multiplayer，补充官方兼容包。包含以下专项兼容：
 
 - Meow Framework / Meow Online Shop：喵呜框架与网店交易。
 - MoeLotl Race：萌螈种族。
 - MoeLotl: Rigor Mortis：萌螈僵尸与剧情扩展。
 - Raven Race：渡鸦种族。
-- Wolfein Race：沃芬种族。
+- Wolfein Race：修复独立启用时的冲锋同步，核验本体与装备共六种能力。
 - Wolfein Race GFI Expand：沃芬 GFI 内容扩展。
 - Wolfein Allegiance：沃芬效忠系统。
 - Wolfein Black Science Expand：沃芬黑科技扩展。
@@ -86,7 +86,7 @@
 - Melee Animation：近战动作动画。
 - Perspective Shift：直接操控角色与镜头。
 - PA's God Hands：上帝之手自动工作助手。
-- Achtung!：角色命令与强制工作。
+- Achtung! 4.1.14：沿用原生联机支持，验证自己派系菜单、强制清扫和移动；报告的右键故障尚未复现。
 - Draft Anything 2.0：扩展征召对象。
 - Down For Me：主动倒地指令。
 - Defensive Positions：防御站位管理。

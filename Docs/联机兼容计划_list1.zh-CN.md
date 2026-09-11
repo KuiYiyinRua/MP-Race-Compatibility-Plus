@@ -1,5 +1,12 @@
 # list1.xml 模组联机兼容计划
 
+## 2026-09-11 更新：Wolfein 能力与 Achtung 多派系检查
+
+- **Wolfein Race（3473140562）**：补充独立启用时的冲锋同步，使用 Ability 标识重建接收端跳跃任务，修复丢失 Verb 引用；不再依赖 Milian Modification 激活跳跃兼容。其余五种能力按原生 Ability 路径验证。
+- **Achtung!（730936602，4.1.14）**：当前版本自带 MultiplayerSupport。客户端自己派系的选人、强制清扫菜单、清扫及征召移动在最小双派系存档通过；报告的右键故障尚未复现。下文旧版“仅稳定执行子集、ForceAction 未同步”的记录不能直接套用于 4.1.14。
+
+实现、版本范围及测试限制见 [Wolfein / Achtung 说明](Wolfein-Achtung-Multiplayer.md)。
+
 ## 2026-09-09 更新：Nivarian 四项扩展
 
 本轮适配四项 Nivarian 扩展，已通过四扩展与原三种族合载、再叠加官方兼容的两个双端快速组合（客户端/主机分别发起操作），使用 `Meow.RaceTrioCompatibility 1.1.0` 补充程序集；核心保持 3.0.125。具体实现、安装版本和最终快速测试记录见 [四扩展专项说明](Nivarian-Expansions-Multiplayer.md)。

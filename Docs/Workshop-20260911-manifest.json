@@ -1,0 +1,82 @@
+[
+  {
+    "path": "LoadFolders.xml",
+    "bytes": 327,
+    "sha256": "FAF20B408E1F4A6B652B505B78E111B32472F954BE7A9C24CF684534A1E82857"
+  },
+  {
+    "path": "1.6/Assemblies/Meow.MultifactionStory.dll",
+    "bytes": 23552,
+    "sha256": "A895571B52CF14096C22187A61185870B62142A8008FE209064AB29B32139655"
+  },
+  {
+    "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
+    "bytes": 47616,
+    "sha256": "2842DF47F3D29711CE3E5061ABC308A8A5500F3AF0ADDC11AF3B68853C24E89E"
+  },
+  {
+    "path": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
+    "bytes": 20480,
+    "sha256": "ED1E64B6B8EEDB07AAC88CE5851C15679824356FD473C1E343BE1C4AF96C1216"
+  },
+  {
+    "path": "1.6/Assemblies/Meow.WolfeinAchtungCompatibility.dll",
+    "bytes": 7680,
+    "sha256": "AFB1563CE7B8654D34D2B44A7BA6763E3FF0F8DBA3B8454D0D3AA9C45B99B7B7"
+  },
+  {
+    "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+    "bytes": 2091520,
+    "sha256": "BB2A1A2976BB27658D922EF548CFFA912705E4CCDA3B89EB349A18F00AF4E63A"
+  },
+  {
+    "path": "1.6/Patches/CommsConsole_MeowPatch.xml",
+    "bytes": 394,
+    "sha256": "D1D015F07FD04C282C3CC9989BD5CD60E89DAE47B0A6072C477729A4264C4584"
+  },
+  {
+    "path": "About/About.xml",
+    "bytes": 2297,
+    "sha256": "65AF6508ADDB49DA1C995770CBE29DB5851BA6749295A4DA989C6C8997849C63"
+  },
+  {
+    "path": "About/Preview.png",
+    "bytes": 2374775,
+    "sha256": "4160FD8D7C1C35F8F8D881DD5C2977F231F568DE07208EB1F44FB134A18928DF"
+  },
+  {
+    "path": "About/PublishedFileId.txt",
+    "bytes": 10,
+    "sha256": "5AEE7BD0D26BC8243DA775B3399F9C29AF56566227588FA9EFE6351A036CD6DE"
+  },
+  {
+    "path": "Languages/ChineseSimplified/Keyed/Actions.xml",
+    "bytes": 375,
+    "sha256": "C1A159F20DAD5B2814E7A20C311B7CC05C0F9821F0DEAD6D5A51AF0EF0165B1F"
+  },
+  {
+    "path": "MeleeAnimation/Assemblies/MP_MeowOnlineShop.MeleeAnimation.dll",
+    "bytes": 58880,
+    "sha256": "2FC449C67ECC944AC37099806068474B29C2CA19EECA8DF643DA53F44201BD32"
+  },
+  {
+    "path": "Patches/CommsConsole_MeowPatch.xml",
+    "bytes": 402,
+    "sha256": "53849659F7B0951CF0CB71B0D4B2C6FF22F91B86B4D57A7939A7EE881AB414B4"
+  },
+  {
+    "path": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll",
+    "bytes": 35840,
+    "sha256": "40209A279DDA03795FE0ABECD8FAB4B7A423C558FADB22EFA10BAAEA19023E25"
+  },
+  {
+    "path": "RatkinUnderground/Defs/Letters.xml",
+    "bytes": 234,
+    "sha256": "0B6E1756982FB1FE25D52584669376010560BE03A3CADCF742DBE9AC86D02632"
+  },
+  {
+    "path": "RavenCompatibility/Assemblies/Meow.RavenCompatibility.dll",
+    "bytes": 184832,
+    "sha256": "D42E802A4BC15080706BCE9D788EB7A6D53E3AA7E5E5BECF19EF0F03DEC23B74"
+  }
+]

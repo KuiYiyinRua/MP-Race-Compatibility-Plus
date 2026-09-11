@@ -6,7 +6,7 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - MoeLotl Race: Axolotl race.
 - MoeLotl: Rigor Mortis: Undead MoeLotl and story expansion.
 - Raven Race: Raven race.
-- Wolfein Race: Wolfein race.
+- Wolfein Race: Standalone sprint sync; six native and equipment abilities checked in multiplayer.
 - Wolfein Race GFI Expand: Wolfein GFI content expansion.
 - Wolfein Allegiance: Wolfein allegiance system.
 - Wolfein Black Science Expand: Wolfein technology expansion.
@@ -84,7 +84,7 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - Melee Animation: Melee combat animations.
 - Perspective Shift: Direct pawn and camera control.
 - PA's God Hands: Automated work assistants.
-- Achtung!: Pawn orders and forced work.
+- Achtung! 4.1.14: Native MP support; own-faction menus, forced cleaning and movement tested. Reported menu fault not reproduced.
 - Draft Anything 2.0: Expanded drafting.
 - Down For Me: Voluntary downing.
 - Defensive Positions: Defensive position management.
@@ -139,12 +139,12 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 
 - Combat speed unlock: removes forced 1x combat speed while respecting shared speed controls.
 - TPS settings: optimization presets with adjustable strength and parameters.
-- Multi-map scheduling: adjusts combat, alert and idle map update frequency to reduce workload. Experimental; disabled by default.
-- UI and log overhead reduction: checks some alerts less often, batches some repeated UI actions and reduces repeated lag messages.
+- Experimental map scheduling; disabled by default.
+- Lower UI and repeated-log overhead.
 
 Compatibility depends on mod versions, load order and combinations; arbitrary modpacks are not guaranteed desync-free.
 
-Required: Multiplayer. Load this mod after Multiplayer and all mods it patches, at the end of the mod list. The host and all clients must use identical mod lists and versions. Do not combine it with other Tick, TPS, or time-dilation scheduling mods.
+Requires Multiplayer; load last. All players need identical mod versions. Avoid other Tick/TPS/time-dilation schedulers.
 
 Author: 尹怨怨
 
