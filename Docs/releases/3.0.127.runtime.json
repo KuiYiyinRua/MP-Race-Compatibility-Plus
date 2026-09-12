@@ -1,0 +1,142 @@
+{
+  "version": "3.0.127",
+  "date": "2026-09-12",
+  "run": "R11",
+  "game": "1.6.4850 rev646",
+  "multiplayer": "0.11.5+4a3be27-dirty",
+  "peers": 2,
+  "maps": 2,
+  "addedPlayerFactions": 4,
+  "multifaction": true,
+  "asyncTime": false,
+  "startWorldTick": 2,
+  "hostCompleteWorldTick": 120020,
+  "clientCompleteWorldTick": 120010,
+  "desyncObserved": false,
+  "reconciliation": "synthetic production-state transition, not a UI handover test",
+  "recalculationAndRecoveryThresholdPassed": true,
+  "coldJoins": [
+    {
+      "cycle": 1,
+      "frozenWorldTick": 13113,
+      "verifiedWorldTick": 32808,
+      "elapsedWorldTicks": 19695,
+      "recordLoadPassed": true
+    },
+    {
+      "cycle": 2,
+      "frozenWorldTick": 33529,
+      "verifiedWorldTick": 52889,
+      "elapsedWorldTicks": 19360,
+      "recordLoadPassed": true
+    },
+    {
+      "cycle": 3,
+      "frozenWorldTick": 53290,
+      "verifiedWorldTick": 72990,
+      "elapsedWorldTicks": 19700,
+      "recordLoadPassed": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "stage": 2,
+      "worldTick": 587
+    },
+    {
+      "stage": 3,
+      "worldTick": 2627
+    },
+    {
+      "stage": 4,
+      "worldTick": 12692
+    },
+    {
+      "stage": 5,
+      "worldTick": 22728
+    },
+    {
+      "stage": 6,
+      "worldTick": 32808
+    },
+    {
+      "stage": 7,
+      "worldTick": 42849
+    },
+    {
+      "stage": 8,
+      "worldTick": 52889
+    },
+    {
+      "stage": 9,
+      "worldTick": 62945
+    },
+    {
+      "stage": 10,
+      "worldTick": 72990
+    },
+    {
+      "stage": 11,
+      "worldTick": 83035
+    },
+    {
+      "stage": 12,
+      "worldTick": 93075
+    },
+    {
+      "stage": 13,
+      "worldTick": 103150
+    },
+    {
+      "stage": 14,
+      "worldTick": 113220
+    }
+  ],
+  "inputs": [
+    {
+      "name": "Meow.FactionDiplomacy.dll",
+      "sha256": "2709415BB0FC5004D364B72315F0ECF9E84A76DDC891D7FA40D30AFCC22FF7F8",
+      "bytes": 31744
+    },
+    {
+      "name": "MP_MeowOnlineShop.dll",
+      "sha256": "BB2A1A2976BB27658D922EF548CFFA912705E4CCDA3B89EB349A18F00AF4E63A",
+      "bytes": 2091520
+    },
+    {
+      "name": "Meow.DiplomacyProbe.dll",
+      "sha256": "E92C2D7BAC765BBC1F84352DC3723F2FB36A68DE9B63D74EDF82A61A8AF00628",
+      "bytes": 23040
+    },
+    {
+      "name": "Milira.dll",
+      "sha256": "371891B8BBE05B68FFF7D6DCAED74A183D39ED6FD5D24C36A0BD9EAF4E4BD0E1",
+      "bytes": 365056
+    },
+    {
+      "name": "Kiiro.dll",
+      "sha256": "DED00E0DF22924E54FD1191E21C77A5F4FB5F96E8C5F707701E3A795C460A1D3",
+      "bytes": 50688
+    },
+    {
+      "name": "AncotLibrary.dll",
+      "sha256": "37C985CB2C884D79664A9FB53801477742E2C4566A30F49A81C17F5115997CA0",
+      "bytes": 755200
+    },
+    {
+      "name": "AlienRace.dll",
+      "sha256": "9B5DC05932E9DFAA963C2FA5253127E050B074686468E03C145831DCF2D7F626",
+      "bytes": 420864
+    },
+    {
+      "name": "Multiplayer.dll",
+      "sha256": "28D2CDA41D78497970565748BE0E4B7E23F6ECE03310A304359A840AB38FAAD1",
+      "bytes": 1166848
+    },
+    {
+      "name": "0MultiplayerAPI.dll",
+      "sha256": "863766DF5FD24A31EDA1E59947F026ABD5B8DC99CB0D7BCA6A8A3D356B65AD8D",
+      "bytes": 23552
+    }
+  ]
+}

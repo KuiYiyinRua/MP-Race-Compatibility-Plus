@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Meow.FactionDiplomacy</AssemblyName>
+    <Version>3.0.127</Version>
+    <GameRoot Condition="'$(GameRoot)' == ''">$(MSBuildProjectDirectory)/../../../..</GameRoot>
+    <ModsRoot>$(GameRoot)/Mods</ModsRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(ModsRoot)/2009463077/Current/Assemblies/0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0MultiplayerAPI"><HintPath>$(ModsRoot)/Multiplayer/1.6/Assemblies/0MultiplayerAPI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Multiplayer"><HintPath>$(ModsRoot)/Multiplayer/1.6/AssembliesCustom/Multiplayer.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

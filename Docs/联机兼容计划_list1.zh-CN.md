@@ -1,5 +1,13 @@
 # list1.xml 模组联机兼容计划
 
+## 2026-09-12 更新：Milira / Kiiro 多派系外交（3.0.127）
+
+- **Milira Race（3256974620）**：普通开局的永久敌对、和解状态、好感度上限与自然恢复按玩家派系实例隔离；同一开局定义建立的多个派系也独立。取消旧的定时强制中立。
+- **Kiiro Race（2988200143）**：保留对 Milira 的开局豁免，之后的合法交战、赠礼不会被周期重置或传播给其他派系。
+- 新增独立 `Meow.FactionDiplomacy.dll`，保留原核心和其他已发布兼容模块。覆盖外交边界，不承诺 Milira 全剧情或其他任意剧本已逐玩家拆分。
+
+实现与旧档行为见 [外交隔离说明](FACTION_DIPLOMACY_ISOLATION.zh-CN.md)，实机环境、验证结果与发布文件清单见 [3.0.127 发布记录](releases/3.0.127.md)。下方历史类型级覆盖记录不代替本轮专项范围。
+
 ## 2026-09-11 更新：Wolfein 能力与 Achtung 多派系检查
 
 - **Wolfein Race（3473140562）**：补充独立启用时的冲锋同步，使用 Ability 标识重建接收端跳跃任务，修复丢失 Verb 引用；不再依赖 Milian Modification 激活跳跃兼容。其余五种能力按原生 Ability 路径验证。
@@ -193,8 +201,8 @@ RimWorld Multiplayer（下称 MP）复制命令并在各端确定性重放，不
 | hentailoliteam.axolotl.factionexpand | MoeLotl Faction Expand |
 | valeries.miliraexpansion | 瓦莱丽的米莉拉扩展包 |
 | pakerwot.miliraeventandstortexpandthetaleofmilira | Milira Event Story Expand |
-| ancot.milirarace | Milira Race（类型级覆盖，需确认） |
-| ancot.kiirorace | Kiiro Race（类型级覆盖，需确认） |
+| ancot.milirarace | Milira Race（3.0.127：派系实例级外交隔离，范围见 FACTION_DIPLOMACY_ISOLATION.zh-CN.md） |
+| ancot.kiirorace | Kiiro Race（3.0.127：Milira 永久敌对豁免与独立好感度） |
 | pupa.insectgirls | 虫娘 Insect Girls（类型级覆盖，需确认） |
 
 #### RJW 附属与玩法扩展

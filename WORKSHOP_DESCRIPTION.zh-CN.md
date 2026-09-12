@@ -5,51 +5,51 @@
 适用于 RimWorld 1.6 Multiplayer，补充官方兼容包。包含以下专项兼容：
 
 - Meow Framework / Meow Online Shop：喵呜框架与网店交易。
-- MoeLotl Race：萌螈种族。
+- MoeLotl Race
 - MoeLotl: Rigor Mortis：萌螈僵尸与剧情扩展。
-- Raven Race：渡鸦种族。
+- Raven Race
 - Wolfein Race：修复独立启用时的冲锋同步，核验本体与装备共六种能力。
-- Wolfein Race GFI Expand：沃芬 GFI 内容扩展。
-- Wolfein Allegiance：沃芬效忠系统。
-- Wolfein Black Science Expand：沃芬黑科技扩展。
-- Milira Race：米莉拉种族。
-- Milira Tech: Milian Modification：米莉安机械体改造。
-- Milira Event Story Expand: The Tale of Milira：米莉拉事件与剧情扩展。
-- Milira Faction: Milira Imperium：米莉拉帝国派系。
-- Xiyue's Milira Expanded：汐月的米莉拉扩展。
-- 米莉拉角色拓展 / MiliraXian NeiyuLaw：米莉拉角色与装备扩展。
-- Milira Expansion: YaoYao：米莉拉瑶瑶角色扩展。
-- Milira Addon: Fianchetto Variation：米莉拉侧卫机械体扩展。
-- Milira: Wings of Democracy：米莉拉军事装备扩展。
-- Sariel Milira Kiiro Attire Expaned：米莉拉与绮罗服装装备扩展。
-- Valkyrie Gunship：女武神炮艇扩展。
-- ExileBrandLib：流放烙印扩展框架。
-- ExileBrandTaskExend：流放烙印任务扩展。
-- Ancot Library：种族与装备功能框架。
-- Ariandel Library：能力与装备扩展框架。
-- ChezhouLib：武器与飞行功能框架。
-- Kiiro Race：绮罗种族。
-- Kiiro Story: Events Expanded：绮罗剧情事件扩展。
-- NewRatkinPlus：鼠族。
-- Ratkin Weapons+：鼠族武器扩展。
-- Ratkin Knights+：鼠族骑士扩展。
+- Wolfein Race GFI Expand
+- Wolfein Allegiance
+- Wolfein Black Science Expand
+- Milira Race：按玩家派系隔离开局永久敌对、和解状态与好感度，保留正常交战结果。
+- Milira Tech: Milian Modification
+- Milira Event Story Expand: The Tale of Milira
+- Milira Faction: Milira Imperium
+- Xiyue's Milira Expanded
+- 米莉拉角色拓展 / MiliraXian NeiyuLaw
+- Milira Expansion: YaoYao
+- Milira Addon: Fianchetto Variation
+- Milira: Wings of Democracy
+- Sariel Milira Kiiro Attire Expaned
+- Valkyrie Gunship
+- ExileBrandLib
+- ExileBrandTaskExend
+- Ancot Library
+- Ariandel Library
+- ChezhouLib
+- Kiiro Race：绮罗开局不继承其他玩家对 Milira 的永久敌对。
+- Kiiro Story: Events Expanded
+- NewRatkinPlus
+- Ratkin Weapons+
+- Ratkin Knights+
 - Ratkin Anomaly+：鼠族异象遗物、剧情确认与随机特效兼容。
 - Ratkin Underground+：地下鼠族电台、共享交易、货运、乘客与钻机控制。
-- [OA] Ratkin Faction: Oberonia aurea：金鸢尾兰鼠族派系。
-- [OA] Oberonia Aurea Framework：金鸢尾兰内容框架。
-- [OA] Ratkin Scenario: Snowstorm Orphan：鼠族雪灾遗孤剧本。
-- Maru Race：玛露种族。
+- [OA] Ratkin Faction: Oberonia aurea
+- [OA] Oberonia Aurea Framework
+- [OA] Ratkin Scenario: Snowstorm Orphan
+- Maru Race
 - Nivarian Race：Nivarian 种族、招募、生产与母舰支援。
 - Nivarian Mental Harness：灵能技能扩展。
 - Nivarian: Apparel Store：服装与饰品扩展。
 - Nivarian Race: Draconiture：家具、工程无人机与重塑舱。
 - Nivarian Race: DraconicMilitary：军事装备、无人机、炮塔控制与传送信标。
 - Monolyn Race：Monolyn 种族、建筑控制与光能网络。
-- Sylvie Race：Sylvie 种族。
-- Dragonian Mix：龙娘混合扩展。
-- Smelted Loong：冶龍种族。
-- Insect Girls：虫娘种族。
-- Secretary Nexus a clone race：秘书中枢克隆种族。
+- Sylvie Race
+- Dragonian Mix
+- Smelted Loong
+- Insect Girls
+- Secretary Nexus a clone race
 - Cinders of the Embergarden：余烬花园内容扩展。
 - kemomimihouse Kz：兽耳屋内容与建筑。
 - kemomimihouse HardworkingKz：兽耳屋工作功能扩展。
@@ -136,6 +136,14 @@
 - [NL] Dynamic Portraits：动态角色头像。
 - Simple FX: Splashes：涉水飞溅效果。
 - Performance Optimizer：游戏性能优化。
+
+## 多派系外交（3.0.127）
+
+- 同一种开局建立的不同派系分别保存外交状态，A 的和解、赠礼和交战不会覆盖 B。
+- 普通开局保留 Milira 的永久敌对；Milira、Kiiro 开局免除此限制。Milira 对教会的敌对只影响对应玩家。
+- 移除定期强制中立，按派系分别计算好感度上限、后台重算和自然恢复计时。
+- 旧存档保留基础好感度，新版恢复计时从零开始；无法归属的旧和解状态不自动复制，普通派系可能重新受敌对限制。
+- 此项覆盖外交隔离，不代表 Milira 全部剧情、角色和任务已按玩家拆分。请所有玩家更新并重启游戏。
 
 ## 额外功能
 

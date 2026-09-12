@@ -3,51 +3,51 @@
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Supported mods:
 
 - Meow Framework / Meow Online Shop: Framework and online trading.
-- MoeLotl Race: Axolotl race.
+- MoeLotl Race
 - MoeLotl: Rigor Mortis: Undead MoeLotl and story expansion.
-- Raven Race: Raven race.
+- Raven Race
 - Wolfein Race: Standalone sprint sync; six native and equipment abilities checked in multiplayer.
-- Wolfein Race GFI Expand: Wolfein GFI content expansion.
-- Wolfein Allegiance: Wolfein allegiance system.
-- Wolfein Black Science Expand: Wolfein technology expansion.
-- Milira Race: Milira race.
-- Milira Tech: Milian Modification: Milian mech modification.
-- Milira Event Story Expand: The Tale of Milira: Milira events and stories.
-- Milira Faction: Milira Imperium: Milira Imperium faction.
-- Xiyue's Milira Expanded: Milira content expansion.
-- 米莉拉角色拓展 / MiliraXian NeiyuLaw: Milira characters and equipment.
-- Milira Expansion: YaoYao: YaoYao character expansion.
-- Milira Addon: Fianchetto Variation: Milira Fianchetto mechs.
-- Milira: Wings of Democracy: Milira military equipment.
-- Sariel Milira Kiiro Attire Expaned: Milira and Kiiro apparel.
-- Valkyrie Gunship: Gunship expansion.
-- ExileBrandLib: Exile Brand framework.
-- ExileBrandTaskExend: Exile Brand quests.
-- Ancot Library: Race and equipment framework.
-- Ariandel Library: Ability and equipment framework.
-- ChezhouLib: Weapon and flight framework.
-- Kiiro Race: Kiiro race.
-- Kiiro Story: Events Expanded: Kiiro story events.
-- NewRatkinPlus: Ratkin race.
-- Ratkin Weapons+: Ratkin weapons.
-- Ratkin Knights+: Ratkin knights.
+- Wolfein Race GFI Expand
+- Wolfein Allegiance
+- Wolfein Black Science Expand
+- Milira Race: Per-player-faction starting hostility, reconciliation and goodwill; legitimate wars are preserved.
+- Milira Tech: Milian Modification
+- Milira Event Story Expand: The Tale of Milira
+- Milira Faction: Milira Imperium
+- Xiyue's Milira Expanded
+- 米莉拉角色拓展 / MiliraXian NeiyuLaw
+- Milira Expansion: YaoYao
+- Milira Addon: Fianchetto Variation
+- Milira: Wings of Democracy
+- Sariel Milira Kiiro Attire Expaned
+- Valkyrie Gunship
+- ExileBrandLib
+- ExileBrandTaskExend
+- Ancot Library
+- Ariandel Library
+- ChezhouLib
+- Kiiro Race: Kiiro starts do not inherit permanent hostility toward Milira from other player factions.
+- Kiiro Story: Events Expanded
+- NewRatkinPlus
+- Ratkin Weapons+
+- Ratkin Knights+
 - Ratkin Anomaly+: Relic actions, story confirmations and deterministic effects.
 - Ratkin Underground+: Radio, shared trading, cargo, passengers and drilling controls.
-- [OA] Ratkin Faction: Oberonia aurea: Oberonia Aurea Ratkin faction.
-- [OA] Oberonia Aurea Framework: Oberonia Aurea framework.
-- [OA] Ratkin Scenario: Snowstorm Orphan: Ratkin snowstorm scenario.
-- Maru Race: Maru race.
+- [OA] Ratkin Faction: Oberonia aurea
+- [OA] Oberonia Aurea Framework
+- [OA] Ratkin Scenario: Snowstorm Orphan
+- Maru Race
 - Nivarian Race: Nivarian race, recruitment, production and mothership support.
 - Nivarian Mental Harness: Additional psionic abilities.
 - Nivarian: Apparel Store: Clothing and accessories.
 - Nivarian Race: Draconiture: Furniture, engineering drones and reshaping caskets.
 - Nivarian Race: DraconicMilitary: Military equipment, drones, turret controls and teleport beacons.
 - Monolyn Race: Monolyn race, building controls and light networks.
-- Sylvie Race: Sylvie race.
-- Dragonian Mix: Dragonian race expansion.
-- Smelted Loong: Chinese dragon race.
-- Insect Girls: Insect girl races.
-- Secretary Nexus a clone race: Clone race.
+- Sylvie Race
+- Dragonian Mix
+- Smelted Loong
+- Insect Girls
+- Secretary Nexus a clone race
 - Cinders of the Embergarden: Embergarden content expansion.
 - kemomimihouse Kz: Kemomimi house content and buildings.
 - kemomimihouse HardworkingKz: Kemomimi house work expansion.
@@ -134,6 +134,14 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - [NL] Dynamic Portraits: Dynamic pawn portraits.
 - Simple FX: Splashes: Water splash effects.
 - Performance Optimizer: Game performance optimization.
+
+## Multifaction diplomacy (3.0.127)
+
+- Factions using the same starting definition keep separate diplomacy. Reconciliation, gifts and wars do not overwrite unrelated faction pairs.
+- Ordinary starts retain permanent hostility toward Milira. Milira and Kiiro starts are exempt. Milira hostility toward the Church applies only to the relevant player faction.
+- Removes periodic forced neutrality and separates goodwill limits, recalculation and natural recovery timers by faction pair.
+- Existing saves retain base goodwill, and new recovery timers start at zero. Legacy reconciliation without a known owner is not copied; ordinary factions may regain the hostility restriction.
+- This covers diplomacy, not separate copies of every Milira story, character or quest. All players must update and restart the game.
 
 ## Additional features
 

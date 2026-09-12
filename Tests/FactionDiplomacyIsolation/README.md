@@ -1,0 +1,16 @@
+# Diplomacy integration probe
+
+Test-only RimWorld GameComponent. Never place this assembly in a Workshop release.
+Build `Probe.csproj -c Release -p:GameRoot=<installed RimWorld path>` with the exact game, Multiplayer, Harmony, Ancot, Milira, Kiiro and HAR assemblies used by the candidate.
+
+Use a separate game installation and two separate savedata directories named Host and Client under one run directory. Load the candidate core and `Meow.FactionDiplomacy.dll` on both peers, then the probe. Enable runInBackground. Launch the host with `-quicktest -dpprobe -savedatafolder=<run>/Host -logFile <run>/host.log`. After `Server started.`, launch the client through the real main menu with `-dpprobe -dpclient -connect=127.0.0.1:30794 -savedatafolder=<run>/Client -logFile <run>/client.log`.
+
+The host starts a multifaction, shared-time local server. The client submits synchronized faction creation, negative goodwill, gifts, a second owned map and a synthetic reconciliation state transition. Four added player factions include two with the same PlayerColony FactionDef. A targeted fixture checks background recalculation after a deliberately inconsistent relation kind, then sets one recovery timer just below the vanilla threshold and verifies only that pair changes. It reads the actual natural goodwill before arranging an out-of-band value. Checks compare both relation directions, permanent hostility, base/effective goodwill and relation kind. Kiiro war must survive more than the retired 1000-tick reset interval. Later checks alternate explicit queries and change the client-local map view. The completion threshold is 120000 **AsyncWorldTime.worldTicks**, not wall time or server packet ticks.
+
+The installed Milira settlement definition does not attach the legacy handover component. Consequently the reconciliation fixture directly exercises production flag setters, status logic and relation repair; it is not a test of an accessible handover button.
+
+For a cold reconnect while running: write `joinpoint` in the run directory (the host sends the official `/joinpoint` request, which rotates server command history); wait for the host save/upload to finish; move `client.ready` aside and write `freeze`; wait for `host.frozen`; write `quit-client` and wait for that owned process to exit. Remove `quit-client` and start a fresh client process with a new log file. It must finish `TickPatch.Simulating` before emitting `REJOIN_RECORDS_PASS`; both peers then resume. Record reads before catch-up completion are not a passed rejoin. Remove the old `host.frozen` before repeating. Do not replace any loaded DLL between these steps.
+
+Files `host.failed` or `client.failed` are terminal failures, even if simulation continues. Require both completion markers, no desync and matching final candidate hashes. Write `quit` to stop the owned test processes. Preserve logs and input hashes outside the release package. This focused probe does not exercise arbitrary modpacks, actual quest completion, every scenario UI or asynchronous map time.
+
+Never send CommandType.CreateJoinPoint directly: that bypasses the server-side tmpMapCmds lifecycle and pairs a new save with stale command history, invalidating the test.
