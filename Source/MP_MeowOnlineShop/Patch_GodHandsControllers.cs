@@ -89,6 +89,7 @@ namespace MP_MeowOnlineShop
                 return true;
             bool rangeMode = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
+            if (!GodHandSync.BeginLocalDrag(__instance, playerId, map.uniqueID)) return false;
             GodHandSync.SyncGodHandStartGrab(
                 playerId,
                 map.uniqueID,
@@ -113,6 +114,7 @@ namespace MP_MeowOnlineShop
                 return true;
             bool rangeMode = UnityInputCompat.GetKey(KeyCode.LeftShift) || UnityInputCompat.GetKey(KeyCode.RightShift);
             float radius = Patch_GodHands.GetSettingsValue("godHandGrabRadius", 3f);
+            if (!GodHandSync.BeginLocalDrag(__instance, playerId, map.uniqueID)) return false;
             GodHandSync.SyncGodHandStartGrab(
                 playerId,
                 map.uniqueID,
@@ -149,7 +151,8 @@ namespace MP_MeowOnlineShop
             int playerId = Patch_GodHands.GetLocalPlayerId();
             if (playerId < 0)
                 return true;
-            GodHandSync.SyncGodHandRelease(playerId, map.uniqueID, cell.x, cell.z);
+            if (GodHandSync.BeginLocalRelease(playerId, map.uniqueID))
+                GodHandSync.SyncGodHandRelease(playerId, map.uniqueID, cell.x, cell.z);
             return false;
         }
 
@@ -164,7 +167,8 @@ namespace MP_MeowOnlineShop
             if (playerId < 0)
                 return true;
             IntVec3 cell;
-            if (GodHandSync.TryGetLocalGodHandDragCell(playerId, map.uniqueID, out cell))
+            if (GodHandSync.TryGetLocalGodHandDragCell(playerId, map.uniqueID, out cell) &&
+                GodHandSync.BeginLocalRelease(playerId, map.uniqueID))
                 GodHandSync.SyncGodHandForceReleaseAt(playerId, map.uniqueID, cell.x, cell.z);
             return false;
         }

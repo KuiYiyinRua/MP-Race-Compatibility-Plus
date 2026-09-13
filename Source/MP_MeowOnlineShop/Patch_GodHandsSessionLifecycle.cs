@@ -8,14 +8,9 @@ using Verse.Profile;
 namespace MP_MeowOnlineShop
 {
     /// <summary>
-    /// GodHand drag/wrench sessions are process-local and are not serialized
-    /// into Multiplayer snapshots. After a disconnect/rejoin the host can keep
-    /// a session that the rejoining client no longer has; later GodHand
-    /// commands then mutate only one side and the command Rand state diverges.
-    /// This guard removes the disconnected player's sessions on the host when
-    /// the server drops the connection, and clears all sessions when a local
-    /// multiplayer session stops or the game maps are torn down for a
-    /// snapshot/rejoin.
+    /// Disconnects enqueue deterministic releases on every peer. World teardown
+    /// clears old object references; GodHandDragState restores hand sessions
+    /// from the incoming snapshot. UI previews are never restored from a save.
     /// </summary>
     internal static class Patch_GodHandsSessionLifecycle
     {
@@ -82,8 +77,7 @@ namespace MP_MeowOnlineShop
 
                 Log.Message(
                     "[MP-MeowOnlineShop] God Hands session lifecycle guard " +
-                    "active: stale drag/wrench sessions are removed on " +
-                    "disconnect, session stop, and map reload/rejoin.");
+                    "active: synchronized disconnect release; hand snapshots restore gameplay state.");
             }
             catch (Exception e)
             {
@@ -127,7 +121,12 @@ namespace MP_MeowOnlineShop
                     null,
                     new object[]
                     {
-                        new Action(() => GodHandSync.RemovePlayerSessions(playerId))
+                        new Action(() =>
+                        {
+                            if (MP.IsInMultiplayer && MP.IsHosting)
+                                foreach (Map map in Find.Maps)
+                                    GodHandSync.DisconnectSync?.DoSync(null, map, playerId);
+                        })
                     });
             }
             catch
@@ -152,10 +151,7 @@ namespace MP_MeowOnlineShop
         {
             try
             {
-                // Rejoin and snapshot reload tear down maps without stopping
-                // the multiplayer session. The static GodHand state cannot be
-                // restored from the snapshot, so retaining it makes a later
-                // StartGrab/Release command apply on only one peer.
+                // Discard the old graph before loading replacement references.
                 GodHandSync.ResetAllSessions();
             }
             catch

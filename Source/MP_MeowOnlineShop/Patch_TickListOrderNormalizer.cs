@@ -19,7 +19,7 @@ namespace MP_MeowOnlineShop
     /// of ticks after rejoin (Desync-462..475 pattern).
     ///
     /// This patch preserves existing membership, but replaces vanilla's
-    /// process-local hash bucket assignment with a thingID-based assignment in
+    /// bucket assignment with an explicit thingID-based assignment in
     /// multiplayer. After a snapshot load, it only queues spawned tickables that
     /// are missing from the reconstructed buckets; the queue is merged
     /// deterministically before the first real tick. The order inside each bucket
@@ -50,6 +50,8 @@ namespace MP_MeowOnlineShop
             public bool MembershipRepairPending;
         }
 
+        // Latched before any TickList mutation. Never switch schedules mid-session.
+        internal static bool EnabledAtStartup { get; private set; }
         private static bool _applied;
         private static bool _loggedFailure;
 
@@ -58,6 +60,11 @@ namespace MP_MeowOnlineShop
             if (_applied || harmony == null)
                 return;
             _applied = true;
+            EnabledAtStartup = MpMeowOnlineShopMod.Settings?.enableTickListOrderNormalizer ?? true;
+            Log.Message("[MP-MeowOnlineShop] TickList order normalizer startup setting=" + EnabledAtStartup +
+                "; independent of TPS presets; changes require all peers to restart.");
+            if (!EnabledAtStartup)
+                return;
 
             MethodInfo target = AccessTools.Method(typeof(TickList), nameof(TickList.Tick));
             MethodInfo prefix = AccessTools.Method(
@@ -79,13 +86,9 @@ namespace MP_MeowOnlineShop
                     priority = Priority.First
                 });
 
-            // Verse.TickList.BucketOf uses Thing.GetHashCode() to decide which
-            // interval bucket receives a thing. Thing.GetHashCode() is based on
-            // the managed object identity, so the same spawned pawn can land in
-            // different buckets on the host and a client. Sorting each bucket
-            // cannot repair that: the pawn then ticks on different map ticks.
-            // Redirect the private helper to a stable thingID-based bucket for
-            // all multiplayer registration and deregistration paths.
+            // Installed Verse.Thing.GetHashCode returns thingIDNumber for assigned
+            // IDs; only unassigned objects use object identity. Keep the existing
+            // override, without claiming ordinary pawn buckets were process-random.
             PatchStableBucketOf(harmony);
 
             PatchFinalizeInit(harmony);
@@ -137,7 +140,7 @@ namespace MP_MeowOnlineShop
             Thing t,
             ref List<Thing> __result)
         {
-            if (!MP.IsInMultiplayer || __instance == null || t == null ||
+            if (!EnabledAtStartup || !MP.IsInMultiplayer || __instance == null || t == null ||
                 t.thingIDNumber < 0 || ThingListsRef == null)
             {
                 return true;
@@ -185,7 +188,7 @@ namespace MP_MeowOnlineShop
 
         private static void FinalizeInitPostfix(object __instance)
         {
-            if (!MP.IsInMultiplayer || __instance == null ||
+            if (!EnabledAtStartup || !MP.IsInMultiplayer || __instance == null ||
                 _asyncMapRef == null ||
                 _asyncNormalRef == null || _asyncRareRef == null || _asyncLongRef == null)
             {
@@ -227,7 +230,7 @@ namespace MP_MeowOnlineShop
 
         internal static void NormalizeAllBuckets(TickList tickList, Map ownerMap = null)
         {
-            if (tickList == null || ThingListsRef == null)
+            if (!EnabledAtStartup || tickList == null || ThingListsRef == null)
                 return;
 
             List<List<Thing>> buckets = ThingListsRef(tickList);
@@ -264,7 +267,7 @@ namespace MP_MeowOnlineShop
 
         private static void InvalidateBucketSorts(TickList tickList)
         {
-            if (tickList == null || ThingListsRef == null)
+            if (!EnabledAtStartup || tickList == null || ThingListsRef == null)
                 return;
 
             List<List<Thing>> buckets = ThingListsRef(tickList);
@@ -386,7 +389,7 @@ namespace MP_MeowOnlineShop
 
         private static bool TickPrefix(TickList __instance)
         {
-            if (!MP.IsInMultiplayer || __instance == null ||
+            if (!EnabledAtStartup || !MP.IsInMultiplayer || __instance == null ||
                 ThingListsRef == null || ThingsToRegisterRef == null)
             {
                 return true;

@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
+using RimWorld.Planet;
 using Verse;
 
 namespace MP_MeowOnlineShop
@@ -55,11 +58,62 @@ namespace MP_MeowOnlineShop
                 _applied = true;
                 Log.Message("[MP-MeowOnlineShop] Almost There fork MP action registered: " +
                     compType.FullName + "::" + toggle.Name);
+                ApplyNightRestCacheBoundary(harmony);
             }
             catch (Exception e)
             {
                 Log.Warning("[MP-MeowOnlineShop] Almost There fork toggle registration failed: " + e.Message);
             }
+        }
+
+        internal static void ApplyNightRestCacheBoundary(Harmony harmony)
+        {
+            var type = AccessTools.TypeByName("CaravanDontRest.Caravan_NightResting_Patch");
+            var target = type == null ? null : AccessTools.DeclaredMethod(type, "Postfix",
+                new[] { typeof(Caravan), typeof(bool).MakeByRefType() });
+            if (target == null || !target.IsStatic || target.ReturnType != typeof(void))
+            {
+                Log.Error("[MP-MeowOnlineShop] Almost There night-rest cache target missing; " +
+                    "deterministic night-rest boundary was NOT installed.");
+                return;
+            }
+
+            harmony.Patch(target, transpiler: new HarmonyMethod(typeof(Patch_AlmostThereMp),
+                nameof(NightRestCacheTranspiler)));
+            Log.Message("[MP-MeowOnlineShop] Almost There night-rest cache boundary active: " +
+                "MP rest decisions use a fresh arrival estimate; local ETA cache is neither read nor written.");
+        }
+
+        internal static IEnumerable<CodeInstruction> NightRestCacheTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.ToList();
+            var original = AccessTools.DeclaredMethod(typeof(CaravanArrivalTimeEstimator),
+                nameof(CaravanArrivalTimeEstimator.EstimatedTicksToArrive),
+                new[] { typeof(Caravan), typeof(bool) });
+            var replacement = AccessTools.DeclaredMethod(typeof(Patch_AlmostThereMp),
+                nameof(EstimateForNightRest));
+            // Resolve the installed overload, not a lambda ordinal or a nearby call.
+            // Refuse an unknown layout before emitting any modified instructions.
+            if (original == null || replacement == null || code.Count(x => x.Calls(original)) != 1)
+                throw new InvalidOperationException("Almost There night-rest ETA call layout changed; expected exactly one call.");
+            foreach (var instruction in code)
+            {
+                if (instruction.Calls(original))
+                    instruction.operand = replacement;
+                yield return instruction;
+            }
+        }
+
+        internal static int EstimateForNightRest(Caravan caravan, bool allowCaching)
+        {
+            // The vanilla cache is static, UI-warmed, unsaved, and accepts negative
+            // age after an async map/world clock switch. Almost There consumes it
+            // in CantMove -> MovingNow -> caravan needs, where a stale result changes
+            // both gameplay and the number of world Rand draws (Desync 33-35).
+            // Keep the original algorithm, settings, faction/time context and RNG.
+            return CaravanArrivalTimeEstimator.EstimatedTicksToArrive(caravan,
+                allowCaching && !MP.IsInMultiplayer);
         }
     }
 }

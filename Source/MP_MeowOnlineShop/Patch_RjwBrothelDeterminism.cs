@@ -4,6 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using Multiplayer.API;
+using RimWorld;
 using Verse;
 
 namespace MP_MeowOnlineShop
@@ -23,6 +25,8 @@ namespace MP_MeowOnlineShop
         private static readonly MethodInfo StablePawnRandomElementMethod =
             AccessTools.Method(typeof(Patch_RjwBrothelDeterminism), nameof(StablePawnRandomElement));
         private static int _replacementCount;
+        private static Func<Room, Building_Bed, float> CalculateRoomBedFactors;
+        private static bool priceQueryPatched;
 
         internal static void Apply(Harmony harmony)
         {
@@ -30,6 +34,8 @@ namespace MP_MeowOnlineShop
                 throw new ArgumentNullException(nameof(harmony));
             if (!ModsConfig.IsActive(PackageId))
                 return;
+
+            ApplyPriceQuery(harmony);
 
             Type anchor = AccessTools.TypeByName(AnchorTypeName);
             Assembly assembly = anchor?.Assembly;
@@ -66,6 +72,59 @@ namespace MP_MeowOnlineShop
             Log.Message(
                 "[MP-MeowOnlineShop][RJW-Brothel] stabilized Pawn RandomElement callers=" +
                 patchedMethods + ".");
+        }
+
+        private static void ApplyPriceQuery(Harmony harmony)
+        {
+            if (priceQueryPatched) return;
+            try
+            {
+                Type utility = AccessTools.TypeByName("BrothelColony.WhoreBed_Utility");
+                MethodInfo price = AccessTools.DeclaredMethod(utility, "CalculatePriceFactor",
+                    new[] { typeof(Building_Bed), typeof(float) });
+                MethodInfo room = AccessTools.DeclaredMethod(utility, "CalculateBedFactorsForRoom",
+                    new[] { typeof(Room), typeof(Building_Bed) });
+                if (price == null || !price.IsStatic || price.ReturnType != typeof(float)
+                    || room == null || !room.IsStatic || room.ReturnType != typeof(float))
+                    throw new MissingMethodException("BrothelColony price/room factor API");
+
+                CalculateRoomBedFactors = (Func<Room, Building_Bed, float>)Delegate.CreateDelegate(
+                    typeof(Func<Room, Building_Bed, float>), room);
+                harmony.Patch(price, prefix: new HarmonyMethod(
+                    typeof(Patch_RjwBrothelDeterminism), nameof(PriceFactorPrefix)));
+                priceQueryPatched = true;
+                Log.Message("[MP-MeowOnlineShop][RJW-Brothel] MP bed prices use live factors without randomized cache updates.");
+            }
+            catch (Exception e)
+            {
+                Log.Error("[MP-MeowOnlineShop][RJW-Brothel] REQUIRED_TARGET_FAILURE price query: " + e);
+            }
+        }
+
+        // Desync-18 (drafting) and -19 (STD cleanliness query) both trigger a
+        // lazy Room stats refresh on only one peer. Brothel's room postfix
+        // calls CalculatePriceFactor, whose cache backoff draws Rand.Int.
+        // Merely isolating that draw would still leave UI/rejoin-dependent
+        // stale prices. Bypass the entire price cache during MP instead.
+        // Source + installed DLL: 80EB64E342A4653CF96FE7E5A4F503CB9DE9857D13D9DA4B1C2C8FC1879B8B48.
+        private static bool PriceFactorPrefix(Building_Bed __0, float __1, ref float __result)
+        {
+            if (!MP.IsInMultiplayer) return true;
+            Building_Bed bed = __0;
+            float roomMultiplier = __1;
+            if (roomMultiplier < 0f)
+            {
+                Room room = bed.Map != null && bed.Map.regionAndRoomUpdater.Enabled
+                    ? bed.GetRoom() : null;
+                // Keep the original room eligibility, bed count, room role and
+                // impressiveness rules. Its sibling-bed calls pass an explicit
+                // multiplier, so they cannot recurse through this branch.
+                roomMultiplier = CalculateRoomBedFactors(room, bed);
+            }
+            __result = roomMultiplier * bed.GetStatValue(RimWorld.StatDefOf.Comfort);
+            // No writes to bedScore/roomScore/lastScoreUpdateTick/backoff.
+            // Owner permissions, reservations and payment logic remain intact.
+            return false;
         }
 
         private static IEnumerable<CodeInstruction> StablePawnRandomElementTranspiler(

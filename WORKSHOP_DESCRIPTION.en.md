@@ -1,24 +1,24 @@
 # [MP] Multiplayer Compatibility Patches
 
-Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Supported mods:
+Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
-- Meow Framework / Meow Online Shop: Framework and online trading.
+- Meow Framework / Meow Online Shop
 - MoeLotl Race
-- MoeLotl: Rigor Mortis: Undead MoeLotl and story expansion.
+- MoeLotl: Rigor Mortis
 - Raven Race
-- Wolfein Race: Standalone sprint sync; six native and equipment abilities checked in multiplayer.
+- Wolfein Race
 - Wolfein Race GFI Expand
 - Wolfein Allegiance
 - Wolfein Black Science Expand
-- Milira Race: Per-player-faction starting hostility, reconciliation and goodwill; legitimate wars are preserved.
-- Milira Tech: Milian Modification
-- Milira Event Story Expand: The Tale of Milira
-- Milira Faction: Milira Imperium
+- Milira Race
+- Milira Tech
+- Milira Event Story Expand
+- Milira Faction
 - Xiyue's Milira Expanded
 - 米莉拉角色拓展 / MiliraXian NeiyuLaw
-- Milira Expansion: YaoYao
-- Milira Addon: Fianchetto Variation
-- Milira: Wings of Democracy
+- Milira Expansion
+- Milira Addon
+- Milira
 - Sariel Milira Kiiro Attire Expaned
 - Valkyrie Gunship
 - ExileBrandLib
@@ -26,114 +26,131 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - Ancot Library
 - Ariandel Library
 - ChezhouLib
-- Kiiro Race: Kiiro starts do not inherit permanent hostility toward Milira from other player factions.
-- Kiiro Story: Events Expanded
+- Kiiro Race
+- Kiiro Story
 - NewRatkinPlus
 - Ratkin Weapons+
 - Ratkin Knights+
-- Ratkin Anomaly+: Relic actions, story confirmations and deterministic effects.
-- Ratkin Underground+: Radio, shared trading, cargo, passengers and drilling controls.
-- [OA] Ratkin Faction: Oberonia aurea
+- Ratkin Anomaly+
+- Ratkin Underground+
+- [OA] Ratkin Faction
 - [OA] Oberonia Aurea Framework
-- [OA] Ratkin Scenario: Snowstorm Orphan
+- [OA] Ratkin Scenario
 - Maru Race
-- Nivarian Race: Nivarian race, recruitment, production and mothership support.
-- Nivarian Mental Harness: Additional psionic abilities.
-- Nivarian: Apparel Store: Clothing and accessories.
-- Nivarian Race: Draconiture: Furniture, engineering drones and reshaping caskets.
-- Nivarian Race: DraconicMilitary: Military equipment, drones, turret controls and teleport beacons.
-- Monolyn Race: Monolyn race, building controls and light networks.
+- Nivarian Race
+- Nivarian Mental Harness
+- Nivarian: Apparel Store
+- Nivarian Race: Draconiture
+- Nivarian Race: DraconicMilitary
+- Monolyn Race
 - Sylvie Race
 - Dragonian Mix
 - Smelted Loong
 - Insect Girls
 - Secretary Nexus a clone race
-- Cinders of the Embergarden: Embergarden content expansion.
-- kemomimihouse Kz: Kemomimi house content and buildings.
-- kemomimihouse HardworkingKz: Kemomimi house work expansion.
-- Voiceroid as Animal: VOICEROID animal characters, abilities and nine-tail clones.
-- Shella Backgrounds: Pawn backstories.
-- RimJobWorld: Core adult gameplay.
-- RimJobWorld Pedophilia Extension: RJW age-rule extension.
-- RimJobWorld - Extension: RJW interactions and furniture.
-- RJW Sexperience: RJW experience and skills.
-- RJW Genes: RJW genes.
-- RJW Animal Gene Inheritance: Animal gene inheritance.
-- RJW Menstruation Cycle: Menstrual and reproductive cycles.
-- ElToros RJW Menstruation - Resources: Cycle resources and hybrid genes.
-- Cumpilation: RJW fluid mechanics.
-- Family Overhaul: Family and servant relationships.
-- Peculiar Institution: RJW slavery and concubinage.
-- RimJobWorld - Brothel Colony: Brothel management.
-- RJW Ero Traders: Adult traders.
-- RJW-Events: Adult events.
-- RJW Consensual Non-Consent: RJW interaction permissions.
-- Privacy, Please!: Privacy for intimate interactions.
-- RimJobWorld - Onahole Extension: RJW device expansion.
-- RJW Now with balls! . . . and Ovaries I guess.: Reproductive organs and hormones.
-- RJW-SexSlaveCraft: RJW slave crafting.
-- RJW Unleashed Framework: RJW effect framework.
-- Humpmaker Dryad: RJW dryad expansion.
-- RaddusX's Demons: Demon races and abilities.
-- Nudity Matters More: Nudity thoughts and interactions.
-- Equal Milking: Milking rules.
-- Romance On The Rim PE: Romance and weddings.
-- RimWorld Animations: Pawn interaction animations.
-- Ultimate Animation Pack (With Voice): RJW animations and voices.
-- Sized Apparel: Body and apparel rendering.
-- Melee Animation: Melee combat animations.
-- Perspective Shift: Direct pawn and camera control.
-- PA's God Hands: Automated work assistants.
-- Achtung! 4.1.14: Native MP support; own-faction menus, forced cleaning and movement tested. Reported menu fault not reproduced.
-- Draft Anything 2.0: Expanded drafting.
-- Down For Me: Voluntary downing.
-- Defensive Positions: Defensive position management.
-- Search and Destroy (Continued): Automatic combat targeting.
-- [XND] Targeting Modes (Continued): Combat targeting modes.
-- Vanilla Melee Modes: Melee attack modes.
-- Tactical Crawling: Tactical crawling.
-- AutoBlink: Automatic blink ability.
-- Sandevistan Implant: Sandevistan implant.
-- Smart Pistol: Smart targeting pistol.
-- Cluster Projection: Cluster projection abilities.
-- The Dead Man's Switch: Mechs and military equipment.
-- The Dead Man's Switch - Power Armor Expanded: Power armor expansion.
-- [RH2] Rimmu-Nation² - Security: Security structures and equipment.
-- True Shooting-Wall: Firing-wall structures.
-- Show Weapon Tallies: Weapon kill tallies.
-- Visual Brutality: Combat gore effects.
-- Blood Animations: Bleeding animations.
-- RW Beheading: Beheading effects.
-- COF's Execute cotinue / More Torture: Execution and torture expansion.
-- [QW] Archotech Implants Expanded: Archotech implants.
-- Eternal Pawns: Pawn persistence and restoration.
-- WVC - Work Modes: Mech work modes.
-- Auto Dissector: Automatic dissection.
-- Auto Cutter: Automatic cutting.
-- Hospitality (Continued): Guest hospitality.
-- Go Explore!: World exploration events.
-- I will be back: Colony return and joiner events.
-- Elite Raid: Elite raids.
-- Ancient Amorphous Threat: Ancient amorphous threats.
-- Quarry: Quarrying.
-- Utility Columns: Utility column structures.
-- Vanilla Plants Expanded - Mushrooms: Mushroom plants.
-- Static Quality: Crafting quality rules.
-- OgreStack: Item stack limits.
-- Adaptive Storage - Global Settings: Global adaptive storage settings.
-- Designator Shapes: Shape-based designators.
-- Blueprints / Blueprints Forked - 1.6: Building blueprint copying.
-- Dubs Mint Menus: Production and planting menus.
-- Nice Bill Tab: Production bill interface.
-- Vehicle Framework: Vehicle framework.
-- Tactical Fulton Extraction System: Fulton extraction system.
-- Almost There! Fork: Caravan travel controls.
-- RPG Style Inventory Revamped: RPG-style inventory.
-- RPG Dialog: RPG-style dialog windows.
-- [NL] Facial Animation - WIP: Facial animations.
-- [NL] Dynamic Portraits: Dynamic pawn portraits.
-- Simple FX: Splashes: Water splash effects.
-- Performance Optimizer: Game performance optimization.
+- Cinders of the Embergarden
+- kemomimihouse Kz
+- kemomimihouse HardworkingKz
+- Voiceroid as Animal
+- Shella Backgrounds
+- RimJobWorld
+- RimJobWorld Pedophilia Extension
+- RimJobWorld - Extension
+- RJW Sexperience
+- RJW Genes
+- RJW Animal Gene Inheritance
+- RJW Menstruation Cycle
+- ElToros RJW Menstruation - Resources
+- Cumpilation
+- Family Overhaul
+- Peculiar Institution
+- RimJobWorld - Brothel Colony
+- RJW Ero Traders
+- RJW-Events
+- RJW Consensual Non-Consent
+- Privacy, Please!
+- RimJobWorld - Onahole Extension
+- RJW Now with balls! . . . and Ovaries I guess.
+- RJW-SexSlaveCraft
+- RJW Unleashed Framework
+- Humpmaker Dryad
+- RaddusX's Demons
+- Nudity Matters More
+- Equal Milking
+- Romance On The Rim PE
+- RimWorld Animations
+- Ultimate Animation Pack (With Voice)
+- Sized Apparel
+- Melee Animation
+- Perspective Shift
+- PA's God Hands
+- Achtung! 4.1.14
+- Draft Anything 2.0
+- Down For Me
+- Defensive Positions
+- Search and Destroy (Continued)
+- [XND] Targeting Modes (Continued)
+- Vanilla Melee Modes
+- Tactical Crawling
+- AutoBlink
+- Sandevistan Implant
+- Smart Pistol
+- Cluster Projection
+- The Dead Man's Switch
+- The Dead Man's Switch - Power Armor Expanded
+- [RH2] Rimmu-Nation² - Security
+- True Shooting-Wall
+- Show Weapon Tallies
+- Visual Brutality
+- Blood Animations
+- RW Beheading
+- COF's Execute cotinue / More Torture
+- [QW] Archotech Implants Expanded
+- Eternal Pawns
+- WVC - Work Modes
+- Auto Dissector
+- Auto Cutter
+- Hospitality (Continued)
+- Go Explore!
+- I will be back
+- Elite Raid
+- Ancient Amorphous Threat
+- Quarry
+- Utility Columns
+- Vanilla Plants Expanded - Mushrooms
+- Static Quality
+- OgreStack
+- Adaptive Storage - Global Settings
+- Designator Shapes
+- Blueprints / Blueprints Forked - 1.6
+- Dubs Mint Menus
+- Nice Bill Tab
+- Vehicle Framework
+- Tactical Fulton Extraction System
+- Almost There! Fork
+- RPG Style Inventory Revamped
+- RPG Dialog
+- [NL] Facial Animation - WIP
+- [NL] Dynamic Portraits
+- Simple FX: Splashes
+- Performance Optimizer
+
+- ReGrowth 2
+- Yet another Optimizer / Kingfisher
+
+## 3.0.128 update (2026-09-13)
+
+- ReGrowth 2: removes autumn leaf simulation's dependency on a local rendering cache, addressing view-dependent spawned objects and Thing IDs.
+- Multifaction diplomacy: reduces reflection calls, temporary allocations and repeated lookups while preserving faction order, diplomacy rules and recovery timers. Simulation tick frequency is unchanged.
+- New separate parallel-render compatibility module: uses thread-local Multiplayer drawing context with nested scope restoration and target-shape checks. This does not authorize arbitrary multithreaded simulation optimizers.
+- Retains the melee-animation component lookup optimization and the YaOpt / Kingfisher item-index removal boundary fix.
+
+Validation: RimWorld 1.6.4850 rev646 and Multiplayer 0.11.5+4a3be27-dirty. A 316-mod combination ran two game processes on one PC, with two maps, multiple factions and async time OFF, for over 120,000 map/world ticks. Final random states, Thing IDs and 28 pawn/diplomacy snapshots matched; three non-host recruitment actions were included. ReGrowth was checked separately in a 318-mod, three-map, async-ON smoke run of 10,008 shared ticks. Cross-PC, cold-rejoin and long ReGrowth runs remain unverified; this is not certification of every feature in every listed mod.
+
+Fixed-work Dubs Performance Analyzer samples showed approximately 29–31% less time in the diplomacy recovery hotspot and 27% less in record lookups. Overall TPS stayed around 153–155; an overall TPS gain has NOT been demonstrated. The profiler is a measurement tool and is not shipped with this mod.
+
+Known limitations: this combination still reports a Kiiro story null-map warning, a Defensive Positions legacy Multiplayer API warning and EliteRaid patch warnings. Patch coverage does not mean all such warnings are resolved. All players should update to identical versions and fully restart the game.
+
 
 ## Multifaction diplomacy (3.0.127)
 
@@ -157,3 +174,5 @@ Requires Multiplayer; load last. All players need identical mod versions. Avoid 
 Author: 尹怨怨
 
 GitHub: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus
+
+Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128.md

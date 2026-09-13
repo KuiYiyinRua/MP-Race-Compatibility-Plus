@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -92,6 +92,7 @@ namespace MP_MeowOnlineShop
             try
             {
                 LogBuildIdentity();
+                ApplyOptionalPatch("Cross-faction cursors", () => Patch_CrossFactionCursors.Apply(Harmony));
 
                 // Install God Hands at the first stable startup boundary. An
                 // exception in an unrelated optional patch must not prevent its
@@ -166,11 +167,14 @@ namespace MP_MeowOnlineShop
                 Patch_MiliraMultifactionRelations.Apply(Harmony);
                 Patch_AudioRandIsolation.Apply(Harmony);
                 Patch_RjwPeVoiceRandIsolation.Apply(Harmony);
+                Patch_RjwAnimationSoundRandIsolation.Apply(Harmony);
                 Patch_BallzAutoOrganRandIsolation.Apply(Harmony);
                 Patch_KemomimiHouseAutoSpawnRand.Apply(Harmony);
                 Patch_NiceBillTabLoad.Apply(Harmony);
+                Patch_ReGrowthAutumnLeavesMp.Apply(Harmony);
                 Patch_UniqueIdSimulationBoundary.Apply(Harmony);
                 Patch_MutantAbilityCacheMp.Apply(Harmony);
+                ApplyOptionalPatch("YaOpt/Kingfisher indexed removal", () => Patch_YaOptKingfisherRemove.Apply(Harmony));
                 Patch_InsectGirlPermanentWoundMp.Apply(Harmony);
                 Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony);
                 Patch_DeterministicTickList.Apply(Harmony);
@@ -183,6 +187,8 @@ namespace MP_MeowOnlineShop
                 Patch_OrderedJobMultifactionContext.Apply(Harmony);
                 Patch_MapStateOrderNormalizer.Apply(Harmony);
                 Patch_CommandOrderDeterminism.Apply(Harmony);
+                Patch_Desync1415Boundaries.Apply(Harmony);
+                Patch_CaravanEscortSelectionMp.Apply(Harmony);
                 Patch_AsyncTimeMapLoadSafety.Apply(Harmony);
                 Patch_NudityMattersMoreMp.Apply(Harmony);
                 Patch_DeterministicWorldPawns.Apply(Harmony);
@@ -231,6 +237,7 @@ namespace MP_MeowOnlineShop
                 Patch_VanillaMeleeModesMp.Apply(Harmony);
                 Patch_DraftAnythingMp.Apply(Harmony);
                 Patch_AutoBlinkMp.Apply(Harmony);
+                Patch_AutoBlinkLoadMp.Apply(Harmony);
                 Patch_SmartPistolMp.Apply(Harmony);
                 Patch_ComeBackColonyMp.Apply(Harmony);
                 Patch_OgreStackMp.Apply(Harmony);
@@ -427,6 +434,24 @@ namespace MP_MeowOnlineShop
                 Patch_RjwEventsDeterminism.Apply(Harmony);
                 Patch_RjwEroTraderDeterminism.Apply(Harmony);
                 Patch_SecretaryNexusMp.Apply(Harmony);
+                Patch_Light350ActionsMp.Apply();
+                Patch_Light350StateMp.Apply(Harmony);
+                Patch_Light350SnapshotsMp.Apply(Harmony);
+                Patch_Light350LoadStateMp.Apply(Harmony);
+                Patch_CumpilationRecipeQueryMp.Apply(Harmony);
+                Patch_MultifactionScenarioContext.Apply(Harmony);
+                Patch_Light350PoliciesMp.Apply(Harmony);
+                Patch_Light350PermitsMp.Apply(Harmony);
+                Patch_Light350SecretaryActionsMp.Apply(Harmony);
+                Patch_Light350CloneConfirmMp.Apply(Harmony);
+                Patch_Light350BillsMp.Apply(Harmony);
+                Patch_Light350BillControlsMp.Apply(Harmony);
+                Patch_Light350BillQueueMp.Apply(Harmony);
+                Patch_Light350HandlerStateMp.Apply(Harmony);
+                Patch_Light350MeleeCooldownMp.Apply(Harmony);
+                Patch_Light350RjwLoadTicksMp.Apply(Harmony);
+                Patch_Light350GenesToilLoadMp.Apply(Harmony);
+                Patch_Light350PrivacyCompMp.Apply(Harmony);
                 Patch_FacialAnimationMp.Apply(Harmony);
                 ApplyAxolotlWeaponModePatches();
                 ApplyAxolotlJumpModeSyncPatches();
@@ -529,6 +554,7 @@ namespace MP_MeowOnlineShop
         private static void ApplyRimJobWorldPatches()
         {
             ApplyOptionalPatch("RJW RimJobWorld", () => Patch_RimJobWorld.Apply(Harmony));
+            ApplyOptionalPatch("RJW multifaction context", () => Patch_RjwMultifactionContext.Apply(Harmony));
             ApplyOptionalPatch("RJW addons", () => Patch_RjwAddons.Apply(Harmony));
             ApplyOptionalPatch("RJW P1", () => Patch_RjwP1.Apply(Harmony));
             ApplyOptionalPatch(

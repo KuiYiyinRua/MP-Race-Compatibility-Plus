@@ -7,17 +7,20 @@
     <GameRoot Condition="'$(GameRoot)' == ''">G:\Steam\steamapps\common\RimWorld</GameRoot>
     <TargetRoot Condition="'$(TargetRoot)' == ''">G:\Steam\steamapps\workshop\content\294100\2944488802</TargetRoot>
     <HarmonyPath Condition="'$(HarmonyPath)' == ''">G:/Steam/steamapps/workshop/content/294100/2009463077/Current/Assemblies/0Harmony.dll</HarmonyPath>
+    <MultiplayerApiPath Condition="'$(MultiplayerApiPath)' == '' and Exists('$(GameRoot)/Mods/Multiplayer/1.6/Assemblies/0MultiplayerAPI.dll')">$(GameRoot)/Mods/Multiplayer/1.6/Assemblies/0MultiplayerAPI.dll</MultiplayerApiPath>
+    <MultiplayerApiPath Condition="'$(MultiplayerApiPath)' == ''">$(GameRoot)/Mods/Multiplayer/Assemblies/0MultiplayerAPI.dll</MultiplayerApiPath>
     <OutputPath>../../BuildValidation/MeleeAnimation/Candidate/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="ScanDiagnostics.cs" Condition="'$(IncludeScanDiagnostics)' != 'true'" />
     <Reference Include="Assembly-CSharp"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="0Harmony"><HintPath>$(HarmonyPath)</HintPath><Private>false</Private></Reference>
-    <Reference Include="0MultiplayerAPI"><HintPath>$(GameRoot)/Mods/Multiplayer/Assemblies/0MultiplayerAPI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0MultiplayerAPI"><HintPath>$(MultiplayerApiPath)</HintPath><Private>false</Private></Reference>
     <Reference Include="zAnimationMod"><HintPath>$(TargetRoot)/1.6/Assemblies/zAnimationMod.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>

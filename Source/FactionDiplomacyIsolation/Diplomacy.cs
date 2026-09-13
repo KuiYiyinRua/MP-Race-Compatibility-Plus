@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
@@ -56,6 +57,8 @@ namespace Meow.FactionDiplomacy
         private const string Owner = "meow.milira.diplomacy";
         private static Type componentType;
         private static MethodInfo pushFaction, popFaction;
+        private static Func<Faction, bool, Faction> push;
+        private static Func<Faction> pop;
         private static PropertyInfo worldComponent;
         private static FieldInfo spectatorField, multiplayerGameField;
         [ThreadStatic] private static Map tickMap;
@@ -65,7 +68,7 @@ namespace Meow.FactionDiplomacy
         private static readonly Dictionary<FactionDef, List<FactionDef>> originalExceptions = new Dictionary<FactionDef, List<FactionDef>>();
         internal static bool TargetAvailable { get; private set; }
         private static FactionDiplomacyState State =>
-            Current.Game?.GetComponent<FactionDiplomacyState>();
+            FactionDiplomacyState.CurrentState();
         private static bool Active => TargetAvailable && (MP.IsInMultiplayer || State?.initialized == true);
 
         internal static void Apply(Harmony ignored)
@@ -114,6 +117,8 @@ namespace Meow.FactionDiplomacy
                 spectatorField = AccessTools.Field(worldComponent?.PropertyType, "spectatorFaction");
                 if (worldComponent == null || spectatorField == null || multiplayerGameField == null) throw new MissingMemberException("MP spectator");
                 if (pushFaction == null || popFaction == null) throw new MissingMethodException("MP FactionContext");
+                push = (Func<Faction, bool, Faction>)Delegate.CreateDelegate(typeof(Func<Faction, bool, Faction>), pushFaction);
+                pop = (Func<Faction>)Delegate.CreateDelegate(typeof(Func<Faction>), popFaction);
                 h.Patch(AccessTools.Method(componentType, "GameComponentTick"),
                     prefix: new HarmonyMethod(typeof(Patch_MiliraMultifactionRelations), nameof(BeforeTick)),
                     finalizer: new HarmonyMethod(typeof(Patch_MiliraMultifactionRelations), nameof(AfterScope)));
@@ -210,7 +215,7 @@ namespace Meow.FactionDiplomacy
         internal static MiliraDiplomacyRecord Record(Faction f, bool create = false)
         {
             if (!RealPlayer(f) || State == null) return null;
-            var record = State.records.FirstOrDefault(r => r.faction == f);
+            var record = FindRecord(State, f);
             if (record != null) return record;
             record = DefaultRecord(f);
             // Queries, including local UI, never write authoritative state.
@@ -333,7 +338,7 @@ namespace Meow.FactionDiplomacy
             __state = null;
             if (!Active || __instance == null || other == null || __instance.IsPlayer == other.IsPlayer) return;
             __state = new Scope { previous = tickMap, pushed = true };
-            pushFaction.Invoke(null, new object[] { __instance.IsPlayer ? __instance : other, false });
+            push(__instance.IsPlayer ? __instance : other, false);
         }
         private static bool RealPlayer(Faction faction)
         {
@@ -342,8 +347,37 @@ namespace Meow.FactionDiplomacy
             var world = worldComponent.GetValue(null, null);
             return world == null || !ReferenceEquals(faction, spectatorField.GetValue(world));
         }
-        private static IEnumerable<Faction> Players() => State.records.Select(r => r.faction)
-            .Where(f => RealPlayer(f) && !f.defeated).Distinct().OrderBy(f => f.loadID);
+        private static List<Faction> Players()
+        {
+            // Rebuild from live records on every query. Faction defeat/ownership and
+            // list replacement must remain immediately visible on every peer.
+            var records = State.records;
+            // Keep the original O(n log n) path for unusually large sessions.
+            if (records.Count > 16)
+                return records.Select(r => r.faction).Where(f => RealPlayer(f) && !f.defeated).Distinct().OrderBy(f => f.loadID).ToList();
+            var result = new List<Faction>();
+            foreach (var record in records)
+            {
+                var faction = record.faction;
+                if (!RealPlayer(faction) || faction.defeated || result.Contains(faction)) continue;
+                int index = result.Count;
+                while (index > 0 && result[index - 1].loadID > faction.loadID) index--;
+                result.Insert(index, faction);
+            }
+            return result;
+        }
+        private static FactionGoodwillRecoveryRecord FindRecovery(FactionDiplomacyState state, Faction player, Faction other)
+        {
+            foreach (var record in state.recovery)
+                if (record.player == player && record.other == other) return record;
+            return null;
+        }
+        private static MiliraDiplomacyRecord FindRecord(FactionDiplomacyState state, Faction faction)
+        {
+            foreach (var record in state.records)
+                if (record.faction == faction) return record;
+            return null;
+        }
         private static void PlayerMaximum(Faction other, ref int __result)
         {
             if (Active && other?.IsPlayer == true) __result = 100;
@@ -357,14 +391,14 @@ namespace Meow.FactionDiplomacy
             // would let the legacy core prefix replace every player with the spectator.
             foreach (var player in Players())
             {
-                pushFaction.Invoke(null, new object[] { player, false });
+                push(player, false);
                 try
                 {
                     foreach (var other in Find.FactionManager.AllFactionsListForReading
                                 .Where(f => f != player && f.HasGoodwill).OrderBy(f => f.loadID))
                         player.Notify_GoodwillSituationsChanged(other, canSendHostilityChangedLetter, null, null);
                 }
-                finally { popFaction.Invoke(null, null); }
+                finally { pop(); }
             }
             return false;
         }        private static bool RecoverGoodwill(Faction __instance)
@@ -374,10 +408,10 @@ namespace Meow.FactionDiplomacy
             foreach (var player in Players())
             {
                 if (player.RelationWith(__instance, true) == null) continue;
-                pushFaction.Invoke(null, new object[] { player, false });
+                push(player, false);
                 try
                 {
-                    var record = State.recovery.FirstOrDefault(r => r.player == player && r.other == __instance);
+                    var record = FindRecovery(State, player, __instance);
                     if (record == null)
                     {
                         record = new FactionGoodwillRecoveryRecord { player = player, other = __instance };
@@ -394,7 +428,7 @@ namespace Meow.FactionDiplomacy
                     __instance.TryAffectGoodwillWith(player, delta, true, !__instance.temporary, HistoryEventDefOf.ReachNaturalGoodwill);
                     record.timer = 0;
                 }
-                finally { popFaction.Invoke(null, null); }
+                finally { pop(); }
             }
             return false;
         }
@@ -478,7 +512,7 @@ namespace Meow.FactionDiplomacy
             if (map == null) return false;
             __state = new Scope { previous = tickMap, pushed = true };
             tickMap = map;
-            pushFaction.Invoke(null, new object[] { map.ParentFaction, false });
+            push(map.ParentFaction, false);
             return true;
         }
         private static void BeforeIncident(IncidentParms parms, out Scope __state)
@@ -488,12 +522,12 @@ namespace Meow.FactionDiplomacy
             if (!Active || map?.ParentFaction?.IsPlayer != true) return;
             __state = new Scope { previous = tickMap, pushed = true };
             tickMap = map;
-            pushFaction.Invoke(null, new object[] { map.ParentFaction, false });
+            push(map.ParentFaction, false);
         }
         private static void AfterScope(Scope __state)
         {
             if (__state == null) return;
-            try { if (__state.pushed) popFaction.Invoke(null, null); }
+            try { if (__state.pushed) pop(); }
             finally { tickMap = __state.previous; }
         }
         private static bool ValidateHandOver(object __instance, out bool __state)
@@ -536,6 +570,23 @@ namespace Meow.FactionDiplomacy
     // migration/version and unsaved 1000-tick repair loop are intentionally retired.
     public sealed class FactionDiplomacyState : GameComponent
     {
+        private static readonly ConditionalWeakTable<Game, FactionDiplomacyState> states =
+            new ConditionalWeakTable<Game, FactionDiplomacyState>();
+        internal static FactionDiplomacyState CurrentState()
+        {
+            var game = Current.Game;
+            if (game == null) return null;
+            if (states.TryGetValue(game, out var state)) return state;
+            return CacheState(game);
+        }
+
+        private static FactionDiplomacyState CacheState(Game game)
+        {
+            var state = game.GetComponent<FactionDiplomacyState>();
+            // Construction can query before components are present. Never cache a miss.
+            return state == null ? null : states.GetValue(game, _ => state);
+        }
+
         public bool initialized;
         public List<FactionGoodwillRecoveryRecord> recovery = new List<FactionGoodwillRecoveryRecord>();
         public List<MiliraDiplomacyRecord> records = new List<MiliraDiplomacyRecord>();
@@ -550,6 +601,10 @@ namespace Meow.FactionDiplomacy
         }
         public override void LoadedGame()
         {
+            // Loading can replace a component on the same Game. Cache only its identity;
+            // records, flags and timers remain live save-owned state.
+            var game = Current.Game;
+            if (game != null) states.Remove(game);
             if (initialized) Patch_MiliraMultifactionRelations.RestoreDefinitions();
         }
     }

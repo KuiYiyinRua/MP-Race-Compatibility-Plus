@@ -35,6 +35,9 @@ namespace MP_MeowOnlineShop
         public bool enableMpMissileGirlBeautyPort = true;
         public bool enableMpMissileGirlTimetableFix = true;
         public bool blockGodHandsWhilePaused;
+        public bool showCrossFactionCursors;
+        public bool enableFactionStoryRoutingIsolation;
+        public bool enableTickListOrderNormalizer = true;
         public int mediumAlertRecheckIntervalTicks = 180;
         public bool enableExperimentalTickScheduler = false;
         public int schedulerMode = SchedulerModeAggressive;
@@ -53,6 +56,9 @@ namespace MP_MeowOnlineShop
         public override void ExposeData()
         {
             base.ExposeData();
+            Scribe_Values.Look(ref enableTickListOrderNormalizer, "mp_meow_modcfg_ticklist_order_normalizer", true);
+            Scribe_Values.Look(ref showCrossFactionCursors, "mp_meow_modcfg_cross_faction_cursors", false);
+            Scribe_Values.Look(ref enableFactionStoryRoutingIsolation, "mp_meow_modcfg_faction_story_routing_isolation", false);
             Scribe_Values.Look(ref tpsOptimizeEnabled, "mp_meow_modcfg_tps_opt_enabled", true);
             Scribe_Values.Look(ref enableOptimizationTelemetry, "mp_meow_modcfg_opt_telemetry_enabled", true);
             Scribe_Values.Look(ref optimizationTelemetryIntervalTicks, "mp_meow_modcfg_opt_telemetry_interval", 300);
@@ -347,10 +353,29 @@ namespace MP_MeowOnlineShop
         public override void DoSettingsWindowContents(Rect inRect)
         {
             _settings.ClampValues();
-            var viewRect = new Rect(0f, 0f, inRect.width - 20f, 1950f);
+            var viewRect = new Rect(0f, 0f, inRect.width - 20f, 2260f);
             Widgets.BeginScrollView(inRect, ref _settingsScrollPos, viewRect);
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
+            listing.CheckboxLabeled(
+                "启用多派系任务与事件隔离及跨派系接取保护（实验性）",
+                ref _settings.enableFactionStoryRoutingIsolation,
+                "默认关闭。开启后可查看其他玩家派系的任务，但不能跨派系手动/自动接取；会覆盖 Multiplayer 的隐藏其他玩家任务选项，仍保留任务自身隐藏和分页规则。同时过滤叙事者及标准任务接收地图。旧任务或未知创建入口缺少归属时也会拒绝接取。尚不覆盖完整任务链、奖励、延迟队列或全部自定义模组事件。");
+            listing.Label("由房主开房时确定并同步。房间内改动需重新开房后生效；观看重放沿用保存值。开关独立于优化预设。");
+            listing.Gap(8f);
+            listing.CheckboxLabeled(
+                "启用 TickList 顺序规范化（诊断开关，需重启）",
+                ref _settings.enableTickListOrderNormalizer,
+                "默认开启，独立于 TPS 优化及预设。关闭后停用本补丁的分桶覆盖、排序、待注册队列合并及缺失成员补回。主客机必须设置一致并全部重启后再联机；用于存档副本 A/B 测试，尚不能据此认定搬运不同步根因。");
+            listing.Label("本次启动 TickList 规范化：" + (Patch_TickListOrderNormalizer.EnabledAtStartup ? "开启" : "关闭"));
+            if (_settings.enableTickListOrderNormalizer != Patch_TickListOrderNormalizer.EnabledAtStartup)
+                listing.Label("设置已更改，重启游戏后生效；当前会话继续使用原设置。");
+            listing.Gap(8f);
+            listing.CheckboxLabeled(
+                "跨派系显示玩家鼠标指针（联机）",
+                ref _settings.showCrossFactionCursors,
+                "默认关闭，仅影响本机显示，切换立即生效。开启后可看到同一地图上其他派系玩家的鼠标、名字和拖选框；仍需开启 Multiplayer 的显示玩家鼠标选项。各玩家可独立设置。");
+            listing.Gap(8f);
             listing.CheckboxLabeled(
                 "暂停时禁用神之手（联机）",
                 ref _settings.blockGodHandsWhilePaused,

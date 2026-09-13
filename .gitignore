@@ -37,3 +37,11 @@ _candidate_*/
 # OS noise
 Thumbs.db
 Desktop.ini
+
+# Runtime binaries, local profiling and publication mirrors
+*.dll
+*.pdb
+*.7z
+*.remote.txt
+*.preview-url.txt
+/P0Decompiled/

@@ -102,12 +102,13 @@ namespace MP_MeowOnlineShop
                 }
             }
 
+            int expectedCumpilationRandom = Patch_Light350LoadStateMp.HasOverflowRandomPatch ? 5 : 6;
             if (cumpilationAssembly != null &&
-                (cumpilationMethods != 6 || cumpilationReplacements != 6))
+                (cumpilationMethods != expectedCumpilationRandom || cumpilationReplacements != expectedCumpilationRandom))
             {
                 Log.Warning(
                     "[MP-MeowOnlineShop][RJW-Addons] Cumpilation deterministic-Random signature drift: " +
-                    $"expected methods/replacements=6/6, actual={cumpilationMethods}/{cumpilationReplacements}.");
+                    $"expected methods/replacements={expectedCumpilationRandom}/{expectedCumpilationRandom}, actual={cumpilationMethods}/{cumpilationReplacements}.");
             }
 
             if (genesAssembly != null &&
@@ -335,6 +336,8 @@ namespace MP_MeowOnlineShop
 
             foreach (var method in GetDeclaredMethodsAndConstructors(assembly))
             {
+                if (Patch_Light350LoadStateMp.OwnsRandomConstructor(method))
+                    continue;
                 if (!ContainsMemberOperand(method, ParameterlessRandomConstructor, OpCodes.Newobj))
                     continue;
 

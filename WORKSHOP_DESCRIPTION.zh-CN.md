@@ -2,17 +2,17 @@
 
 联机交流群：432965131
 
-适用于 RimWorld 1.6 Multiplayer，补充官方兼容包。包含以下专项兼容：
+适用于 RimWorld 1.6 Multiplayer，补充官方兼容包。以下为已有补丁覆盖的模组，受版本和功能范围限制：
 
-- Meow Framework / Meow Online Shop：喵呜框架与网店交易。
+- Meow Framework / Meow Online Shop
 - MoeLotl Race
-- MoeLotl: Rigor Mortis：萌螈僵尸与剧情扩展。
+- MoeLotl: Rigor Mortis
 - Raven Race
-- Wolfein Race：修复独立启用时的冲锋同步，核验本体与装备共六种能力。
+- Wolfein Race
 - Wolfein Race GFI Expand
 - Wolfein Allegiance
 - Wolfein Black Science Expand
-- Milira Race：按玩家派系隔离开局永久敌对、和解状态与好感度，保留正常交战结果。
+- Milira Race
 - Milira Tech: Milian Modification
 - Milira Event Story Expand: The Tale of Milira
 - Milira Faction: Milira Imperium
@@ -28,114 +28,131 @@
 - Ancot Library
 - Ariandel Library
 - ChezhouLib
-- Kiiro Race：绮罗开局不继承其他玩家对 Milira 的永久敌对。
+- Kiiro Race
 - Kiiro Story: Events Expanded
 - NewRatkinPlus
 - Ratkin Weapons+
 - Ratkin Knights+
-- Ratkin Anomaly+：鼠族异象遗物、剧情确认与随机特效兼容。
-- Ratkin Underground+：地下鼠族电台、共享交易、货运、乘客与钻机控制。
+- Ratkin Anomaly+
+- Ratkin Underground+
 - [OA] Ratkin Faction: Oberonia aurea
 - [OA] Oberonia Aurea Framework
 - [OA] Ratkin Scenario: Snowstorm Orphan
 - Maru Race
-- Nivarian Race：Nivarian 种族、招募、生产与母舰支援。
-- Nivarian Mental Harness：灵能技能扩展。
-- Nivarian: Apparel Store：服装与饰品扩展。
-- Nivarian Race: Draconiture：家具、工程无人机与重塑舱。
-- Nivarian Race: DraconicMilitary：军事装备、无人机、炮塔控制与传送信标。
-- Monolyn Race：Monolyn 种族、建筑控制与光能网络。
+- Nivarian Race
+- Nivarian Mental Harness
+- Nivarian: Apparel Store
+- Nivarian Race: Draconiture
+- Nivarian Race: DraconicMilitary
+- Monolyn Race
 - Sylvie Race
 - Dragonian Mix
 - Smelted Loong
 - Insect Girls
 - Secretary Nexus a clone race
-- Cinders of the Embergarden：余烬花园内容扩展。
-- kemomimihouse Kz：兽耳屋内容与建筑。
-- kemomimihouse HardworkingKz：兽耳屋工作功能扩展。
-- Voiceroid as Animal：VOICEROID 角色动物化、角色技能与九尾分身。
-- Shella Backgrounds：角色背景故事扩展。
-- RimJobWorld：RJW 核心成人玩法。
-- RimJobWorld Pedophilia Extension：RJW 年龄规则扩展。
-- RimJobWorld - Extension：RJW 交互与家具扩展。
-- RJW Sexperience：RJW 经验与技能扩展。
-- RJW Genes：RJW 基因扩展。
-- RJW Animal Gene Inheritance：动物基因遗传扩展。
-- RJW Menstruation Cycle：月经与生殖周期。
-- ElToros RJW Menstruation - Resources：周期资源与混合基因扩展。
-- Cumpilation：RJW 体液机制扩展。
-- Family Overhaul：家庭与主仆关系扩展。
-- Peculiar Institution：RJW 奴役与侍妾制度。
-- RimJobWorld - Brothel Colony：妓院经营。
-- RJW Ero Traders：成人交易商。
-- RJW-Events：成人事件扩展。
-- RJW Consensual Non-Consent：RJW 互动许可与标记。
-- Privacy, Please!：亲密行为隐私规则。
-- RimJobWorld - Onahole Extension：RJW 器具扩展。
-- RJW Now with balls! . . . and Ovaries I guess.：性器官与激素系统。
-- RJW-SexSlaveCraft：RJW 奴隶制作系统。
-- RJW Unleashed Framework：RJW 效果扩展框架。
-- Humpmaker Dryad：RJW 树精扩展。
-- RaddusX's Demons：恶魔种族与能力。
-- Nudity Matters More：裸露相关思想与互动。
-- Equal Milking：产奶规则扩展。
-- Romance On The Rim PE：恋爱与婚礼扩展。
-- RimWorld Animations：角色互动动画框架。
-- Ultimate Animation Pack (With Voice)：RJW 动画与语音包。
-- Sized Apparel：体型与服装显示。
-- Melee Animation：近战动作动画。
-- Perspective Shift：直接操控角色与镜头。
-- PA's God Hands：上帝之手自动工作助手。
-- Achtung! 4.1.14：沿用原生联机支持，验证自己派系菜单、强制清扫和移动；报告的右键故障尚未复现。
-- Draft Anything 2.0：扩展征召对象。
-- Down For Me：主动倒地指令。
-- Defensive Positions：防御站位管理。
-- Search and Destroy (Continued)：自动索敌作战。
-- [XND] Targeting Modes (Continued)：攻击目标模式。
-- Vanilla Melee Modes：近战攻击模式。
-- Tactical Crawling：战术爬行。
-- AutoBlink：自动闪现能力。
-- Sandevistan Implant：斯安威斯坦植入体。
-- Smart Pistol：智能手枪。
-- Cluster Projection：集群投射能力。
-- The Dead Man's Switch：机械体与军备扩展。
-- The Dead Man's Switch - Power Armor Expanded：动力甲扩展。
-- [RH2] Rimmu-Nation² - Security：安保设施与装备。
-- True Shooting-Wall：射击墙建筑。
-- Show Weapon Tallies：武器战绩显示。
-- Visual Brutality：战斗血腥视觉效果。
-- Blood Animations：流血动画。
-- RW Beheading：斩首效果。
-- COF's Execute cotinue / More Torture：处刑与酷刑扩展。
-- [QW] Archotech Implants Expanded：超凡仿生体扩展。
-- Eternal Pawns：角色持久化与复原。
-- WVC - Work Modes：机械体工作模式。
-- Auto Dissector：自动解剖设施。
-- Auto Cutter：自动切割设施。
-- Hospitality (Continued)：访客接待与住宿。
-- Go Explore!：世界探索事件。
-- I will be back：殖民地回归与加入事件。
-- Elite Raid：精英袭击扩展。
-- Ancient Amorphous Threat：远古无定形威胁事件。
-- Quarry：采石场。
-- Utility Columns：功能柱建筑。
-- Vanilla Plants Expanded - Mushrooms：蘑菇植物扩展。
-- Static Quality：制作品质规则。
-- OgreStack：物品堆叠上限。
-- Adaptive Storage - Global Settings：自适应储存全局设置。
-- Designator Shapes：形状绘制建造工具。
-- Blueprints / Blueprints Forked - 1.6：建筑蓝图复制。
-- Dubs Mint Menus：生产与种植菜单。
-- Nice Bill Tab：生产清单界面。
-- Vehicle Framework：载具框架。
-- Tactical Fulton Extraction System：富尔顿回收系统。
-- Almost There! Fork：商队行进控制。
-- RPG Style Inventory Revamped：RPG 风格装备栏。
-- RPG Dialog：RPG 风格对话窗口。
-- [NL] Facial Animation - WIP：面部表情动画。
-- [NL] Dynamic Portraits：动态角色头像。
-- Simple FX: Splashes：涉水飞溅效果。
-- Performance Optimizer：游戏性能优化。
+- Cinders of the Embergarden
+- kemomimihouse Kz
+- kemomimihouse HardworkingKz
+- Voiceroid as Animal
+- Shella Backgrounds
+- RimJobWorld
+- RimJobWorld Pedophilia Extension
+- RimJobWorld - Extension
+- RJW Sexperience
+- RJW Genes
+- RJW Animal Gene Inheritance
+- RJW Menstruation Cycle
+- ElToros RJW Menstruation - Resources
+- Cumpilation
+- Family Overhaul
+- Peculiar Institution
+- RimJobWorld - Brothel Colony
+- RJW Ero Traders
+- RJW-Events
+- RJW Consensual Non-Consent
+- Privacy, Please!
+- RimJobWorld - Onahole Extension
+- RJW Now with balls! . . . and Ovaries I guess.
+- RJW-SexSlaveCraft
+- RJW Unleashed Framework
+- Humpmaker Dryad
+- RaddusX's Demons
+- Nudity Matters More
+- Equal Milking
+- Romance On The Rim PE
+- RimWorld Animations
+- Ultimate Animation Pack (With Voice)
+- Sized Apparel
+- Melee Animation
+- Perspective Shift
+- PA's God Hands
+- Achtung! 4.1.14
+- Draft Anything 2.0
+- Down For Me
+- Defensive Positions
+- Search and Destroy (Continued)
+- [XND] Targeting Modes (Continued)
+- Vanilla Melee Modes
+- Tactical Crawling
+- AutoBlink
+- Sandevistan Implant
+- Smart Pistol
+- Cluster Projection
+- The Dead Man's Switch
+- The Dead Man's Switch - Power Armor Expanded
+- [RH2] Rimmu-Nation² - Security
+- True Shooting-Wall
+- Show Weapon Tallies
+- Visual Brutality
+- Blood Animations
+- RW Beheading
+- COF's Execute cotinue / More Torture
+- [QW] Archotech Implants Expanded
+- Eternal Pawns
+- WVC - Work Modes
+- Auto Dissector
+- Auto Cutter
+- Hospitality (Continued)
+- Go Explore!
+- I will be back
+- Elite Raid
+- Ancient Amorphous Threat
+- Quarry
+- Utility Columns
+- Vanilla Plants Expanded - Mushrooms
+- Static Quality
+- OgreStack
+- Adaptive Storage - Global Settings
+- Designator Shapes
+- Blueprints / Blueprints Forked - 1.6
+- Dubs Mint Menus
+- Nice Bill Tab
+- Vehicle Framework
+- Tactical Fulton Extraction System
+- Almost There! Fork
+- RPG Style Inventory Revamped
+- RPG Dialog
+- [NL] Facial Animation - WIP
+- [NL] Dynamic Portraits
+- Simple FX: Splashes
+- Performance Optimizer
+
+- ReGrowth 2
+- Yet another Optimizer / Kingfisher
+
+## 3.0.128 更新（2026-09-13）
+
+- ReGrowth 2：隔离秋季落叶判定对本地绘制缓存的依赖，修复不同视角可能造成的生成物与 Thing ID 差异。
+- 多派系外交：减少上下文反射调用、临时分配和重复查询，保留派系顺序、外交规则及恢复计时；不降低模拟 Tick 频率。
+- 新增独立并行绘制兼容模块：将 Multiplayer 绘制上下文改为线程局部、支持嵌套恢复，并校验目标补丁结构；不等于允许任意多线程模拟优化。
+- 保留近战动画的组件查询优化，以及 YaOpt / Kingfisher 物品索引移除边界修复。
+
+测试范围：RimWorld 1.6.4850 rev646、Multiplayer 0.11.5+4a3be27-dirty。316 模组组合在同机双进程、双地图、多派系、异步关闭条件下运行超过 120,000 个地图/世界 Tick，最终随机数状态、Thing ID 及 28 份角色/外交快照一致；包含三次非主机招募。ReGrowth 使用另一套 318 模组、三地图、异步开启组合完成 10,008 个共享 Tick 的短测。未完成跨电脑、冷重连或 ReGrowth 长测，不代表所有模组的所有功能均已验证。
+
+Dubs Performance Analyzer 固定工作量采样中，外交自然恢复热点耗时约降低 29–31%，记录查询约降低 27%；整体 TPS 约 153–155，未证明整体 TPS 提升。分析器仅用于测量，不属于本模组发布内容。
+
+已知限制：该组合仍有 Kiiro 剧情空地图告警、Defensive Positions 旧 Multiplayer API 告警及 EliteRaid 补丁告警。已有补丁覆盖不等于这些告警已全部修复。建议所有玩家统一版本后完全重启游戏。
+
 
 ## 多派系外交（3.0.127）
 
@@ -159,3 +176,5 @@
 作者：尹怨怨
 
 GitHub：https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus
+
+详细兼容及验证记录：https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128.md

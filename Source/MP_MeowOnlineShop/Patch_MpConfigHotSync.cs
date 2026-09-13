@@ -54,10 +54,14 @@ namespace MP_MeowOnlineShop
         // XmlMod settings feed def-time patch operations.  XmlModBaseSettings
         // is a normal Verse.ModSettings and XmlMod inherits the standard
         // WriteSettings path, so the generic hot-sync reload below can apply
-        // and verify it in place.  Keep this set empty unless a mod genuinely
+        // and verify it in place.  Only add a package when it genuinely
         // cannot reload its settings without a restart.
         private static readonly HashSet<string> StartupBoundConfigModIds =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Installed TickList patches cannot be changed by config hot reload.
+                "local.mp.meowonlineshop.sellslingshot"
+            };
 
         private static readonly HashSet<string> WrittenThisProcess =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);

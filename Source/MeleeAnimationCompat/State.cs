@@ -76,9 +76,14 @@ namespace MP_MeowOnlineShop.MeleeAnimation
     [HarmonyPatch(typeof(IdleControllerComp), nameof(IdleControllerComp.CompTick))]
     internal static class InitializeSkills
     {
-        private static void Prefix(IdleControllerComp __instance)
+        private static void Prefix(IdleControllerComp __instance, UniqueSkillInstance[] ___skills)
         {
-            if (Bootstrap.Active) __instance.GetSkills();
+            // GetSkills leaves skills null when disabled/ineligible. Avoid its
+            // repeated eligibility path while disabled, and stop once populated.
+            // Keep first eligible-tick initialization (including recruitment).
+            if (___skills != null || !Bootstrap.Active
+                || !MeleeSessionState.CurrentRules().EnableUniqueSkills) return;
+            __instance.GetSkills();
         }
     }
 

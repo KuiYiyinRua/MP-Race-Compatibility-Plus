@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using AM;
 using AM.AMSettings;
 using HarmonyLib;
@@ -15,6 +16,8 @@ namespace MP_MeowOnlineShop.MeleeAnimation
     public sealed class MeleeSessionState : GameComponent
     {
         public Settings Rules;
+        private static readonly ConditionalWeakTable<Game, MeleeSessionState> States =
+            new ConditionalWeakTable<Game, MeleeSessionState>();
         private static readonly MethodInfo Clone = AccessTools.Method(typeof(object), "MemberwiseClone");
         internal static readonly AccessTools.FieldRef<Settings, Dictionary<string, AnimDef.SettingsData>> AnimSettings =
             AccessTools.FieldRefAccess<Settings, Dictionary<string, AnimDef.SettingsData>>("animSettings");
@@ -44,9 +47,31 @@ namespace MP_MeowOnlineShop.MeleeAnimation
             if (Scribe.mode == LoadSaveMode.PostLoadInit && Rules == null) Rules = Copy(Core.Settings);
         }
 
-        public static Settings CurrentRules() => Bootstrap.Active
-            ? Current.Game?.GetComponent<MeleeSessionState>()?.Rules ?? Core.Settings
-            : Core.Settings;
+        public override void LoadedGame()
+        {
+            base.LoadedGame();
+            // Scribe can replace the component list on an existing Game.
+            var game = Current.Game;
+            if (game != null) States.Remove(game);
+        }
+
+        public static Settings CurrentRules()
+        {
+            if (!Bootstrap.Active) return Core.Settings;
+            var game = Current.Game;
+            if (game == null) return Core.Settings;
+            if (!States.TryGetValue(game, out var state)) state = CacheState(game);
+            // Cache the component, not Rules: hosting and loading replace Rules.
+            return state?.Rules ?? Core.Settings;
+        }
+
+        private static MeleeSessionState CacheState(Game game)
+        {
+            var state = game.GetComponent<MeleeSessionState>();
+            // Do not cache a miss during game construction. Weak keys also allow
+            // unloaded games to be collected and keep MP game swaps isolated.
+            return state == null ? null : States.GetValue(game, _ => state);
+        }
     }
 
     [HarmonyPatch]

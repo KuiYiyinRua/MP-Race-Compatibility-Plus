@@ -48,6 +48,8 @@ namespace MP_MeowOnlineShop
         private static UnityEngine.Random.State _unityRandomSavedState;
         [ThreadStatic]
         private static bool _unityRandomStateCaptured;
+        [ThreadStatic]
+        private static Stack<Tuple<Map, UnityRandom.State, bool>> _randParents;
 
         private sealed class QuestTickCacheEntry
         {
@@ -230,7 +232,11 @@ namespace MP_MeowOnlineShop
                         {
                             try
                             {
-                                Harmony.Patch(mExecute, prefix: new HarmonyMethod(prefixEntry), finalizer: new HarmonyMethod(finalizerEntry));
+                                // MP enters the destination map in its normal-priority prefix.
+                                // Unwind our inner scope BEFORE MP saves and restores that map.
+                                Harmony.Patch(mExecute,
+                                    prefix: new HarmonyMethod(prefixEntry) { priority = Priority.Last },
+                                    finalizer: new HarmonyMethod(finalizerEntry) { priority = Priority.First });
                                 executeSuccessCount++;
                                 if (ModDebug.EnableQuestIdeologyTrace)
                                     Log.Message($"[MP-MeowOnlineShop] IncidentWorker: patched {t.FullName}.TryExecute (stable incident Rand scope).");
@@ -483,6 +489,8 @@ namespace MP_MeowOnlineShop
             }
             catch (Exception ex)
             {
+                if (__state != 0) PopTripleRand(__state);
+                else RestoreParentRandScope();
                 __state = 0;
                 if (ModDebug.EnableQuestIdeologyTrace)
                     Log.Warning($"[MP-MeowOnlineShop] {label}: TryPushTripleRandSafe failed: {ex.Message}");
@@ -687,7 +695,11 @@ namespace MP_MeowOnlineShop
         private static void PushTripleRand(Map map, int seed, ref int __state)
         {
             __state = 0;
+            var parent = Tuple.Create(_mapForRandPop, _unityRandomSavedState, _unityRandomStateCaptured);
+            if (_randParents == null) _randParents = new Stack<Tuple<Map, UnityRandom.State, bool>>();
+            _randParents.Push(parent);
             _mapForRandPop = null;
+            _unityRandomStateCaptured = false;
 
             DeterministicRandScope.Begin(
                 map,
@@ -702,7 +714,7 @@ namespace MP_MeowOnlineShop
 
         private static void PopTripleRand(int __state)
         {
-            if (!MP.IsInMultiplayer)
+            if (!MP.IsInMultiplayer || __state == 0)
                 return;
             try
             {
@@ -716,8 +728,24 @@ namespace MP_MeowOnlineShop
             }
             finally
             {
-                _mapForRandPop = null;
+                RestoreParentRandScope();
             }
+        }
+
+        private static void RestoreParentRandScope()
+        {
+                if (_randParents != null && _randParents.Count > 0)
+                {
+                    var parent = _randParents.Pop();
+                    _mapForRandPop = parent.Item1;
+                    _unityRandomSavedState = parent.Item2;
+                    _unityRandomStateCaptured = parent.Item3;
+                }
+                else
+                {
+                    _mapForRandPop = null;
+                    _unityRandomStateCaptured = false;
+                }
         }
 
         private static bool PushUnityRandIfEnabled(int seed)

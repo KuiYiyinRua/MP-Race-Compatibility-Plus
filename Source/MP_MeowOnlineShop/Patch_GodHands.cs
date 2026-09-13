@@ -624,9 +624,9 @@ namespace MP_MeowOnlineShop
     /// Registered sync methods and per-map drag sessions used by God Hands
     /// compatibility. Commands mutate simulation only through these methods.
     /// </summary>
-    internal static class GodHandSync
+    internal static partial class GodHandSync
     {
-        private sealed class GodHandDragSession
+        private sealed partial class GodHandDragSession : IExposable
         {
             public int MapIndex;
             public int PlayerId;
@@ -708,45 +708,12 @@ namespace MP_MeowOnlineShop
 
         public static int RegisteredCount => _registeredCount;
 
-        public static void RemovePlayerSessions(int playerId)
-        {
-            if (playerId < 0)
-                return;
-
-            List<SessionKey> godKeys = null;
-            foreach (SessionKey key in GodHandSessions.Keys)
-            {
-                if (key.PlayerId == playerId)
-                {
-                    (godKeys ??= new List<SessionKey>()).Add(key);
-                }
-            }
-            if (godKeys != null)
-            {
-                for (int i = 0; i < godKeys.Count; i++)
-                    GodHandSessions.Remove(godKeys[i]);
-            }
-
-            List<SessionKey> wrenchKeys = null;
-            foreach (SessionKey key in WrenchSessions.Keys)
-            {
-                if (key.PlayerId == playerId)
-                {
-                    (wrenchKeys ??= new List<SessionKey>()).Add(key);
-                }
-            }
-            if (wrenchKeys != null)
-            {
-                for (int i = 0; i < wrenchKeys.Count; i++)
-                    WrenchSessions.Remove(wrenchKeys[i]);
-            }
-        }
-
         public static void ResetAllSessions()
         {
             GodHandSessions.Clear();
             WrenchSessions.Clear();
             LocalPreviewPawnIds.Clear();
+            ResetLocalDragState();
         }
 
         public static void Register()
@@ -756,6 +723,9 @@ namespace MP_MeowOnlineShop
             _registered = true;
 
             RegisterSyncWorkers();
+            PolicySync = MP.RegisterSyncMethod(typeof(GodHandSync), nameof(SyncDragPolicy)).SetHostOnly();
+            DisconnectSync = MP.RegisterSyncMethod(typeof(GodHandSync), nameof(SyncDisconnectPlayer)).SetHostOnly();
+            CancelSync = MP.RegisterSyncMethod(typeof(GodHandSync), nameof(SyncCancelDrag));
 
             RegisterMethod(nameof(SyncTurretHoldFire));
             RegisterMethod(nameof(SyncTurretSweep));
@@ -1136,15 +1106,33 @@ namespace MP_MeowOnlineShop
 
         public static void SyncGodHandStartGrab(int playerId, int mapIndex, int pawnId, int thingId, int startX, int startZ, bool rangeMode, bool grabPawn, float radius)
         {
+            try
+            {
+                StartGrab(playerId, mapIndex, pawnId, thingId, startX, startZ, rangeMode, grabPawn, radius);
+            }
+            finally
+            {
+                AcknowledgeLocalStart(playerId, mapIndex);
+            }
+        }
+
+        private static void StartGrab(int playerId, int mapIndex, int pawnId, int thingId, int startX, int startZ, bool rangeMode, bool grabPawn, float radius)
+        {
             if (playerId < 0)
                 return;
             Map map = Patch_GodHands.FindMap(mapIndex);
             if (map == null)
                 return;
             SessionKey key = new SessionKey(mapIndex, playerId);
-            if (GodHandSessions.ContainsKey(key))
+            if (GodHandSessions.TryGetValue(key, out GodHandDragSession existing))
+            {
+                TrySyncLocalGodHandController(existing);
                 return;
+            }
             IntVec3 start = new IntVec3(startX, 0, startZ);
+            if (!start.InBounds(map) || float.IsNaN(radius) || float.IsInfinity(radius))
+                return;
+            radius = Mathf.Clamp(radius, 0f, 10f);
             var session = new GodHandDragSession
             {
                 MapIndex = mapIndex,
@@ -1159,7 +1147,9 @@ namespace MP_MeowOnlineShop
             {
                 if (grabPawn)
                 {
-                    var pawns = Patch_GodHands.InvokeStatic(Patch_GodHands.GrabbingUtilsGetPawnsMethod, map, start, radius) as IList;
+                    var pawns = GenRadial.RadialCellsAround(start, radius, true)
+                        .Where(c => c.InBounds(map)).SelectMany(c => c.GetThingList(map))
+                        .OfType<Pawn>().Distinct().OrderBy(p => p.thingIDNumber).ToList();
                     if (pawns != null)
                     {
                         for (int i = 0; i < pawns.Count; i++)
@@ -1171,7 +1161,10 @@ namespace MP_MeowOnlineShop
                 }
                 else
                 {
-                    var things = Patch_GodHands.InvokeStatic(Patch_GodHands.GrabbingUtilsGetItemsMethod, map, start, radius) as IList;
+                    var things = GenRadial.RadialCellsAround(start, radius, true)
+                        .Where(c => c.InBounds(map)).SelectMany(c => c.GetThingList(map))
+                        .Where(t => t.def.category == ThingCategory.Item).Distinct()
+                        .OrderBy(t => t.thingIDNumber).ToList();
                     if (things != null)
                     {
                         for (int i = 0; i < things.Count; i++)
@@ -1204,10 +1197,11 @@ namespace MP_MeowOnlineShop
 
         private static void AddGrabbedPawn(GodHandDragSession session, Pawn p, IntVec3 start, int mapIndex)
         {
-            if (p == null || p.Dead || p.Destroyed || PawnGrabbedByAnotherPlayer(mapIndex, session.PlayerId, p))
+            if (p == null || p.Dead || p.Destroyed || !p.Spawned || p.Map.uniqueID != mapIndex ||
+                !CanGrabPawn(p) || PawnGrabbedByAnotherPlayer(mapIndex, session.PlayerId, p))
                 return;
             session.Pawns[p.thingIDNumber] = p;
-            session.Offsets[p.thingIDNumber] = p.DrawPos - start.ToVector3Shifted();
+            session.Offsets[p.thingIDNumber] = session.RangeMode ? (p.Position - start).ToVector3() : Vector3.zero;
             p.jobs?.EndCurrentJob(JobCondition.InterruptForced);
             p.pather?.StopDead();
             p.stances?.CancelBusyStanceHard();
@@ -1217,10 +1211,11 @@ namespace MP_MeowOnlineShop
 
         private static void AddGrabbedThing(GodHandDragSession session, Thing t, IntVec3 start, int mapIndex)
         {
-            if (t == null || t.Destroyed || ThingGrabbedByAnotherPlayer(mapIndex, session.PlayerId, t))
+            if (t == null || t.Destroyed || !t.Spawned || t.Map.uniqueID != mapIndex ||
+                t.def.category != ThingCategory.Item || ThingGrabbedByAnotherPlayer(mapIndex, session.PlayerId, t))
                 return;
             session.Things[t.thingIDNumber] = t;
-            session.Offsets[t.thingIDNumber] = t.DrawPos - start.ToVector3Shifted();
+            session.Offsets[t.thingIDNumber] = session.RangeMode ? (t.Position - start).ToVector3() : Vector3.zero;
             if (t.Spawned)
                 t.DeSpawn(DestroyMode.Vanish);
         }
@@ -1298,8 +1293,7 @@ namespace MP_MeowOnlineShop
                 return;
 
             IntVec3 cell = new IntVec3(cellX, 0, cellZ);
-            session.LastDragCell = cell;
-            session.LastDragTick = Find.TickManager.TicksGame;
+            LocalDragCells[new SessionKey(mapIndex, playerId)] = cell;
             // Item drags use the same landing-point-only path: the target mod's
             // itemHandler.Draw already renders grabbed things at the local mouse
             // position, so no per-cell command is needed. Tracking the last
@@ -1333,7 +1327,8 @@ namespace MP_MeowOnlineShop
             cell = IntVec3.Invalid;
             if (!GodHandSessions.TryGetValue(new SessionKey(mapIndex, playerId), out GodHandDragSession session))
                 return false;
-            cell = session.LastDragCell.IsValid ? session.LastDragCell : session.StartCell;
+            cell = LocalDragCells.TryGetValue(new SessionKey(mapIndex, playerId), out IntVec3 preview)
+                ? preview : session.StartCell;
             return true;
         }
 
@@ -1343,6 +1338,12 @@ namespace MP_MeowOnlineShop
         }
 
         public static void SyncGodHandRelease(int playerId, int mapIndex, int cellX, int cellZ)
+        {
+            try { ReleaseGrab(playerId, mapIndex, cellX, cellZ); }
+            finally { CompleteLocalDrag(playerId, mapIndex); }
+        }
+
+        private static void ReleaseGrab(int playerId, int mapIndex, int cellX, int cellZ)
         {
             if (playerId < 0 || !GodHandSessions.TryGetValue(new SessionKey(mapIndex, playerId), out GodHandDragSession session))
                 return;
@@ -1389,7 +1390,7 @@ namespace MP_MeowOnlineShop
                     targetCell = session.StartCell;
                 GenPlace.TryPlaceThing(t, targetCell, map, ThingPlaceMode.Near);
                 if (t.Spawned && t.def.IsIngestible &&
-                    Patch_GodHands.GetSettingsValue("godHandEnableForceIngest", true))
+                    (Current.Game?.GetComponent<GodHandDragState>()?.ForceIngest ?? false))
                 {
                     Pawn eater = Patch_GodHands.InvokeStatic(Patch_GodHands.GrabbingUtilsGetPawnAtMethod, map, t.Position) as Pawn;
                     if (eater != null && eater.RaceProps.CanEverEat(t.def))
@@ -1403,7 +1404,7 @@ namespace MP_MeowOnlineShop
 
             GodHandSessions.Remove(new SessionKey(mapIndex, playerId));
             TrySyncLocalGodHandController(null, mapIndex, playerId);
-            ClearLocalPreview();
+            CompleteLocalDrag(playerId, mapIndex);
         }
 
         public static void SyncGodHandForceRelease(int playerId, int mapIndex)
@@ -1421,7 +1422,7 @@ namespace MP_MeowOnlineShop
                     AbortGodHandDrag(session, map, new IntVec3(cellX, 0, cellZ));
                 GodHandSessions.Remove(key);
             }
-            ClearLocalPreview();
+            CompleteLocalDrag(playerId, mapIndex);
             TrySyncLocalGodHandController(null, mapIndex, playerId);
         }
 
@@ -1448,8 +1449,9 @@ namespace MP_MeowOnlineShop
                 {
                     if (GodHandSessions.TryGetValue(godHandKeys[i], out GodHandDragSession session))
                     {
-                        IntVec3 cell = session.LastDragCell.IsValid ? session.LastDragCell : session.StartCell;
-                        SyncGodHandForceReleaseAt(playerId, godHandKeys[i].MapIndex, cell.x, cell.z);
+                        TryGetLocalGodHandDragCell(playerId, godHandKeys[i].MapIndex, out IntVec3 cell);
+                        if (BeginLocalRelease(playerId, godHandKeys[i].MapIndex))
+                            SyncGodHandForceReleaseAt(playerId, godHandKeys[i].MapIndex, cell.x, cell.z);
                     }
                 }
             }
@@ -2310,9 +2312,9 @@ namespace MP_MeowOnlineShop
             }
 
             Designator designator = FindSelectedDesignator(Patch_GodHands.DesignatorGodHandType);
-            if (designator == null)
-                return;
-            object controller = AccessTools.Field(Patch_GodHands.DesignatorGodHandType, "controller")?.GetValue(designator);
+            LocalDrags.TryGetValue(new SessionKey(mapIndex, session?.PlayerId ?? ownerPlayerId ?? -1), out LocalDrag local);
+            object controller = local?.Controller ?? (designator == null ? null :
+                AccessTools.Field(Patch_GodHands.DesignatorGodHandType, "controller")?.GetValue(designator));
             if (controller == null)
                 return;
             if (session == null)

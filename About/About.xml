@@ -1,12 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.127</modVersion>
+  <modVersion>3.0.128</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
   </supportedVersions>
-  <author>尹怨怨</author>  <description><![CDATA[
+  <author>尹怨怨</author>
+  <description><![CDATA[
 MP-Race-Compatibility-Plus 是面向 RimWorld 1.6 Multiplayer 的联机兼容补丁合集，提供 RJW、多个种族与第三方模组的确定性、同步动作和多地图稳定性修复。
 
 MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch collection covering RJW, race mods, synchronized actions, deterministic randomness, and multi-map stability.
@@ -56,4 +57,3 @@ MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch col
     <li>ferny.PerspectiveShift</li>
   </loadAfter>
 </ModMetaData>
-
