@@ -1,5 +1,18 @@
 # [MP] Multiplayer Compatibility Patches
 
+## 3.0.128 desync hotfix (2026-09-13)
+
+- **Nivarian Race**: selection boost now uses focus delivered through Multiplayer map commands instead of each computer's local selection during simulation. Original hediff creation and ramping remain intact; duplicate selection does not multiply the effect, and abandoned focus expires after 180 map ticks.
+- **Milira Imperium / MiliraXian NeiyuLaw**: automatic special-pawn ideology conversion uses the pawn's owning player faction. Existing conversion queues and delays are preserved, avoiding branches based on the local player's faction.
+- **Raven Race**: includes the previously deployed apparel-render cache concurrency guard. It protects shared dictionary access; no overall TPS improvement is claimed.
+
+Resuming time alone can trigger the original issues because both automatic culture checks and selection boosts run during simulation ticks. The two diagnosed causes cover reports 62 and 65–67. The Kiiro job-ending divergence in reports 63/64 remains unresolved; this is not a claim that all reports are fixed.
+
+Validation: 45 offline regression checks passed. Three Nivarian host/client smoke runs covering one/two maps and sync/async time each passed 12,000 shared ticks. A representative 316-mod, three-map, multifaction, async-ON save passed 10,008 shared ticks. A separate Kiiro warm-rejoin comparison matched pawn snapshots but failed its final world-clock measurement assertion; it is not counted as a complete pass. Further testing was stopped at the maintainer's request before publication. The 120,000-shared-tick soak and three cold-rejoin cycles remain incomplete; long-term stability is unverified.
+
+All players must install identical files and fully restart RimWorld. For config mismatches, use Multiplayer's native Fix and Restart instead of bypassing startup-setting differences. Keep a pre-update save backup.
+
+
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
 - Meow Framework / Meow Online Shop
@@ -138,19 +151,9 @@ Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compati
 - ReGrowth 2
 - Yet another Optimizer / Kingfisher
 
-## 3.0.128 update (2026-09-13)
+## Earlier 3.0.128 changes
 
-- ReGrowth 2: removes autumn leaf simulation's dependency on a local rendering cache, addressing view-dependent spawned objects and Thing IDs.
-- Multifaction diplomacy: reduces reflection calls, temporary allocations and repeated lookups while preserving faction order, diplomacy rules and recovery timers. Simulation tick frequency is unchanged.
-- New separate parallel-render compatibility module: uses thread-local Multiplayer drawing context with nested scope restoration and target-shape checks. This does not authorize arbitrary multithreaded simulation optimizers.
-- Retains the melee-animation component lookup optimization and the YaOpt / Kingfisher item-index removal boundary fix.
-
-Validation: RimWorld 1.6.4850 rev646 and Multiplayer 0.11.5+4a3be27-dirty. A 316-mod combination ran two game processes on one PC, with two maps, multiple factions and async time OFF, for over 120,000 map/world ticks. Final random states, Thing IDs and 28 pawn/diplomacy snapshots matched; three non-host recruitment actions were included. ReGrowth was checked separately in a 318-mod, three-map, async-ON smoke run of 10,008 shared ticks. Cross-PC, cold-rejoin and long ReGrowth runs remain unverified; this is not certification of every feature in every listed mod.
-
-Fixed-work Dubs Performance Analyzer samples showed approximately 29–31% less time in the diplomacy recovery hotspot and 27% less in record lookups. Overall TPS stayed around 153–155; an overall TPS gain has NOT been demonstrated. The profiler is a measurement tool and is not shipped with this mod.
-
-Known limitations: this combination still reports a Kiiro story null-map warning, a Defensive Positions legacy Multiplayer API warning and EliteRaid patch warnings. Patch coverage does not mean all such warnings are resolved. All players should update to identical versions and fully restart the game.
-
+Retains ReGrowth autumn-leaf determinism, thread-local drawing context, diplomacy query optimization and YaOpt/Kingfisher fixes. Earlier performance samples and their separate test conditions are documented in the repository; they are not a long-soak result for this hotfix.
 
 ## Multifaction diplomacy (3.0.127)
 
@@ -175,4 +178,4 @@ Author: 尹怨怨
 
 GitHub: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus
 
-Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128.md
+Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128-desync-hotfix.md
