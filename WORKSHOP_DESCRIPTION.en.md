@@ -1,17 +1,18 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.128 desync hotfix (2026-09-13)
+## The Tale of Milira / Nivarian update (2026-09-14)
 
-- **Nivarian Race**: selection boost now uses focus delivered through Multiplayer map commands instead of each computer's local selection during simulation. Original hediff creation and ramping remain intact; duplicate selection does not multiply the effect, and abandoned focus expires after 180 map ticks.
-- **Milira Imperium / MiliraXian NeiyuLaw**: automatic special-pawn ideology conversion uses the pawn's owning player faction. Existing conversion queues and delays are preserved, avoiding branches based on the local player's faction.
-- **Raven Race**: includes the previously deployed apparel-render cache concurrency guard. It protects shared dictionary access; no overall TPS improvement is claimed.
+Release boundary: the soak used a locally modified Raven module. This upload retains the previous Workshop Raven binary and its original eligibility restrictions, excluding that local change. The soak is therefore not an identical-environment test of the entire final Workshop package. The new dedicated DLL and XML are byte-identical to the tested files.
 
-Resuming time alone can trigger the original issues because both automatic culture checks and selection boosts run during simulation ticks. The two diagnosed causes cover reports 62 and 65–67. The Kiiro job-ending divergence in reports 63/64 remains unresolved; this is not a claim that all reports are fixed.
+- **The Tale of Milira (3477405110)**: 49 caravan outcome callbacks use the caravan's faction and map context; special-pawn recruitment and supply-dialog synchronization are covered.
+- **Nivarian (3624805128)**: orbital fireworks use a consistent recipient roster across player factions, preventing a mood memory from being awarded on only one peer. Coverage also includes simulation randomness for drones/turrets/shields, rendering and saved-state separation, aid and joining decisions, flight/transformation/experience canisters, Nira parameters and control-panel actions.
+- **Other determinism fixes**: Privacy Please simulation randomness and saved cooldowns; fire smoke/spark visual randomness isolation; conditional legacy Def-reference corrections.
 
-Validation: 45 offline regression checks passed. Three Nivarian host/client smoke runs covering one/two maps and sync/async time each passed 12,000 shared ticks. A representative 316-mod, three-map, multifaction, async-ON save passed 10,008 shared ticks. A separate Kiiro warm-rejoin comparison matched pawn snapshots but failed its final world-clock measurement assertion; it is not counted as a complete pass. Further testing was stopped at the maintainer's request before publication. The 120,000-shared-tick soak and three cold-rejoin cycles remain incomplete; long-term stability is unverified.
+Validation: 91 checks against actual assemblies and IL passed. A combined host/client run with 317 user mods, three maps, multiple player factions and async time passed 120,000 shared ticks, including rejoin, serialization and Nira actions. Fireworks recipients matched under five player-faction contexts; natural outdoor rewards and subsequent mood calculations matched. Both peers ran on one computer; this does not cover every story branch or cross-PC combination.
 
-All players must install identical files and fully restart RimWorld. For config mismatches, use Multiplayer's native Fix and Restart instead of bypassing startup-setting differences. Keep a pre-update save backup.
+No new all-pawn per-tick polling. Fireworks processing stays at the original reward boundary (current XML interval: 300 ticks); rendering guards use cached access. No separate TPS A/B benchmark was run, so zero overhead is not claimed. All 16 available historical reports were analyzed, but some contain only downstream differences: not every historical root cause is proven fixed. There is no evidence that removing one ordinary mod resolves all desyncs.
 
+Core remains 3.0.128 and RaceTrio remains 1.1.0; the new dedicated assembly is 1.0.0. All peers must install identical files, fully restart, and keep other local settings consistent. Further tests stop after this release at the maintainer's request.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
@@ -178,4 +179,4 @@ Author: 尹怨怨
 
 GitHub: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus
 
-Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128-desync-hotfix.md
+Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128-tale-nivarian.md

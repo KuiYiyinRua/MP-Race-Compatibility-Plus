@@ -1,5 +1,20 @@
 # list1.xml 模组联机兼容计划
 
+## 米莉拉之物语 / Nivarian 专项更新（2026-09-14）
+
+- **米莉拉之物语（3477405110）**：49 个商队事件结果使用商队所属阵营和地图上下文；补齐特殊角色招募、补给对话同步。
+- **Nivarian（3624805128）**：修复轨道烟花按本机阵营选择奖励对象的问题，避免一端获得心情记忆、另一端没有；补齐无人机/炮塔/护盾模拟随机、绘制缓存与存档隔离、援助及加入选择、飞行/变形/经验罐、Nira 参数与控制面板交互同步。
+- **其他确定性修补**：Privacy Please 模拟随机与冷却保存；火焰烟雾/火星的视觉随机隔离；有条件的旧 Def 引用修复。
+
+验证：91 项实际程序集/IL 检查通过；317 个用户模组、双端、三地图、多玩家阵营、异步时间下，合并重连、存读档、Nira 操作与 120,000 共享 tick 长测通过。烟花奖励在五个玩家阵营上下文保持一致，自然室外奖励和随后心情计算两端一致。该测试在同一电脑运行，未覆盖全部剧情分支或全部跨电脑组合。
+
+没有新增全角色逐 tick 巡检。烟花只在原有奖励入口处理（当前 XML 间隔 300 tick）；绘制保护使用缓存访问。未进行独立 TPS A/B，不承诺零开销。16 份历史日志已逐份分析，部分仅保留末端差异，不能宣称所有历史根因均已解决；没有证据支持删除某一个普通模组就能解决全部失步。
+
+核心保持 3.0.128，RaceTrio 保持 1.1.0；新增专项程序集为 1.0.0。所有玩家安装相同文件并完全重启，未接管的本地设置仍须一致。按维护者要求，本轮发布后停止追加测试。
+
+本节为当前范围；下文保留历史验证记录。
+
+
 ## 3.0.128 失步修补更新（2026-09-13）
 
 - **Nivarian Race**：选中强化改为通过联机地图命令同步选中目标；模拟不再直接读取各电脑的本地选择。保留原增益生成与增长规则，重复选中不叠加，离线选中记录在 180 个地图 Tick 后过期。
@@ -919,3 +934,8 @@ P1 批量审计表已覆盖 P1Inventory160.txt 中本阶段需要定向审计的
 证据目录：`%TEMP%\mp-ps-test10-20260809\`、`%TEMP%\mp-trader-test-20260809\`、`%TEMP%\mp-rjw-test-20260809\`、`%TEMP%\mp-compatui-test-20260809\`、`%TEMP%\mp-rigor-test-20260809\`、`%TEMP%\mp-alert-test-20260809\`、`%TEMP%\mp-caravanui-test2-20260809\`、`%TEMP%\mp-gravship-test-20260809\`。
 
 剩余专项（Caravan Mass UI、TwoMap/Async 等）可继续用同一候选跑；Gravship 需要带引擎的专用存档。正式部署仍待用户确认。
+
+
+发布边界：长测使用了本地修改版渡鸦模块；本次上传保留既有工坊渡鸦版本和原有资格限制，不包含该本地改动。因此长测不是对最终全部工坊文件组合的相同环境验证。新增专项DLL和XML与通过测试的文件完全一致。
+
+Release boundary: the soak used a locally modified Raven module. This upload retains the previous Workshop Raven binary and its original eligibility restrictions, excluding that local change. The soak is therefore not an identical-environment test of the entire final Workshop package. The new dedicated DLL and XML are byte-identical to the tested files.

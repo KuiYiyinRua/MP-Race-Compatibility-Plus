@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+  <!-- The installed Ratkin 1.6 renamed the same research tab and noble apparel project. -->
+  <Operation Class="PatchOperationConditional">
+    <xpath>Defs[ResearchTabDef[defName="RK_ResearchTab_Default"] and not(ResearchTabDef[defName="RatkinTech"])]/ResearchProjectDef[defName="UnCraftableThings"]/tab[text()="RatkinTech"]</xpath>
+    <match Class="PatchOperationReplace">
+      <xpath>Defs/ResearchProjectDef[defName="UnCraftableThings"]/tab[text()="RatkinTech"]</xpath>
+      <value><tab>RK_ResearchTab_Default</tab></value>
+    </match>
+  </Operation>
+  <Operation Class="PatchOperationConditional">
+    <xpath>Defs[ResearchProjectDef[defName="RK_Research_NobleApparel"] and not(ResearchProjectDef[defName="HighClassClothing"])]/ResearchProjectDef[defName="UnCraftableThings"]/prerequisites/li[text()="HighClassClothing"]</xpath>
+    <match Class="PatchOperationReplace">
+      <xpath>Defs/ResearchProjectDef[defName="UnCraftableThings"]/prerequisites/li[text()="HighClassClothing"]</xpath>
+      <value><li>RK_Research_NobleApparel</li></value>
+    </match>
+  </Operation>
+  <!-- Insects moved out of RJW core. An unavailable OR alternative is false;
+       remove only that absent graphical condition, never an existing gameplay def. -->
+  <Operation Class="PatchOperationConditional">
+    <xpath>Defs[not(HediffDef[defName="RJW_InsectHiveEgg"])]/AlienRace.ThingDef_AlienRace//Or[count(*) &gt; 1]/Hediff[text()="RJW_InsectHiveEgg"]</xpath>
+    <match Class="PatchOperationRemove">
+      <xpath>Defs/AlienRace.ThingDef_AlienRace//Or[count(*) &gt; 1]/Hediff[text()="RJW_InsectHiveEgg"]</xpath>
+    </match>
+  </Operation>
+</Patch>

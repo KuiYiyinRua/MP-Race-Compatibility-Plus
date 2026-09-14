@@ -30,11 +30,11 @@
 
 3.0.127 按玩家派系实例保存 Milira 开局敌对与和解状态，并分别处理好感度上限、重算和自然恢复。相同开局定义的不同派系也保持独立；正常交战不再被定期重置。实现范围和旧档行为见 [外交隔离说明](Docs/FACTION_DIPLOMACY_ISOLATION.zh-CN.md)。
 
-## 当前发布：3.0.128 失步修补更新
+## 当前发布：米莉拉之物语 / Nivarian 专项更新
 
-新增 Nivarian 选中增益同步与 Milira 特殊角色归属文化修复，并补齐 Raven 服装缓存并发保护。三轮 Nivarian 12,000 共享 Tick 短测及 316 模组原存档 10,008 共享 Tick 短测通过；长测、冷重连未完成，63/64 绮罗工作分叉仍未定位。所有玩家需同步文件并完全重启。
+317 用户模组、三地图、多阵营异步双端 120,000 共享 tick 合并回归通过。新增烟花奖励一致性、剧情上下文、模拟随机、保存状态和交互同步修复。核心与 RaceTrio 版本保持不变。
 
-详见 [中英文修补说明](Docs/releases/3.0.128-desync-hotfix.md)。核心仍为 3.0.128，两处新模块各为 1.0.0；未重建实验 RaceTrio 源码。
+实现范围、测试与限制见 [中英文发布说明](Docs/releases/3.0.128-tale-nivarian.md)。
 
 ## 3.0.128 基础更新（历史验证）
 
@@ -45,3 +45,8 @@
 - [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3777248347)
 
 外交热点耗时约降低 29–31%，并不代表整体 TPS 提升。316 模组双端长测为同机双地图、多派系、异步关闭；ReGrowth 为独立的异步三地图短测。所有玩家须安装同一发布版本并完全重启。
+
+
+发布边界：长测使用了本地修改版渡鸦模块；本次上传保留既有工坊渡鸦版本和原有资格限制，不包含该本地改动。因此长测不是对最终全部工坊文件组合的相同环境验证。新增专项DLL和XML与通过测试的文件完全一致。
+
+Release boundary: the soak used a locally modified Raven module. This upload retains the previous Workshop Raven binary and its original eligibility restrictions, excluding that local change. The soak is therefore not an identical-environment test of the entire final Workshop package. The new dedicated DLL and XML are byte-identical to the tested files.
