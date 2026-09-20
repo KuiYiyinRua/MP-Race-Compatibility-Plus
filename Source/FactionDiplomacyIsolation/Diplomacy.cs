@@ -17,6 +17,7 @@ namespace Meow.FactionDiplomacy
     {
         static Bootstrap()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction")) return;
             if (!MP.enabled) return;
             // Force the original bootstrap to queue its installer before this installer.
             var core = AccessTools.TypeByName("MP_MeowOnlineShop.MpMeowOnlineShopBootstrap");

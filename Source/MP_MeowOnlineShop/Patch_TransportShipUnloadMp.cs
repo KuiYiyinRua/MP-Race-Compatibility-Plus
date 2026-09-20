@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
@@ -10,248 +11,156 @@ using Verse;
 namespace MP_MeowOnlineShop
 {
     /// <summary>
-    /// Vanilla ShipJob_Unload drops pawns and immediately sets
-    /// pawn.drafter.Drafted = true while the transport ship is ticking in the
-    /// world time domain. In Multiplayer async time the map can be at a
-    /// different tick; the world-tick setter then ends the pawn's job and
-    /// creates its next job under the world Rand context on one peer, while the
-    /// same pawn's job tracker ends naturally under the map Rand context on the
-    /// other peer. That cross-domain ordering makes job IDs and Rand states
-    /// diverge exactly after a shuttle landing.
-    ///
-    /// Desync-259 reproduced the same ordering failure with Odyssey passenger
-    /// shuttles. The Drafted setter is not a reliable queue boundary: it is
-    /// skipped when the pawn is already drafted or when the local map is
-    /// reported as a home map, so one peer defers the draft while the other
-    /// lets the pawn tick through its job naturally. Queueing now happens at
-    /// UnloadThingFromShuttle itself, from the method's own arguments, so every
-    /// peer schedules the same pawns regardless of local draft state. No
-    /// home-map guard is applied when the deferred setter actually runs.
-    ///
-    /// The setter is deferred to the pawn's actual map's next MapPreTick. All
-    /// peers then run the vanilla draft side effects in the same per-map
-    /// context and stable pawn-ID order before that map's tick lists execute.
-    /// The queue is keyed by pawn, not by the shuttle's local map, and the
-    /// home-map guard is removed so one peer cannot skip the replay while the
-    /// other runs it (Desync-259).
-    ///
-    /// Desync-513/514/515 (2026-08-20, faction trade): the same job-ID
-    /// signature returned. The deferral queue was gated on
-    /// pawn.IsPlayerControlled (a Faction.OfPlayer-relative check), and in
-    /// multifaction/async sessions Faction.OfPlayer can be the spectator
-    /// faction on one peer while the unload runs. One peer then queues the
-    /// pawn (defers the auto-draft to MapPreTick) while the other never does,
-    /// leaving the pawn drafted on one peer only. Its think tree starts
-    /// JobGiver_Orders Wait_Combat / Wait_MaintainPosture jobs and consumes
-    /// UniqueIDsManager job IDs on that peer only (first divergent trace).
-    /// The queue decision and the mirror step are now deterministic
-    /// (Faction.def.isPlayer + drafter), independent of Faction.OfPlayer.
-    ///
-    /// Desync-588 (2026-08-21): the same world-side unload also executes
-    /// `pawn.inventory.UnloadEverything = true` for a colonist pawn arriving
-    /// at a home map. The client then entered JobDriver_UnloadYourInventory
-    /// while the host was already ticking a TunnelHiveSpawner. That branch is
-    /// deferred through the same MapPreTick boundary; its queue is populated
-    /// from the unload arguments and uses map-parent faction identity instead
-    /// of the peer-local Faction.OfPlayer/Map.IsPlayerHome context.
+    /// Replay complete world-side shuttle unloads at the destination map's
+    /// MapPreTick, where pawn jobs and random state belong. The serialized
+    /// queue deduplicates paused-map retries and discards stale ship jobs.
+    /// Vanilla decides draft and inventory effects after the pawn has spawned,
+    /// under its actual owner faction rather than the peer's viewed faction.
     /// </summary>
     internal static class Patch_TransportShipUnloadMp
     {
-        private static readonly FieldInfo DraftedField =
-            AccessTools.Field(typeof(Pawn_DraftController), "draftedInt");
-
-        private static readonly FieldInfo InventoryPawnField =
-            AccessTools.Field(typeof(Pawn_InventoryTracker), "pawn");
-
-        private static bool IsDeferredPlayerPawn(Pawn pawn)
-        {
-            return pawn != null &&
-                   pawn.drafter != null &&
-                   pawn.Faction != null &&
-                   pawn.Faction.def != null &&
-                   pawn.Faction.def.isPlayer;
-        }
+        private static readonly Type FactionExtensionsType =
+            AccessTools.TypeByName("Multiplayer.Client.Factions.FactionExtensions");
+        private static readonly MethodInfo PushFactionMethod = AccessTools.Method(
+            FactionExtensionsType, "PushFaction",
+            new[] { typeof(Map), typeof(Faction), typeof(bool) });
+        private static readonly MethodInfo PopFactionMethod = AccessTools.Method(
+            FactionExtensionsType, "PopFaction", new[] { typeof(Map) });
+        private static readonly MethodInfo AsyncTimeMethod = AccessTools.Method(
+            AccessTools.TypeByName("Multiplayer.Client.Extensions"), "AsyncTime", new[] { typeof(Map) });
+        private static readonly FieldInfo TickingMapField = AccessTools.Field(
+            AccessTools.TypeByName("Multiplayer.Client.AsyncTimeComp"), "tickingMap");
+        private static readonly PropertyInfo MapPausedProperty = AccessTools.Property(
+            AccessTools.TypeByName("Multiplayer.Client.AsyncTimeComp"), "Paused");
 
         private static bool IsAsyncTimeActive()
         {
             return MpRuntimeInfo.TryGetAsyncTimeActive(out bool asyncTime) &&
                    asyncTime;
         }
-        private static readonly HashSet<Pawn> PendingDrafts =
-            new HashSet<Pawn>();
-        private static readonly HashSet<Pawn> PendingInventoryUnloads =
-            new HashSet<Pawn>();
-        private static readonly HashSet<int> LoggedDeferredDraftMaps =
-            new HashSet<int>();
-        private static readonly HashSet<int> LoggedDeferredInventoryMaps =
-            new HashSet<int>();
-        private sealed class DeferredUnloadOperation
+        internal sealed class DeferredUnloadOperation : IExposable
         {
-            internal readonly TransportShip Ship;
-            internal readonly Thing Thing;
-            internal readonly List<Thing> DroppedThings;
-            internal readonly bool UnforbidAll;
-            internal readonly bool DeferDraft;
-            internal readonly bool DeferInventoryUnload;
+            private static readonly FieldInfo DroppedThingsField =
+                AccessTools.Field(typeof(ShipJob_Unload), "droppedThings");
+            internal TransportShip Ship;
+            internal Thing Thing;
+            internal Map SourceMap;
+            internal List<Thing> DroppedThings;
+            internal bool UnforbidAll;
+            internal int UnloadJobId = -1;
+
+            public DeferredUnloadOperation() { }
 
             internal DeferredUnloadOperation(
                 TransportShip ship,
                 Thing thing,
                 List<Thing> droppedThings,
-                bool unforbidAll,
-                bool deferDraft,
-                bool deferInventoryUnload)
+                bool unforbidAll)
             {
                 Ship = ship;
                 Thing = thing;
                 DroppedThings = droppedThings;
                 UnforbidAll = unforbidAll;
-                DeferDraft = deferDraft;
-                DeferInventoryUnload = deferInventoryUnload;
+                SourceMap = ship.shipThing.Map;
+                if (ship.curJob is ShipJob_Unload job && droppedThings != null &&
+                    ReferenceEquals(DroppedThingsField.GetValue(job), droppedThings))
+                    UnloadJobId = job.loadID;
+            }
+
+            internal List<Thing> ResolveDroppedThings()
+            {
+                if (UnloadJobId < 0)
+                    return DroppedThings;
+                return ShipJobMatches() ? DroppedThingsField.GetValue(Ship.curJob) as List<Thing> : null;
+            }
+
+            internal bool ShipJobMatches() => Ship?.curJob is ShipJob_Unload job &&
+                job.loadID == UnloadJobId && job.jobState != ShipJobState.Ended;
+
+            public void ExposeData()
+            {
+                Scribe_References.Look(ref Ship, "ship");
+                Scribe_References.Look(ref Thing, "thing");
+                Scribe_References.Look(ref SourceMap, "sourceMap");
+                Scribe_Values.Look(ref UnforbidAll, "unforbidAll");
+                Scribe_Values.Look(ref UnloadJobId, "unloadJobId", -1);
+                // A ship job owns its live droppedThings list. Rebind to that
+                // job after loading instead of silently using a detached copy.
+                if (UnloadJobId < 0)
+                    Scribe_Collections.Look(ref DroppedThings, "droppedThings", LookMode.Reference);
             }
         }
 
-        private static readonly List<DeferredUnloadOperation>
-            PendingUnloadOperations =
-                new List<DeferredUnloadOperation>();
+        private static List<DeferredUnloadOperation> PendingUnloadOperations =>
+            Current.Game.GetComponent<TransportShipUnloadState>().Pending;
 
         private static bool _applied;
         private static bool _processingDeferred;
-        private static int _shipUnloadDepth;
+        private sealed class NativeUnloadScope
+        {
+            internal Map Map;
+            internal Faction Owner;
+            internal NativeUnloadScope Previous;
+            internal bool Pushed;
+        }
+        private static NativeUnloadScope nativeScope;
+
 
         internal static void Apply(Harmony harmony)
         {
-            if (_applied || harmony == null)
-                return;
+            if (_applied || harmony == null) return;
             _applied = true;
-
             try
             {
-                MethodInfo unloadThingFromShuttle = AccessTools.Method(
-                    typeof(ShipJob_Unload),
+                MethodInfo unload = AccessTools.Method(typeof(ShipJob_Unload),
                     nameof(ShipJob_Unload.UnloadThingFromShuttle),
-                    new[]
-                    {
-                        typeof(TransportShip),
-                        typeof(Thing),
-                        typeof(List<Thing>),
-                        typeof(bool)
-                    });
-                MethodInfo draftedSetter = AccessTools.PropertySetter(
-                    typeof(Pawn_DraftController),
-                    nameof(Pawn_DraftController.Drafted));
-                MethodInfo unloadEverythingSetter = AccessTools.PropertySetter(
-                    typeof(Pawn_InventoryTracker),
-                    nameof(Pawn_InventoryTracker.UnloadEverything));
-                MethodInfo mapPreTick = AccessTools.Method(
-                    typeof(Map),
-                    nameof(Map.MapPreTick));
-
-                MethodInfo unloadPrefix = AccessTools.Method(
-                    typeof(Patch_TransportShipUnloadMp),
-                    nameof(UnloadPrefix));
-                MethodInfo unloadFinalizer = AccessTools.Method(
-                    typeof(Patch_TransportShipUnloadMp),
-                    nameof(UnloadFinalizer));
-                MethodInfo draftedPrefix = AccessTools.Method(
-                    typeof(Patch_TransportShipUnloadMp),
-                    nameof(DraftedPrefix));
-                MethodInfo unloadEverythingPrefix = AccessTools.Method(
-                    typeof(Patch_TransportShipUnloadMp),
-                    nameof(UnloadEverythingPrefix));
-                MethodInfo mapPreTickPostfix = AccessTools.Method(
-                    typeof(Patch_TransportShipUnloadMp),
-                    nameof(MapPreTickPostfix));
-
-                if (unloadThingFromShuttle == null || draftedSetter == null ||
-                    mapPreTick == null || unloadPrefix == null ||
-                    unloadFinalizer == null || draftedPrefix == null ||
-                    unloadEverythingPrefix == null || mapPreTickPostfix == null ||
-                    DraftedField == null)
+                    new[] { typeof(TransportShip), typeof(Thing), typeof(List<Thing>), typeof(bool) });
+                MethodInfo preTick = AccessTools.Method(typeof(Map), nameof(Map.MapPreTick));
+                if (unload == null || preTick == null || PushFactionMethod == null || PopFactionMethod == null || AsyncTimeMethod == null || MapPausedProperty == null || TickingMapField == null)
                 {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Transport-ship unload draft guard " +
-                        $"targets unresolved; skipped unload={unloadThingFromShuttle != null}, " +
-                        $"setter={draftedSetter != null}, mapPreTick={mapPreTick != null}, " +
-                        $"field={DraftedField != null}.");
+                    Log.Error("[MP-MeowOnlineShop] REQUIRED_TARGET_FAILED transport unload map boundary.");
                     return;
                 }
-
-                harmony.Patch(
-                    unloadThingFromShuttle,
-                    prefix: new HarmonyMethod(unloadPrefix)
-                    {
-                        priority = Priority.First
-                    },
-                    finalizer: new HarmonyMethod(unloadFinalizer)
-                    {
-                        priority = Priority.Last
-                    });
-                harmony.Patch(
-                    draftedSetter,
-                    prefix: new HarmonyMethod(draftedPrefix)
-                    {
-                        priority = Priority.First
-                    });
-                bool inventoryUnloadPatched = false;
-                if (unloadEverythingSetter != null &&
-                    unloadEverythingPrefix != null &&
-                    InventoryPawnField != null)
-                {
-                    harmony.Patch(
-                        unloadEverythingSetter,
-                        prefix: new HarmonyMethod(unloadEverythingPrefix)
-                        {
-                            priority = Priority.First
-                        });
-                    inventoryUnloadPatched = true;
-                }
-                harmony.Patch(
-                    mapPreTick,
-                    postfix: new HarmonyMethod(mapPreTickPostfix)
-                    {
-                        priority = Priority.Last
-                    });
-
-                Log.Message(
-                    "[MP-MeowOnlineShop] Transport-ship unload draft guard active: " +
-                    "world-tick drops and pawn side effects are replayed at " +
-                    "the destination map's next MapPreTick; inventory unload " +
-                    "deferral=" +
-                    inventoryUnloadPatched + ".");
-
-                if (!inventoryUnloadPatched)
-                {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Transport-ship inventory unload " +
-                        "deferral target unresolved; vanilla UnloadEverything " +
-                        "side effects remain immediate.");
-                }
+                harmony.Patch(unload,
+                    prefix: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(UnloadPrefix)) { priority = Priority.First },
+                    finalizer: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(UnloadFinalizer)) { priority = Priority.Last },
+                    transpiler: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(UsePassengerHomeContext)));
+                harmony.Patch(preTick, postfix: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(MapPreTickPostfix)) { priority = Priority.Last });
+                Log.Message("[MP-MeowOnlineShop] Transport unload map boundary active: serialized, deduplicated native replay with owner faction context.");
             }
             catch (Exception e)
             {
-                Log.Warning(
-                    "[MP-MeowOnlineShop] Transport-ship unload draft guard " +
-                    "install failed: " + e);
+                Log.Error("[MP-MeowOnlineShop] REQUIRED_TARGET_FAILED transport unload: " + e);
             }
         }
-
         private static bool UnloadPrefix(
             TransportShip ship,
             Thing thingToDrop,
             List<Thing> droppedThings,
-            bool unforbidAll)
+            bool unforbidAll,
+            out NativeUnloadScope __state)
         {
-            if (!MP.IsInMultiplayer || _processingDeferred)
+            __state = null;
+            if (!MP.IsInMultiplayer)
                 return true;
-
-            _shipUnloadDepth++;
-
-            // With async time off there is no world/map ordering boundary to
-            // repair; preserve vanilla execution in that mode.
-            if (!IsAsyncTimeActive() || ship?.shipThing == null ||
+            if (ship?.shipThing == null ||
                 !ship.shipThing.Spawned || thingToDrop == null)
             {
+                return true;
+            }
+            if (_processingDeferred || !IsAsyncTimeActive())
+            {
+                // World ticks use the spectator faction even with async off.
+                // Keep native execution timing, but restore the passenger's
+                // owner context for spawning, draft and inventory decisions.
+                Faction owner = (thingToDrop as Pawn)?.Faction ?? ship.shipThing.Faction;
+                if (ship.shipThing is Building_PassengerShuttle && owner != null && owner.IsPlayer)
+                {
+                    __state = new NativeUnloadScope { Map = ship.shipThing.Map, Owner = owner, Previous = nativeScope };
+                    nativeScope = __state;
+                    PushFactionMethod.Invoke(null, new object[] { __state.Map, owner, true });
+                    __state.Pushed = true;
+                }
                 return true;
             }
 
@@ -259,226 +168,88 @@ namespace MP_MeowOnlineShop
             // peers before the destination map reaches its stable pre-tick
             // boundary. Queue the complete vanilla operation so the drop,
             // Notify_ThingRemoved, and pawn side effects share one map context.
-            Pawn pawn = thingToDrop as Pawn;
-            Map unloadMap = ship.shipThing.Map;
+            // A paused/slower destination can receive several world-side
+            // attempts before its next pre-tick. Keep one operation per item;
+            // otherwise successful drops leave duplicates retrying forever.
+            foreach (DeferredUnloadOperation pending in PendingUnloadOperations)
+            {
+                if (pending.Ship == ship && pending.Thing == thingToDrop)
+                {
+                    pending.UnforbidAll |= unforbidAll;
+                    return false;
+                }
+            }
             PendingUnloadOperations.Add(
                 new DeferredUnloadOperation(
                     ship,
                     thingToDrop,
                     droppedThings,
-                    unforbidAll,
-                    IsDeferredPlayerPawn(pawn),
-                    ShouldDeferInventoryUnload(pawn, unloadMap)));
+                    unforbidAll));
             return false;
         }
-        private static Exception UnloadFinalizer(
-            TransportShip ship,
-            Thing thingToDrop,
-            Exception __exception)
+        private static void MapPreTickPostfix(Map __instance)
         {
-            if (_shipUnloadDepth > 0)
-                _shipUnloadDepth--;
+            if (MP.IsInMultiplayer && !_processingDeferred && __instance != null &&
+                ReferenceEquals(TickingMapField.GetValue(null), __instance))
+                ReplayPendingUnloadOperations(__instance);
+        }
 
-            if (!MP.IsInMultiplayer ||
-                !(thingToDrop is Pawn pawn) || pawn == null)
+        private static Exception UnloadFinalizer(NativeUnloadScope __state, Exception __exception)
+        {
+            if (__state != null)
             {
-                return __exception;
+                try { if (__state.Pushed) PopFactionMethod.Invoke(null, new object[] { __state.Map }); }
+                finally { nativeScope = __state.Previous; }
             }
-
-            if (__exception != null)
-            {
-                PendingDrafts.Remove(pawn);
-                PendingInventoryUnloads.Remove(pawn);
-                return __exception;
-            }
-
-            if (pawn.Destroyed || !pawn.Spawned)
-            {
-                PendingDrafts.Remove(pawn);
-                PendingInventoryUnloads.Remove(pawn);
-                return __exception;
-            }
-
-            // Deterministic mirror: every peer marks a queued player-faction
-            // pawn drafted at the drop point, regardless of the vanilla
-            // IsPlayerControlled / IsPlayerHome gates (both are
-            // Faction.OfPlayer-relative and can differ between peers). The
-            // full setter side effects still run once at the destination
-            // map's next MapPreTick, in the map's Rand/UniqueID context.
-            if (PendingDrafts.Contains(pawn) && pawn.drafter != null &&
-                !pawn.drafter.Drafted)
-            {
-                DraftedField.SetValue(pawn.drafter, true);
-            }
-
             return __exception;
         }
 
-        private static bool UnloadEverythingPrefix(
-            Pawn_InventoryTracker __instance,
-            bool value)
+        private static bool IsPassengerHome(Map map)
         {
-            if (!MP.IsInMultiplayer || !value || _processingDeferred ||
-                _shipUnloadDepth <= 0 || !IsAsyncTimeActive())
-            {
+            bool vanilla = map.IsPlayerHome;
+            if (!vanilla || nativeScope == null || nativeScope.Map != map ||
+                !MpRuntimeInfo.TryGetMultifactionActive(out bool multifaction) || !multifaction)
+                return vanilla;
+            Faction owner = nativeScope.Owner;
+            if (map.ParentFaction == owner &&
+                (map.Parent?.def.canBePlayerHome == true || map.wasSpawnedViaGravShipLanding))
                 return true;
-            }
-
-            Pawn pawn = GetInventoryPawn(__instance);
-            // The queue decision was captured from ShipJob_Unload.UnloadThingFromShuttle.
-            // Do not re-evaluate the live map/faction state here: that state can already
-            // differ while vanilla is unwinding the same unload call on different peers.
-            if (!PendingInventoryUnloads.Contains(pawn))
+            // Odyssey's generic home flag accepts any grav-engine or a past
+            // landing. Another player's ship/base must not count as our home.
+            if (map.listerThings.ThingsOfDef(ThingDefOf.GravEngine).Any(t => t.Faction == owner))
                 return true;
-
-            // ShipJob_Unload invokes this setter while the transport ship is
-            // still on the world tick. Keep the flag false until MapPreTick so
-            // JobDriver_UnloadYourInventory is created in the destination map
-            // context on every peer. The queue is populated from the unload
-            // method arguments, so this remains symmetric even if the vanilla
-            // IsColonist/IsPlayerHome checks differ under multifaction.
-            return false;
+            var packed = new List<Thing>();
+            ThingOwnerUtility.GetAllThingsRecursively(map, ThingRequest.ForDef(ThingDefOf.GravEngine.minifiedDef),
+                packed, allowUnreal: true, null, alsoGetSpawnedThings: true);
+            return packed.Any(t => t.GetInnerIfMinified()?.Faction == owner);
         }
 
-        private static bool DraftedPrefix(
-            Pawn_DraftController __instance,
-            bool value)
+        private static IEnumerable<CodeInstruction> UsePassengerHomeContext(IEnumerable<CodeInstruction> instructions)
         {
-            if (!MP.IsInMultiplayer || !value || _processingDeferred ||
-                _shipUnloadDepth <= 0)
+            var getter = AccessTools.PropertyGetter(typeof(Map), nameof(Map.IsPlayerHome));
+            var replacement = AccessTools.Method(typeof(Patch_TransportShipUnloadMp), nameof(IsPassengerHome));
+            int matches = 0;
+            foreach (var instruction in instructions)
             {
-                return true;
+                if (instruction.Calls(getter))
+                {
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = replacement;
+                    matches++;
+                }
+                yield return instruction;
             }
-
-            if (!MpRuntimeInfo.TryGetAsyncTimeActive(out bool asyncTime) ||
-                !asyncTime)
-            {
-                return true;
-            }
-
-            Pawn pawn = __instance?.pawn;
-            if (pawn == null || pawn.Destroyed || !pawn.Spawned ||
-                pawn.Map == null)
-            {
-                return true;
-            }
-
-            // Mirror the resulting Drafted value immediately, but postpone the
-            // full setter side effects (queued-job clear, current-job end, and
-            // next-job selection) until the map owns the Rand/UniqueID context.
-            if (!__instance.Drafted)
-                DraftedField.SetValue(__instance, true);
-            return false;
+            if (matches != 2) throw new InvalidOperationException("REQUIRED_TARGET_FAILED passenger home checks=" + matches);
         }
-
-        private static void MapPreTickPostfix(Map __instance)
-        {
-            if (!MP.IsInMultiplayer || _processingDeferred ||
-                __instance == null)
-            {
-                return;
-            }
-
-            ReplayPendingUnloadOperations(__instance);
-
-            List<Pawn> valid = null;
-            HashSet<Pawn> validDrafts = new HashSet<Pawn>();
-            HashSet<Pawn> validInventoryUnloads = new HashSet<Pawn>();
-            foreach (Pawn pawn in PendingDrafts)
-            {
-                if (pawn == null || pawn.Destroyed || !pawn.Spawned ||
-                    pawn.Map != __instance || !IsDeferredPlayerPawn(pawn))
-                {
-                    continue;
-                }
-
-                if (valid == null)
-                    valid = new List<Pawn>();
-                if (validDrafts.Add(pawn))
-                    valid.Add(pawn);
-            }
-
-            foreach (Pawn pawn in PendingInventoryUnloads)
-            {
-                // PendingInventoryUnloads is authoritative for this unload operation.
-                // Re-checking the current home/parent state here could make one peer
-                // replay UnloadEverything while another peer leaves it deferred.
-                if (pawn == null || pawn.Destroyed || !pawn.Spawned ||
-                    pawn.Map != __instance || pawn.inventory == null)
-                {
-                    continue;
-                }
-
-                if (valid == null)
-                    valid = new List<Pawn>();
-                if (validInventoryUnloads.Add(pawn) &&
-                    !validDrafts.Contains(pawn))
-                {
-                    valid.Add(pawn);
-                }
-            }
-
-            if (valid == null || valid.Count == 0)
-                return;
-
-            valid.Sort((a, b) => a.thingIDNumber.CompareTo(b.thingIDNumber));
-            for (int i = 0; i < valid.Count; i++)
-            {
-                PendingDrafts.Remove(valid[i]);
-                PendingInventoryUnloads.Remove(valid[i]);
-            }
-
-            _processingDeferred = true;
-            try
-            {
-                foreach (Pawn pawn in valid)
-                {
-                    if (validDrafts.Contains(pawn))
-                    {
-                        // The prefix already mirrored the value; reset it so
-                        // the vanilla setter performs its normal job
-                        // transitions.
-                        DraftedField.SetValue(pawn.drafter, false);
-                        pawn.drafter.Drafted = true;
-                    }
-
-                    if (validInventoryUnloads.Contains(pawn) &&
-                        pawn.inventory != null)
-                    {
-                        pawn.inventory.UnloadEverything = true;
-                    }
-                }
-
-                if (validDrafts.Count > 0 &&
-                    LoggedDeferredDraftMaps.Add(__instance.uniqueID))
-                {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Replayed deferred transport-ship " +
-                        $"auto-draft at MapPreTick: map={__instance.uniqueID}, " +
-                        $"count={validDrafts.Count}, ids=" +
-                        FormatPawnIds(valid, validDrafts));
-                }
-
-                if (validInventoryUnloads.Count > 0 &&
-                    LoggedDeferredInventoryMaps.Add(__instance.uniqueID))
-                {
-                    Log.Warning(
-                        "[MP-MeowOnlineShop] Replayed deferred transport-ship " +
-                        "inventory unload at MapPreTick: map=" +
-                        __instance.uniqueID + ", count=" +
-                        validInventoryUnloads.Count + ", ids=" +
-                        FormatPawnIds(valid, validInventoryUnloads));
-                }
-            }
-            finally
-            {
-                _processingDeferred = false;
-            }
-        }
-
         private static void ReplayPendingUnloadOperations(Map map)
         {
-            if (!MP.IsInMultiplayer || map == null)
+            if (!MP.IsInMultiplayer || map == null || PendingUnloadOperations.Count == 0)
+                return;
+            // Only the real AsyncTimeComp map context may reach this replay.
+            // Multiplayer LoadPatch ticks every map once to initialize caches,
+            // including paused maps. That synthetic tick must not unload cargo.
+            object mapTime = AsyncTimeMethod.Invoke(null, new object[] { map });
+            if (mapTime != null && (bool)MapPausedProperty.GetValue(mapTime))
                 return;
 
             List<DeferredUnloadOperation> ready =
@@ -492,7 +263,11 @@ namespace MP_MeowOnlineShop
                     operation.Thing == null ||
                     operation.Ship.shipThing == null ||
                     operation.Ship.shipThing.Destroyed ||
-                    !operation.Ship.shipThing.Spawned)
+                    !operation.Ship.shipThing.Spawned ||
+                    operation.Ship.shipThing.Map != operation.SourceMap ||
+                    (operation.UnloadJobId >= 0 && !operation.ShipJobMatches()) ||
+                    operation.Ship.TransporterComp == null ||
+                    !operation.Ship.TransporterComp.innerContainer.Contains(operation.Thing))
                 {
                     stale.Add(operation);
                 }
@@ -525,6 +300,10 @@ namespace MP_MeowOnlineShop
             {
                 foreach (DeferredUnloadOperation operation in ready)
                 {
+                    // An earlier operation or native callback may have
+                    // transferred this item since the ready list was built.
+                    if (!operation.Ship.TransporterComp.innerContainer.Contains(operation.Thing))
+                        continue;
                     if (!ReplayDeferredUnload(operation))
                         retry.Add(operation);
                 }
@@ -553,108 +332,47 @@ namespace MP_MeowOnlineShop
             }
 
             Map map = ship.shipThing.Map;
-            IntVec3 interactionCell = ship.shipThing.InteractionCell;
-            if (!ship.TransporterComp.innerContainer.TryDrop(
-                thingToDrop,
-                interactionCell,
-                map,
-                ThingPlaceMode.Near,
-                out Thing _,
-                null,
-                delegate(IntVec3 c)
-                {
-                    if (c.Fogged(map))
-                        return false;
-                    return (!(thingToDrop is Pawn { Downed: not false }) ||
-                            c.GetFirstPawn(map) == null)
-                        ? true
-                        : false;
-                },
-                !(thingToDrop is Pawn)))
-            {
-                return false;
-            }
-
-            ship.TransporterComp.Notify_ThingRemoved(thingToDrop);
-            operation.DroppedThings?.Add(thingToDrop);
-            if (operation.UnforbidAll)
-                thingToDrop.SetForbidden(false, false);
-
-            if (thingToDrop is Pawn pawn)
-            {
-                if (operation.DeferDraft && pawn.drafter != null &&
-                    pawn.Spawned)
-                {
-                    DraftedField.SetValue(pawn.drafter, false);
-                    pawn.drafter.Drafted = true;
-                }
-
-                Pawn_GuestTracker guest = pawn.guest;
-                if (guest != null && guest.IsPrisoner)
-                    guest.WaitInsteadOfEscapingForDefaultTicks();
-
-                if (operation.DeferInventoryUnload &&
-                    pawn.inventory != null)
-                {
-                    pawn.inventory.UnloadEverything = true;
-                }
-            }
-
-            return true;
-        }
-        private static Pawn GetInventoryPawn(Pawn_InventoryTracker tracker)
-        {
-            if (tracker == null || InventoryPawnField == null)
-                return null;
-
+            // Drafter/inventory components can be absent while a pawn is in
+            // the shuttle and are restored by SpawnSetup. Let vanilla inspect
+            // the spawned pawn, rather than replaying pre-spawn eligibility.
+            // Its OfPlayer-relative checks must use the actual pawn owner,
+            // including when this shuttle lands at another player's base.
+            Faction owner = (thingToDrop as Pawn)?.Faction ?? ship.shipThing.Faction;
+            bool pushed = false;
             try
             {
-                return InventoryPawnField.GetValue(tracker) as Pawn;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static string FormatPawnIds(
-            List<Pawn> pawns,
-            HashSet<Pawn> selected)
-        {
-            List<string> ids = new List<string>();
-            if (pawns != null && selected != null)
-            {
-                for (int i = 0; i < pawns.Count; i++)
+                if (owner != null && owner.IsPlayer)
                 {
-                    if (selected.Contains(pawns[i]))
-                        ids.Add(pawns[i].ThingID);
+                    PushFactionMethod.Invoke(null, new object[] { map, owner, false });
+                    pushed = true;
                 }
+                ShipJob_Unload.UnloadThingFromShuttle(
+                    ship, thingToDrop, operation.ResolveDroppedThings(), operation.UnforbidAll);
+                return !ship.TransporterComp.innerContainer.Contains(thingToDrop);
             }
-
-            return string.Join(",", ids);
+            finally
+            {
+                if (pushed)
+                    PopFactionMethod.Invoke(null, new object[] { map });
+            }
         }
+    }
 
-        private static bool ShouldDeferInventoryUnload(Pawn pawn, Map map)
+    // Game components are included by both vanilla saves and Multiplayer's
+    // ExposeSmallComponents snapshot path. Pending operations belong to this
+    // game, so cold joins and loading another save cannot retain stale objects.
+    public sealed class TransportShipUnloadState : GameComponent
+    {
+        internal List<Patch_TransportShipUnloadMp.DeferredUnloadOperation> Pending =
+            new List<Patch_TransportShipUnloadMp.DeferredUnloadOperation>();
+
+        public TransportShipUnloadState(Game game) { }
+
+        public override void ExposeData()
         {
-            if (pawn == null || pawn.inventory == null || map == null ||
-                pawn.Faction == null || pawn.Faction.def == null ||
-                !pawn.Faction.def.isPlayer)
-            {
-                return false;
-            }
-
-            Faction parentFaction = map.ParentFaction;
-            if (parentFaction != null)
-            {
-                return parentFaction == pawn.Faction && map.Parent != null &&
-                       map.Parent.def != null &&
-                       map.Parent.def.canBePlayerHome;
-            }
-
-            // Gravship-created maps can have no parent faction. Preserve the
-            // vanilla fallback for that rare shape; normal faction maps use
-            // the deterministic parent-faction branch above.
-            return map.IsPlayerHome;
+            Scribe_Collections.Look(ref Pending, "pendingTransportShipUnloads", LookMode.Deep);
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && Pending == null)
+                Pending = new List<Patch_TransportShipUnloadMp.DeferredUnloadOperation>();
         }
     }
 }

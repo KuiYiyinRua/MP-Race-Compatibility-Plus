@@ -20,6 +20,7 @@ namespace MP_MeowOnlineShop.MeleeAnimation
 
         static Bootstrap()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("melee")) return;
             if (!MP.enabled) return;
             try
             {

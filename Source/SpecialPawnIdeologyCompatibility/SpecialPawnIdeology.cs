@@ -18,6 +18,7 @@ namespace Meow.SpecialPawnIdeologyCompatibility
 
         static SpecialPawnIdeology()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
             if (!MP.enabled) return;
             var harmony = new Harmony("meow.special-pawn-ideology.multiplayer");
             try

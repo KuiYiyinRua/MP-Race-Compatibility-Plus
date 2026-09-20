@@ -29,6 +29,13 @@ namespace MP_MeowOnlineShop
             AccessTools.TypeByName("Multiplayer.Client.Extensions");
         private static readonly MethodInfo AsyncTimeMethod =
             AccessTools.Method(ExtensionsType, "AsyncTime", new[] { typeof(Map) });
+        private static readonly MethodInfo MpCompMethod =
+            AccessTools.Method(ExtensionsType, "MpComp", new[] { typeof(Map) });
+        private static readonly MethodInfo SetFactionMethod = AccessTools.Method(
+            AccessTools.TypeByName("Multiplayer.Client.MultiplayerMapComp"),
+            "SetFaction", new[] { typeof(Faction) });
+        private static readonly PropertyInfo WorldTimeProperty = AccessTools.Property(
+            AccessTools.TypeByName("Multiplayer.Client.Multiplayer"), "AsyncWorldTime");
         private static readonly FieldInfo ControllerMapField =
             AccessTools.Field(typeof(WorldComponent_GravshipController), "map");
         private static readonly FieldInfo LandingMarkerField =
@@ -49,6 +56,8 @@ namespace MP_MeowOnlineShop
 
             try
             {
+                Patch_GravshipRitualInitialization.Apply(harmony);
+                Patch_GravshipShuttleClock.Apply(harmony);
                 MethodInfo arriveNewMap = AccessTools.Method(
                     typeof(GravshipUtility),
                     "ArriveNewMap",
@@ -69,6 +78,23 @@ namespace MP_MeowOnlineShop
                     typeof(GravshipLandingMarker),
                     "SpawnSetup",
                     new[] { typeof(Map), typeof(bool) });
+                MethodInfo removeGravship = AccessTools.Method(
+                    typeof(WorldComponent_GravshipController), "RemoveGravshipFromMap",
+                    new[] { typeof(Building_GravEngine) });
+
+                if (removeGravship == null || MpCompMethod == null || SetFactionMethod == null)
+                {
+                    Log.Error("[MP-MeowOnlineShop] REQUIRED_TARGET_FAILED gravship takeoff faction restore.");
+                    return;
+                }
+                harmony.Patch(removeGravship,
+                    prefix: new HarmonyMethod(typeof(Patch_GravshipLandingMp), nameof(RemoveGravshipPrefix)) { priority = Priority.First },
+                    finalizer: new HarmonyMethod(typeof(Patch_GravshipLandingMp), nameof(RemoveGravshipFinalizer)) { priority = Priority.Last });
+                harmony.Patch(AccessTools.Method(typeof(Building_GravEngine), nameof(Building_GravEngine.DeSpawn)),
+                    prefix: new HarmonyMethod(typeof(Patch_GravshipLandingMp), nameof(EngineDespawnPrefix)),
+                    finalizer: new HarmonyMethod(typeof(Patch_GravshipLandingMp), nameof(EngineDespawnFinalizer)));
+                harmony.Patch(AccessTools.Method(typeof(Building_GravEngine), nameof(Building_GravEngine.SpawnSetup)),
+                    postfix: new HarmonyMethod(typeof(Patch_GravshipLandingMp), nameof(EngineSpawnPostfix)));
 
                 if (arriveNewMap != null)
                 {
@@ -147,10 +173,87 @@ namespace MP_MeowOnlineShop
             }
             catch (Exception e)
             {
-                Log.Warning(
-                    "[MP-MeowOnlineShop] Gravship landing MP guard install failed: " +
+                Log.Error(
+                    "[MP-MeowOnlineShop] REQUIRED_TARGET_FAILED gravship landing MP guard: " +
                     e);
             }
+        }
+
+        private sealed class TakeoffFactionState
+        {
+            internal Map Map;
+            internal Faction Faction;
+        }
+
+        private sealed class CooldownState
+        {
+            internal int Remaining;
+            internal int WorldTick;
+        }
+
+        internal static bool TryReadClocks(Map map, out int mapTick, out int worldTick)
+        {
+            mapTick = worldTick = 0;
+            if (!MP.IsInMultiplayer || map == null ||
+                !MpRuntimeInfo.TryGetAsyncTimeActive(out bool asyncTime) || !asyncTime)
+                return false;
+            object mapTime = AsyncTimeMethod?.Invoke(null, new object[] { map });
+            object worldTime = WorldTimeProperty?.GetValue(null);
+            if (mapTime == null || worldTime == null)
+                return false;
+            mapTick = (int)AccessTools.Field(mapTime.GetType(), "mapTicks").GetValue(mapTime);
+            worldTick = (int)AccessTools.Field(worldTime.GetType(), "worldTicks").GetValue(worldTime);
+            return true;
+        }
+
+        private static void EngineDespawnPrefix(Building_GravEngine __instance, out CooldownState __state)
+        {
+            __state = null;
+            if (__instance.cooldownCompleteTick >= 0 &&
+                TryReadClocks(__instance.Map, out int mapTick, out int worldTick))
+                __state = new CooldownState { Remaining = __instance.cooldownCompleteTick - mapTick, WorldTick = worldTick };
+        }
+
+        private static Exception EngineDespawnFinalizer(Building_GravEngine __instance, CooldownState __state, Exception __exception)
+        {
+            if (__exception == null && __state != null && !__instance.Spawned)
+                __instance.cooldownCompleteTick = __state.Remaining > 0 ? __state.WorldTick + __state.Remaining : -1;
+            return __exception;
+        }
+
+        private static void EngineSpawnPostfix(Building_GravEngine __instance, Map map, bool respawningAfterLoad)
+        {
+            // Saved spawned engines already use their map clock. Engines in
+            // transit use the world clock; elapsed travel time counts down.
+            if (respawningAfterLoad || __instance.cooldownCompleteTick < 0 ||
+                !TryReadClocks(map, out int mapTick, out int worldTick))
+                return;
+            int remaining = __instance.cooldownCompleteTick - worldTick;
+            __instance.cooldownCompleteTick = remaining > 0 ? mapTick + remaining : -1;
+        }
+
+        private static void RemoveGravshipPrefix(Building_GravEngine engine, out TakeoffFactionState __state)
+        {
+            __state = null;
+            if (!MP.IsInMultiplayer || engine?.Map == null ||
+                !MpRuntimeInfo.TryGetMultifactionActive(out bool multifaction) || !multifaction)
+                return;
+            __state = new TakeoffFactionState { Map = engine.Map, Faction = Faction.OfPlayer };
+        }
+
+        private static Exception RemoveGravshipFinalizer(TakeoffFactionState __state, Exception __exception)
+        {
+            // MP pops its faction scope via engine.Map. GenerateGravship has
+            // already despawned the engine, so that pop restores the world but
+            // cannot restore the original map's per-faction managers. Retain
+            // the pre-removal map and restore it after MP's finalizer.
+            if (__state?.Map != null && __state.Faction != null && Find.Maps.Contains(__state.Map))
+            {
+                object comp = MpCompMethod.Invoke(null, new object[] { __state.Map });
+                if (comp != null)
+                    SetFactionMethod.Invoke(comp, new object[] { __state.Faction });
+            }
+            return __exception;
         }
 
         private static void ArriveNewMapPostfix(Gravship gravship)

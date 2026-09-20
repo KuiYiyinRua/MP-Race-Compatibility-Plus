@@ -15,6 +15,7 @@ namespace Meow.WolfeinAchtungCompatibility
 
         static WolfeinAbilities()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("wolfein")) return;
             if (!MP.enabled || !ModsConfig.IsActive("melondove.wolfeinrace")) return;
             LongEventHandler.ExecuteWhenFinished(Install);
         }

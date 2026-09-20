@@ -45,6 +45,7 @@ namespace Meow.TaleNivarianCompatibility
                 if (method == null) throw new MissingMethodException(pair[0], pair[1]);
                 harmony.Patch(method, transpiler: new HarmonyMethod(typeof(NivarianAidSettings), nameof(ReadSessionSettings)));
             }
+            NivarianAidSettingsUi.Apply(harmony);
         }
 
         static bool ReadEnabled(object settings) => MP.IsInMultiplayer && Current.Game != null

@@ -26,6 +26,7 @@ namespace Meow.RatkinUndergroundCompatibility
         public static RadioState State(Thing radio)=>Current.Game.GetComponent<RadioStore>().Find(radio);
         static Radio()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("ratkin")) return;
             if(!MP.enabled)return;
             try{
                 action=MP.RegisterSyncMethod(typeof(Radio),nameof(Act));
@@ -194,6 +195,7 @@ namespace Meow.RatkinUndergroundCompatibility
         public override void ExposeData(){Scribe_Collections.Look(ref states,"meow_radios",LookMode.Deep);Scribe_Collections.Look(ref scanned,"meow_scanned",LookMode.Reference);if(states==null)states=new List<RadioState>();if(scanned==null)scanned=new List<WorldObject>();}
         public override void GameComponentTick()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("ratkin")) return;
             if(!MP.IsInMultiplayer)return;
             var c=Current.Game.GetComponent<RKU_RadioGameComponent>();int tick=Verse.Find.TickManager.TicksGame;
             if(!c.canTrade&&tick-c.lastTradeTick>=c.tradeCooldownTicks){c.canTrade=true;c.isWaitingForTrade=false;}

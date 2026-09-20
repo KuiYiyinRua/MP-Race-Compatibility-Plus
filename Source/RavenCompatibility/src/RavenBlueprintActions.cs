@@ -27,6 +27,7 @@ namespace MP_MeowOnlineShop
   public override void ExposeData() { Scribe_Collections.Look(ref pending, "mpRavenBlueprintTransfers", LookMode.Deep); if (Scribe.mode == LoadSaveMode.PostLoadInit && pending == null) pending = new List<RavenBlueprintTransfer>(); }
   public override void MapComponentTick()
   {
+   if (!CompatibilityPatchCategories.IsEnabled("raven")) return;
    int now = Find.TickManager.TicksGame;
    if (now % 3000 == 0) pending.RemoveAll(p => now - p.began > 60000);
   }
@@ -34,7 +35,7 @@ namespace MP_MeowOnlineShop
  public sealed class RavenBlueprintFeedback : GameComponent
  {
   public RavenBlueprintFeedback(Game game) { }
-  public override void GameComponentUpdate() => RavenBlueprintActions.DrainFeedback();
+  public override void GameComponentUpdate() { if (CompatibilityPatchCategories.IsEnabled("raven")) RavenBlueprintActions.DrainFeedback(); }
  }
  internal static class RavenBlueprintActions
  {

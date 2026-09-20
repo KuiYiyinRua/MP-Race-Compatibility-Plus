@@ -26,11 +26,52 @@ namespace Meow.TaleNivarianCompatibility
             var harmony = new Harmony("meow.tale-nivarian.multiplayer");
             try
             {
-                FireVisualRandom.Apply(harmony);
-                if (ModsConfig.IsActive("keeptpa.NivarianRace"))
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual")) FireVisualRandom.Apply(harmony);
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual")) WoundCacheRandom.Apply(harmony);
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("transport")) SweepPlanePath.Apply(harmony);
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction")) DateNotifierContextOrder.Apply(harmony);
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
                 {
                     NivarianRenderState.Apply(harmony);
                     NivarianFireworks.Apply(harmony);
+                    NivarianRemainingActions.Apply(harmony);
+                    NivarianSelfBuilding.Apply(harmony);
+                    NivarianWindowDebugTools.Apply(harmony);
+                    NivarianWindowQuestButtons.Apply(harmony);
+                    NivarianDroneDeveloperActions.Apply(harmony);
+                    NivarianModuleRefuel.Apply(harmony);
+                    NivarianResearchCache.Apply(harmony);
+                    NivarianWirelessPower.Apply(harmony);
+                    NivarianArchive.Apply(harmony);
+                    NivarianMultiblock.Apply(harmony);
+                    NivarianComponentCaches.Apply(harmony);
+                    NivarianMonumentOwnership.Apply(harmony);
+                    NivarianBillOverrides.Apply();
+                    NivarianIcyCoreSettings.Apply(harmony);
+                    NivarianGameplaySwitches.Apply(harmony);
+                    NivarianVerdantSettings.Apply(harmony);
+                    NivarianPsionicCap.Apply(harmony);
+                    NivarianMothershipVisuals.Apply(harmony);
+                    NivarianOptionalVisualRandom.Apply(harmony);
+                    NivarianPlantMaturity.Apply(harmony);
+                    NivarianShieldState.Apply(harmony);
+                    NivarianReturnProjectile.Apply(harmony);
+                    NivarianRecruitmentPayment.Apply(harmony);
+                    NivarianLifespanState.Apply(harmony);
+                    NivarianCasterState.Apply(harmony);
+                    NivarianTaskState.Apply(harmony);
+                    NivarianDroneOwnership.Apply(harmony);
+                    NivarianDroneSearchState.Apply(harmony);
+                    NivarianDroneWorkState.Apply(harmony);
+                    NivarianPodTickRegistration.Apply(harmony);
+                    NivarianProgressOwnership.Apply(harmony);
+                    NivarianUplinkProgressSignal.Apply(harmony);
+                    NivarianMetricsRefresh.Apply(harmony);
+                    NivarianMetricInputs.Apply(harmony);
+                    NivarianCurrencyCollectors.Apply(harmony);
+                    NivarianLentColonists.Apply(harmony);
+
+
                     var existingTrio=AccessTools.TypeByName("Meow.RaceTrioCompatibility.Bootstrap");
                     if(existingTrio==null || existingTrio.Assembly.GetName().Version<=new Version(1,1,0,0))
                     {
@@ -48,10 +89,10 @@ namespace Meow.TaleNivarianCompatibility
                     RegisterIfOldTrio("Nivarian_Race.Code.Comps.ThingComps.Comp_FlyActivator", "SwitchMode", Type.EmptyTypes);
                     RegisterIfOldTrio("Nivarian_Race.Code.Comps.ThingComps.ThingComp_ExpCanister", "StartAbsorption", new[] { typeof(Pawn) });
                 }
-                if (ModsConfig.IsActive("Pakerwot.MiliraEventandStortExpandTheTaleofMilira")) Tale.Apply(harmony);
-                if (ModsConfig.IsActive("abscon.privacy.please")) Privacy.Apply(harmony);
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Pakerwot.MiliraEventandStortExpandTheTaleofMilira")) { Tale.Apply(harmony); TaleArrival.Apply(harmony); TaleSupplyDialog.Apply(harmony); }
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("rjw") && ModsConfig.IsActive("abscon.privacy.please")) Privacy.Apply(harmony);
                 Ready = true;
-                Log.Message("[TaleNivarianCompat] 1.0.0 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
+                Log.Message("[TaleNivarianCompat] 1.1.0 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
             }
             catch (Exception e)
             {
@@ -70,4 +111,3 @@ namespace Meow.TaleNivarianCompatibility
         }
     }
 }
-

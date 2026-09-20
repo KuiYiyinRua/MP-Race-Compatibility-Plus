@@ -24,6 +24,7 @@ namespace Meow.RatkinCompatibility
         public static void Set(object o,string f,object v)=>AccessTools.Field(o.GetType(),f).SetValue(o,v);
         static UndergroundBasics()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("ratkin")) return;
             if(!MP.enabled||!ModsConfig.IsActive("rku.ratkinunderground"))return;
             try{
                 foreach(var pair in new[]{

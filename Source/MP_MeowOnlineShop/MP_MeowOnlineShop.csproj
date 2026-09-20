@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -96,6 +96,7 @@
     <Compile Include="Patch_Desync1415Boundaries.cs" />
     <Compile Include="MpRuntimeInfo.cs" />
     <Compile Include="Mod_MpMeowOnlineShopSettings.cs" />
+    <Compile Include="CompatibilityPatchCategories.cs" />
     <Compile Include="OptimizationRuntime.cs" />
     <Compile Include="DeterministicRandScope.cs" />
     <Compile Include="MapEventWakeRegistry.cs" />
@@ -370,6 +371,8 @@
     <Compile Include="Patch_MultifactionSingleFactionMigration.cs" />
     <Compile Include="Patch_PawnComponentRepair.cs" />
     <Compile Include="Patch_TransportShipUnloadMp.cs" />
+    <Compile Include="Patch_GravshipShuttleClock.cs" />
+    <Compile Include="Patch_GravshipRitualInitialization.cs" />
     <Compile Include="Patch_TransporterLoadingSessionMp.cs" />
     <Compile Include="PerspectiveShiftMpState.cs" />
     <Compile Include="Patch_PerspectiveShiftMp.cs" />

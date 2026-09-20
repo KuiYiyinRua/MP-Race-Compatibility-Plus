@@ -169,6 +169,7 @@ namespace MP_MeowOnlineShop
     public sealed class Light350BillUiUpdates : GameComponent
     {
         public Light350BillUiUpdates(Game game) { Patch_Light350BillsMp.ClearLocalUpdates(); }
-        public override void GameComponentUpdate() { Patch_Light350BillsMp.DrainLocalUpdates(); }
+        public override void GameComponentUpdate() {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("light350")) return; Patch_Light350BillsMp.DrainLocalUpdates(); }
     }
 }

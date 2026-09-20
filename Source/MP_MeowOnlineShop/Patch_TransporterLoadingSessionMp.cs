@@ -29,6 +29,8 @@ namespace MP_MeowOnlineShop
     /// different transporter set. The session ID is derived deterministically
     /// from map/faction/transporter IDs and does not advance the shared
     /// unique-ID stream, so one-sided create/reuse cannot shift later IDs.
+    /// Passenger shuttles use Multiplayer's serialized session ID allocator:
+    /// reopening their manifest must not alias the cancelled session's ID.
     /// </summary>
     internal static class Patch_TransporterLoadingSessionMp
     {
@@ -268,8 +270,8 @@ namespace MP_MeowOnlineShop
                 Log.Message(
                     LogTag + " active: session faction stays with the " +
                     "issuing player; stale sessions are removed; session IDs " +
-                    "are deterministic and do not advance the shared ID " +
-                    "stream; TryAccept uses the session faction while " +
+                    "use native generations for passenger shuttles and " +
+                    "deterministic keys for other transporters; TryAccept uses the session faction while " +
                     "creating transport lords; transporter and pawn order " +
                     "and missing references are repaired canonically.");
             }
@@ -311,6 +313,14 @@ namespace MP_MeowOnlineShop
                     sessionManager,
                     faction,
                     transporters);
+
+                // Native ProcessInput constructs this session in a synchronized
+                // command. Preserve an existing session's identity, and let
+                // SessionManager allocate a fresh serialized ID on each reopen.
+                // A map/faction/transporter hash aliases cancelled manifests,
+                // allowing a late buffered count/reset to hit the next one.
+                if (transporters.Any(comp => comp?.parent is Building_PassengerShuttle))
+                    return;
 
                 object existing = FindExistingTransporterLoading(
                     sessionManager,
@@ -508,6 +518,12 @@ namespace MP_MeowOnlineShop
                         return false;
                     }
                 }
+
+                // UI lookups must not add session members on only one peer.
+                // Recovery belongs to synced reference deserialization, where
+                // every peer handles the same referenced thing ID.
+                if (MP.InInterface)
+                    return true;
 
                 Thing thing = MP.GetThingById(thingId) as Thing;
                 Map map = _transporterLoadingMapField.GetValue(__instance)

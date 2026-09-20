@@ -28,6 +28,7 @@ public static class Patch_MiliraShipCountdownMp
 
 	static Patch_MiliraShipCountdownMp()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		harmony = new Harmony(HarmonyId);
 		if (!MP.enabled || !ModsConfig.IsActive("Ariandel.MiliraImperium"))
 		{

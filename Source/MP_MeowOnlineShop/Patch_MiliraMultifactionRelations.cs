@@ -247,6 +247,7 @@ namespace MP_MeowOnlineShop
 
         public override void GameComponentTick()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
             if (!Patch_MiliraMultifactionRelations.TargetAvailable || !MP.IsInMultiplayer)
                 return;
 

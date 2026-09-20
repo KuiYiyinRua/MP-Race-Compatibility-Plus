@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -92,7 +92,7 @@ namespace MP_MeowOnlineShop
             try
             {
                 LogBuildIdentity();
-                ApplyOptionalPatch("Cross-faction cursors", () => Patch_CrossFactionCursors.Apply(Harmony));
+                ApplyOptionalPatch("Cross-faction cursors", () => CompatibilityPatchCategories.Apply("multifaction", () => Patch_CrossFactionCursors.Apply(Harmony)));
 
                 // Install God Hands at the first stable startup boundary. An
                 // exception in an unrelated optional patch must not prevent its
@@ -100,371 +100,371 @@ namespace MP_MeowOnlineShop
                 // failure captured by Desync-737 did exactly that).
                 ApplyOptionalPatch(
                     "GodHands multiplayer compatibility",
-                    () => Patch_GodHands.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_GodHands.Apply(Harmony)));
 
                 // These two boundaries must be registered before optional or
                 // signature-sensitive patches.  Desync-730..734 showed that
                 // Ancot's landing designator exception aborted this method
                 // before EliteRaid and the raid-map context patches ran.
-                Patch_EliteRaidDeterminism.Apply(Harmony);
-                Patch_IncidentRaidFactionContext.Apply(Harmony);
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_EliteRaidDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_IncidentRaidFactionContext.Apply(Harmony));
 
                 // 与 Meow Framework 无关的联机补丁：始终尝试应用（内部按类型是否存在再决定是否打补丁）
-                ApplyWorldRandStabilizerPatches();
-                Patch_GravshipOrphanCommands.Apply(Harmony);
-                Patch_GravshipLandingMp.Apply(Harmony);
+                CompatibilityPatchCategories.Apply("core", () => ApplyWorldRandStabilizerPatches());
+                CompatibilityPatchCategories.Apply("transport", () => Patch_GravshipOrphanCommands.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_GravshipLandingMp.Apply(Harmony));
                 // Patch_GravshipOrphanCommands is the single owner of the
                 // synchronized takeoff/abandon lifecycle. Applying the old
                 // queue-based guard as well duplicated TakeoffEnded, TravelTo
                 // and TickList rebuild callbacks (visible as paired
                 // GRAVSHIP_* lines) and could defer/remove the same map twice.
-                Patch_InvalidMapIndexSafety.Apply(Harmony);
-                Patch_PawnComponentRepair.Apply(Harmony);
-                Patch_TransportShipUnloadMp.Apply(Harmony);
-                Patch_TransporterLoadingSessionMp.Apply(Harmony);
-                Patch_CaravanShuttleMp.Apply(Harmony);
-                Patch_TransportLaunchBoundary.Apply(Harmony);
-                Patch_TransportArrivalDeterminism.Apply(Harmony);
-                Patch_TransportVisitSiteMp.Apply(Harmony);
-                Patch_MultifactionSingleFactionMigration.Apply(Harmony);
-                Patch_MpServerLagLogThrottle.Apply(Harmony);
-                ApplyCaravanFormingDiagnostics();
-                ApplyVehicleFrameworkCaravanProxyGuard();
+                CompatibilityPatchCategories.Apply("core", () => Patch_InvalidMapIndexSafety.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_PawnComponentRepair.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_TransportShipUnloadMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_TransporterLoadingSessionMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanShuttleMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_TransportLaunchBoundary.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_TransportArrivalDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_TransportVisitSiteMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_MultifactionSingleFactionMigration.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_MpServerLagLogThrottle.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => ApplyCaravanFormingDiagnostics());
+                CompatibilityPatchCategories.Apply("transport", () => ApplyVehicleFrameworkCaravanProxyGuard());
                 ApplyOptionalPatch(
                     "Caravan map-removal safety",
-                    () => Patch_CaravanMapRemovalSafety.Apply(Harmony));
-                Patch_MpDesyncTraceBudget.Apply(Harmony);
-                Patch_AsyncRandStateDiagnostic.Apply(Harmony);
-                Patch_PerformanceOptimizerMp.Apply(Harmony);
-                Patch_SlowerPawnTickRateMp.Apply(Harmony);
-                Patch_ThirdPartyPerformanceMp.Apply(Harmony);
-                Patch_MultiplayerVtrContextGuard.Apply(Harmony);
-                Patch_MpThreatSpeedUnlock.Apply(Harmony);
-                Patch_AsyncTickSchedulerPhase.Apply(Harmony);
-                Patch_DateNotifierMultifactionDeterminism.Apply(Harmony);
-                Patch_StoragePriorityMp.Apply(Harmony);
-                Patch_MultiplayerAsyncQuestSnapshot.Apply(Harmony);
-                Patch_AcceptJoinerWorldCommand.Apply(Harmony);
-                Patch_AncientAmorphousThreatMp.Apply(Harmony);
-                Patch_AnomalyChimeraAssaultDeterminism.Apply(Harmony);
-                Patch_AnomalyVoidMonolithEndingMp.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanMapRemovalSafety.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("core", () => Patch_MpDesyncTraceBudget.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_AsyncRandStateDiagnostic.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_PerformanceOptimizerMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_SlowerPawnTickRateMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_ThirdPartyPerformanceMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_MultiplayerVtrContextGuard.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_MpThreatSpeedUnlock.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_AsyncTickSchedulerPhase.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_DateNotifierMultifactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_StoragePriorityMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_MultiplayerAsyncQuestSnapshot.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_AcceptJoinerWorldCommand.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_AncientAmorphousThreatMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_AnomalyChimeraAssaultDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_AnomalyVoidMonolithEndingMp.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Cinders of the Embergarden regen Rand determinism",
-                    () => Patch_EmbergardenRegenMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_EmbergardenRegenMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Cinders of the Embergarden weapon mode sync",
-                    () => Patch_EmbergardenWeaponSwitchMp.Apply(Harmony));
-                Patch_PerspectiveShiftMp.Apply(Harmony);
-                Patch_MpSafeAlertThrottling.Apply(Harmony);
-                Patch_MissileGirlPort.Apply();
-                Patch_NaturalGoodwillMultifactionDeterminism.Apply(Harmony);
-                Patch_DubsMintMenusPlant.Apply(Harmony);
-                Patch_MiliraActiveDropPod.Apply(Harmony);
-                Patch_MiliraFallenAngelQuest.Apply(Harmony);
-                Patch_MiliraCaravanRaidFactionContext.Apply(Harmony);
-                Patch_MiliraTaleStorytellerDeterminism.Apply(Harmony);
-                Patch_MiliraSupplyMp.Apply(Harmony);
-                Patch_MiliraMultifactionRelations.Apply(Harmony);
-                Patch_AudioRandIsolation.Apply(Harmony);
-                Patch_RjwPeVoiceRandIsolation.Apply(Harmony);
-                Patch_RjwAnimationSoundRandIsolation.Apply(Harmony);
-                Patch_BallzAutoOrganRandIsolation.Apply(Harmony);
-                Patch_KemomimiHouseAutoSpawnRand.Apply(Harmony);
-                Patch_NiceBillTabLoad.Apply(Harmony);
-                Patch_ReGrowthAutumnLeavesMp.Apply(Harmony);
-                Patch_UniqueIdSimulationBoundary.Apply(Harmony);
-                Patch_MutantAbilityCacheMp.Apply(Harmony);
-                ApplyOptionalPatch("YaOpt/Kingfisher indexed removal", () => Patch_YaOptKingfisherRemove.Apply(Harmony));
-                Patch_InsectGirlPermanentWoundMp.Apply(Harmony);
-                Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony);
-                Patch_DeterministicTickList.Apply(Harmony);
-                Patch_TickListOrderNormalizer.Apply(Harmony);
-                Patch_ThrownFleckEmitterRandIsolation.Apply(Harmony);
-                Patch_AncotTrailFleckRandIsolation.Apply(Harmony);
-                Patch_AncotBeamMoteSaveCompat.Apply(Harmony);
-                Patch_MoteLifecycleMp.Apply(Harmony);
-                Patch_RitualMoteCleanupMp.Apply(Harmony);
-                Patch_OrderedJobMultifactionContext.Apply(Harmony);
-                Patch_MapStateOrderNormalizer.Apply(Harmony);
-                Patch_CommandOrderDeterminism.Apply(Harmony);
-                Patch_Desync1415Boundaries.Apply(Harmony);
-                Patch_CaravanEscortSelectionMp.Apply(Harmony);
-                Patch_AsyncTimeMapLoadSafety.Apply(Harmony);
-                Patch_NudityMattersMoreMp.Apply(Harmony);
-                Patch_DeterministicWorldPawns.Apply(Harmony);
-                Patch_PawnFilthRandIsolation.Apply(Harmony);
-                Patch_MpIgnoredRandIsolation.Apply(Harmony);
-                Patch_HospitalityInteractions.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_EmbergardenWeaponSwitchMp.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_PerspectiveShiftMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_MpSafeAlertThrottling.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("performance", () => Patch_MissileGirlPort.Apply());
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_NaturalGoodwillMultifactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_DubsMintMenusPlant.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraActiveDropPod.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraFallenAngelQuest.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraCaravanRaidFactionContext.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraTaleStorytellerDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraSupplyMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraMultifactionRelations.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_AudioRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwPeVoiceRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwAnimationSoundRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_BallzAutoOrganRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("races", () => Patch_KemomimiHouseAutoSpawnRand.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_NiceBillTabLoad.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_ReGrowthAutumnLeavesMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_UniqueIdSimulationBoundary.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_MutantAbilityCacheMp.Apply(Harmony));
+                ApplyOptionalPatch("YaOpt/Kingfisher indexed removal", () => CompatibilityPatchCategories.Apply("performance", () => Patch_YaOptKingfisherRemove.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("races", () => Patch_InsectGirlPermanentWoundMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("races", () => Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_DeterministicTickList.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_TickListOrderNormalizer.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_ThrownFleckEmitterRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotTrailFleckRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotBeamMoteSaveCompat.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_MoteLifecycleMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_RitualMoteCleanupMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_OrderedJobMultifactionContext.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_MapStateOrderNormalizer.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_CommandOrderDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_Desync1415Boundaries.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanEscortSelectionMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_AsyncTimeMapLoadSafety.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_NudityMattersMoreMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_DeterministicWorldPawns.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_PawnFilthRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_MpIgnoredRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_HospitalityInteractions.Apply(Harmony));
                 // This is an unconditional, user-requested incident kill switch.
                 // It must run before optional third-party patches: a failed dynamic
                 // patch (for example RatkinWeapons) aborts the remaining bootstrap.
-                Patch_DisableHarbingerTreeSpawn.Apply(Harmony);
-                Patch_HarbingerTreeSpawnDeterminism.Apply(Harmony);
-                Patch_BloodAnimationsMp.Apply(Harmony);
-                Patch_CaravanFloatMenuDiagnostic.Apply(Harmony);
-                Patch_CaravanFloatMenuNullGuard.Apply(Harmony);
-                Patch_CaravansBattlefieldVictoryDeterminism.Apply(Harmony);
-                Patch_SettlementDefeatTaleRandDeterminism.Apply(Harmony);
-                Patch_RpgDialogMp.Apply(Harmony);
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_DisableHarbingerTreeSpawn.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_HarbingerTreeSpawnDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_BloodAnimationsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanFloatMenuDiagnostic.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanFloatMenuNullGuard.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravansBattlefieldVictoryDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_SettlementDefeatTaleRandDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_RpgDialogMp.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Shella Backgrounds multiplayer UI compatibility",
-                    () => Patch_ShellaBackgroundsMp.Apply(Harmony));
-                Patch_FishShadowRandIsolation.Apply(Harmony);
-                Patch_SimpleFxSplashesRandIsolation.Apply(Harmony);
-                Patch_SnowGridRandIsolation.Apply(Harmony);
-                Patch_MoteConstructionRandIsolation.Apply(Harmony);
-                Patch_StaticQualityDeterminism.Apply(Harmony);
-                Patch_InspirationScheduleMp.Apply(Harmony);
-                Patch_ChildcareRandMp.Apply(Harmony);
-                Patch_RitualVisualEffectRandIsolation.Apply(Harmony);
-                Patch_AncotTurretRandIsolation.Apply(Harmony);
-                Patch_AncotSpinTurretMp.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_ShellaBackgroundsMp.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_FishShadowRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_SimpleFxSplashesRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_SnowGridRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_MoteConstructionRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_StaticQualityDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_InspirationScheduleMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_ChildcareRandMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_RitualVisualEffectRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotTurretRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotSpinTurretMp.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Ancot aerocraft multiplayer compatibility",
-                    () => Patch_AncotAerocraftMp.Apply(Harmony));
-                Patch_AncotTurretFireAtWillMp.Apply(Harmony);
-                Patch_MiliraRocketDeterminism.Apply(Harmony);
-                Patch_BiotechMechAttackRandIsolation.Apply(Harmony);
-                Patch_AncotIntegrationWeaponMp.Apply(Harmony);
-                Patch_AncotMechAutoFightMp.Apply(Harmony);
-                Patch_PsychicRitualVfxRandIsolation.Apply(Harmony);
-                Patch_PsychicRitualSkipAbductionMultifaction.Apply(Harmony);
-                Patch_KiiroStoryEventsMp.Apply(Harmony);
-                Patch_SearchAndDestroyMp.Apply(Harmony);
-                Patch_DefensivePositionsMp.Apply(Harmony);
-                Patch_TargetingModesMp.Apply(Harmony);
-                Patch_TacticalCrawlingMp.Apply(Harmony);
-                Patch_VanillaMeleeModesMp.Apply(Harmony);
-                Patch_DraftAnythingMp.Apply(Harmony);
-                Patch_AutoBlinkMp.Apply(Harmony);
-                Patch_AutoBlinkLoadMp.Apply(Harmony);
-                Patch_SmartPistolMp.Apply(Harmony);
-                Patch_ComeBackColonyMp.Apply(Harmony);
-                Patch_OgreStackMp.Apply(Harmony);
-                Patch_GoExploreMp.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("milira", () => Patch_AncotAerocraftMp.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotTurretFireAtWillMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MiliraRocketDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_BiotechMechAttackRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotIntegrationWeaponMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotMechAutoFightMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_PsychicRitualVfxRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_PsychicRitualSkipAbductionMultifaction.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("races", () => Patch_KiiroStoryEventsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_SearchAndDestroyMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_DefensivePositionsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_TargetingModesMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_TacticalCrawlingMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_VanillaMeleeModesMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_DraftAnythingMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_AutoBlinkMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_AutoBlinkLoadMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_SmartPistolMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_ComeBackColonyMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_OgreStackMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_GoExploreMp.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Almost There fork multiplayer compatibility",
-                    () => Patch_AlmostThereMp.Apply(Harmony));
-                ApplyOptionalPatch("UF series multiplayer compatibility", () => Patch_UFSeriesMp.Apply(Harmony));
-                ApplyOptionalPatch("Vehicle Framework synchronous paths", () => Patch_VehiclePathMp.Apply(Harmony));
-                ApplyOptionalPatch("UF and Miho random scopes", () => Patch_UFMihoRandomMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("transport", () => Patch_AlmostThereMp.Apply(Harmony)));
+                ApplyOptionalPatch("UF series multiplayer compatibility", () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_UFSeriesMp.Apply(Harmony)));
+                ApplyOptionalPatch("Vehicle Framework synchronous paths", () => CompatibilityPatchCategories.Apply("transport", () => Patch_VehiclePathMp.Apply(Harmony)));
+                ApplyOptionalPatch("UF and Miho random scopes", () => CompatibilityPatchCategories.Apply("races", () => Patch_UFMihoRandomMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Dead Man's Switch multiplayer compatibility",
-                    () => Patch_DeadMansSwitchMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_DeadMansSwitchMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Cluster Projection multiplayer compatibility",
-                    () => Patch_ClusterProjectionMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_ClusterProjectionMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Fulton Extraction multiplayer compatibility",
-                    () => Patch_FultonExtractionMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_FultonExtractionMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Sandevistan multiplayer compatibility",
-                    () => Patch_SandevistanMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_SandevistanMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "QW Archotech Implants multiplayer compatibility",
-                    () => Patch_QwArchotechImplantsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_QwArchotechImplantsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "DMS Power Armor Expanded multiplayer compatibility",
-                    () => Patch_DmsPowerArmorMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_DmsPowerArmorMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Ratkin Knights multiplayer compatibility",
-                    () => Patch_RatkinKnightsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("ratkin", () => Patch_RatkinKnightsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Monolyn multiplayer compatibility",
-                    () => Patch_AselMonolynMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_AselMonolynMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Oberonia Snowstorm multiplayer compatibility",
-                    () => Patch_OberoniaSnowstormMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_OberoniaSnowstormMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Smelted Loong multiplayer compatibility",
-                    () => Patch_SmeltedLoongMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_SmeltedLoongMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Dragonian Mix multiplayer compatibility",
-                    () => Patch_DragonianMixMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_DragonianMixMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Sylvie Race multiplayer compatibility",
-                    () => Patch_SylvieRaceMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_SylvieRaceMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Adaptive Storage Global Settings multiplayer compatibility",
-                    () => Patch_AdaptiveStorageGlobalSettingsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_AdaptiveStorageGlobalSettingsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Custom ChoiceLetter multiplayer compatibility",
-                    () => Patch_CustomChoiceLettersMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_CustomChoiceLettersMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Hardworking Kz multiplayer compatibility",
-                    () => Patch_HardworkingKzMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_HardworkingKzMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Maru Item Form Change multiplayer compatibility",
-                    () => Patch_MaruItemFormChangeMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_MaruItemFormChangeMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Maru Trap multiplayer compatibility",
-                    () => Patch_MaruTrapMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_MaruTrapMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Wolfein Allegiance multiplayer compatibility",
-                    () => Patch_WolfeinAllegianceMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("wolfein", () => Patch_WolfeinAllegianceMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Ling Item Cuter multiplayer compatibility",
-                    () => Patch_LingCuterMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_LingCuterMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "More Torture multiplayer compatibility",
-                    () => Patch_MoreTortureMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_MoreTortureMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Eternal Pawns multiplayer compatibility",
-                    () => Patch_EternalPawnsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_EternalPawnsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Quarry multiplayer compatibility",
-                    () => Patch_QuarryMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_QuarryMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Down For Me multiplayer compatibility",
-                    () => Patch_DownForMeMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_DownForMeMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "More Mechanoids Work Modes multiplayer compatibility",
-                    () => Patch_MoreMechanoidsWorkModesMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_MoreMechanoidsWorkModesMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Blueprints multiplayer compatibility",
-                    () => Patch_BlueprintsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_BlueprintsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Achtung stable executor multiplayer compatibility",
-                    () => Patch_AchtungMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_AchtungMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "MVCF ShowWeaponTallies multiplayer compatibility",
-                    () => Patch_ShowWeaponTalliesMvcfMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_ShowWeaponTalliesMvcfMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "RimmuNation Security multiplayer compatibility",
-                    () => Patch_RimmuNationSecurityMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_RimmuNationSecurityMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Vanilla Mushrooms multiplayer compatibility",
-                    () => Patch_VanillaMushroomsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_VanillaMushroomsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "RimWorld Columns multiplayer compatibility",
-                    () => Patch_RimWorldColumnsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_RimWorldColumnsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Equal Milking multiplayer compatibility",
-                    () => Patch_EqualMilkingMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_EqualMilkingMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "RatkinWeapons deterministic bayonet guard",
-                    () => Patch_RatkinWeaponsMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("ratkin", () => Patch_RatkinWeaponsMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Ratkin race weapon/search toggles and caravan dialog multiplayer compatibility",
-                    () => Patch_RatkinRaceMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("ratkin", () => Patch_RatkinRaceMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Ratkin Underground radio dialogue multiplayer compatibility",
-                    () => Patch_RatkinUndergroundMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("ratkin", () => Patch_RatkinUndergroundMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Ratkin Underground backpack radio launch multiplayer compatibility",
-                    () => Patch_RatkinBackpackRadioMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("ratkin", () => Patch_RatkinBackpackRadioMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Race saved toggle multiplayer compatibility",
-                    () => Patch_RaceTogglesMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_RaceTogglesMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Wolfein chargeable shield multiplayer compatibility",
-                    () => Patch_WolfeinToolsMp.Apply(Harmony));
-                ApplyOptionalPatch("Wolfein GFI multiplayer compatibility", () => Patch_WolfeinGfiMp.Apply(Harmony));
-                ApplyOptionalPatch("Wolfein Black Science multiplayer compatibility", () => Patch_WolfeinBlackScienceMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("wolfein", () => Patch_WolfeinToolsMp.Apply(Harmony)));
+                ApplyOptionalPatch("Wolfein GFI multiplayer compatibility", () => CompatibilityPatchCategories.Apply("wolfein", () => Patch_WolfeinGfiMp.Apply(Harmony)));
+                ApplyOptionalPatch("Wolfein Black Science multiplayer compatibility", () => CompatibilityPatchCategories.Apply("wolfein", () => Patch_WolfeinBlackScienceMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Oberonia science ship multiplayer compatibility",
-                    () => Patch_OberoniaScienceShipMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_OberoniaScienceShipMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Oberonia Aurea GameComponent deterministic ticker",
-                    () => Patch_OberoniaGameComponentMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_OberoniaGameComponentMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Oberonia Frame trade/sale request multiplayer compatibility",
-                    () => Patch_OberoniaFrameMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_OberoniaFrameMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Asel Monolyn toggles and grav cannon multiplayer compatibility",
-                    () => Patch_AselTogglesMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_AselTogglesMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Asel constructor/teleport/transform targeting multiplayer compatibility",
-                    () => Patch_AselTargetingMp.Apply(Harmony));
-                ApplyMpConfigHotSyncPatch();
-                Patch_QuestAndIdeologyMp.Apply();
-                Patch_MiningDiscoveryMp.Apply();
-                Patch_WorkSiteQuestDeterminism.Apply(Harmony);
-                Patch_CaravanVisitSiteFactionDeterminism.Apply(Harmony);
-                Patch_CaravanEnterFactionDeterminism.Apply(Harmony);
-                Patch_StorageGroupSync.Apply(Harmony);
-                Patch_TechprintMpDiagnostic.Apply(Harmony);
-                Patch_OberoniaBirthdayMp.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("races", () => Patch_AselTargetingMp.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("core", () => ApplyMpConfigHotSyncPatch());
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_QuestAndIdeologyMp.Apply());
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_MiningDiscoveryMp.Apply());
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_WorkSiteQuestDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanVisitSiteFactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("transport", () => Patch_CaravanEnterFactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_StorageGroupSync.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_TechprintMpDiagnostic.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("races", () => Patch_OberoniaBirthdayMp.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Plant-to-grow warning suppression",
-                    () => Patch_PlantToGrowMessageMp.Apply(Harmony));
-                Patch_StorytellerRandomQuestDeterminism.Apply(Harmony);
-                Patch_StorytellerIntervalDeterminism.Apply(Harmony);
-                Patch_OnetimeNotificationDeterminism.Apply(Harmony);
-                Patch_MilianDressMp.Apply(Harmony);
-                Patch_HarbingerTreeSpawnExecutionDeterminism.Apply(Harmony);
-                Patch_RitualObligationDateDeterminism.Apply(Harmony);
-                Patch_RitualRoleChangeMultifactionPersistence.Apply(Harmony);
-                Patch_GoodwillRecalcMultifactionDeterminism.Apply(Harmony);
-                Patch_TraderStockDeterminism.Apply(Harmony);
-                Patch_TradeSessionRejoinMp.Apply(Harmony);
-                Patch_TradeExecutionSnapshot.Apply(Harmony);
-                Patch_JobEndDiagnostic.Apply(Harmony);
-                Patch_WorldPauseDiagnostic.Apply(Harmony);
-                Patch_InsectGirlSpawnFactionDeterminism.Apply(Harmony);
-                Patch_RWBeheadingRandIsolation.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("gameplay", () => Patch_PlantToGrowMessageMp.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_StorytellerRandomQuestDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_StorytellerIntervalDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_OnetimeNotificationDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("milira", () => Patch_MilianDressMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_HarbingerTreeSpawnExecutionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_RitualObligationDateDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_RitualRoleChangeMultifactionPersistence.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_GoodwillRecalcMultifactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_TraderStockDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_TradeSessionRejoinMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_TradeExecutionSnapshot.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_JobEndDiagnostic.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_WorldPauseDiagnostic.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("races", () => Patch_InsectGirlSpawnFactionDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_RWBeheadingRandIsolation.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Visual Brutality multiplayer determinism",
-                    () => Patch_VisualBrutalityMp.Apply(Harmony));
+                    () => CompatibilityPatchCategories.Apply("visual", () => Patch_VisualBrutalityMp.Apply(Harmony)));
                 ApplyOptionalPatch(
                     "Dynamic Portraits multiplayer work-item UI guard",
-                    () => Patch_DynamicPortraitMp.Apply(Harmony));
-                Patch_PollutionIncidentMp.Apply();
-                Patch_BattleReferenceSaveFix.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("visual", () => Patch_DynamicPortraitMp.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_PollutionIncidentMp.Apply());
+                CompatibilityPatchCategories.Apply("core", () => Patch_BattleReferenceSaveFix.Apply(Harmony));
                 ApplyOptionalPatch(
                     "Projectile launcher save reference and Ancot impact determinism",
-                    () => Patch_ProjectileLauncherDeterminism.Apply(Harmony));
-                ApplyDesignatorShapesCompatPatches();
-                ApplyMultifactionTpsOptimizePatches();
-                ApplyRigorMortisPatches();
-                Patch_AncotCommandMode.Apply(Harmony);
-                Patch_TrueShootingWallMp.Apply();
-                ApplyMiliraWeaponModePatches();
-                ApplyMiliraShieldModePatches();
-                ApplyMiliraFlightModePatches();
-                ApplyMiliraFlyPatches();
-                ApplyVoiceroidAsAnimalPatches();
-                ApplyRpgInventoryDropPatch();
-                ApplyRimJobWorldPatches();
-                Patch_RjwMenstruation.Apply(Harmony);
-                Patch_RjwOnaholeModes.Apply(Harmony);
-                Patch_RjwBrothelDeterminism.Apply(Harmony);
-                Patch_RjwRomanceRandom.Apply(Harmony);
-                Patch_RjwSexSlaveCraft.Apply(Harmony);
-                Patch_RjwEventsDeterminism.Apply(Harmony);
-                Patch_RjwEroTraderDeterminism.Apply(Harmony);
-                Patch_SecretaryNexusMp.Apply(Harmony);
-                Patch_Light350ActionsMp.Apply();
-                Patch_Light350StateMp.Apply(Harmony);
-                Patch_Light350SnapshotsMp.Apply(Harmony);
-                Patch_Light350LoadStateMp.Apply(Harmony);
-                Patch_CumpilationRecipeQueryMp.Apply(Harmony);
-                Patch_MultifactionScenarioContext.Apply(Harmony);
-                Patch_Light350PoliciesMp.Apply(Harmony);
-                Patch_Light350PermitsMp.Apply(Harmony);
-                Patch_Light350SecretaryActionsMp.Apply(Harmony);
-                Patch_Light350CloneConfirmMp.Apply(Harmony);
-                Patch_Light350BillsMp.Apply(Harmony);
-                Patch_Light350BillControlsMp.Apply(Harmony);
-                Patch_Light350BillQueueMp.Apply(Harmony);
-                Patch_Light350HandlerStateMp.Apply(Harmony);
-                Patch_Light350MeleeCooldownMp.Apply(Harmony);
-                Patch_Light350RjwLoadTicksMp.Apply(Harmony);
-                Patch_Light350GenesToilLoadMp.Apply(Harmony);
-                Patch_Light350PrivacyCompMp.Apply(Harmony);
-                Patch_FacialAnimationMp.Apply(Harmony);
-                ApplyAxolotlWeaponModePatches();
-                ApplyAxolotlJumpModeSyncPatches();
-                ApplyAxolotlCultivationReadPatches();
-                ApplyAxolotlCombatStabilityPatches();
-                ApplyAxolotlJumpLandingPatches();
-                ApplyAxolotlFlyerCarrySaveFixPatches();
-                ApplyAxolotlVerbSaveFixPatches();
-                ApplyAxolotlCommsPatches();
-                Patch_AxolotlAlchemyStoveMp.Apply();
-                Patch_AxolotlMoteRandIsolation.Apply(Harmony);
-                Patch_AxolotlCrossbowVerbDeterminism.Apply(Harmony);
-                Patch_MedicalSurgeryCompat.Apply(Harmony);
+                    () => CompatibilityPatchCategories.Apply("core", () => Patch_ProjectileLauncherDeterminism.Apply(Harmony)));
+                CompatibilityPatchCategories.Apply("gameplay", () => ApplyDesignatorShapesCompatPatches());
+                CompatibilityPatchCategories.Apply("performance", () => ApplyMultifactionTpsOptimizePatches());
+                CompatibilityPatchCategories.Apply("races", () => ApplyRigorMortisPatches());
+                CompatibilityPatchCategories.Apply("milira", () => Patch_AncotCommandMode.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_TrueShootingWallMp.Apply());
+                CompatibilityPatchCategories.Apply("milira", () => ApplyMiliraWeaponModePatches());
+                CompatibilityPatchCategories.Apply("milira", () => ApplyMiliraShieldModePatches());
+                CompatibilityPatchCategories.Apply("milira", () => ApplyMiliraFlightModePatches());
+                CompatibilityPatchCategories.Apply("milira", () => ApplyMiliraFlyPatches());
+                CompatibilityPatchCategories.Apply("races", () => ApplyVoiceroidAsAnimalPatches());
+                CompatibilityPatchCategories.Apply("gameplay", () => ApplyRpgInventoryDropPatch());
+                CompatibilityPatchCategories.Apply("rjw", () => ApplyRimJobWorldPatches());
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwMenstruation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwOnaholeModes.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwBrothelDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwRomanceRandom.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwSexSlaveCraft.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwEventsDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_RjwEroTraderDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_SecretaryNexusMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350ActionsMp.Apply());
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350StateMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350SnapshotsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350LoadStateMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_CumpilationRecipeQueryMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("multifaction", () => Patch_MultifactionScenarioContext.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350PoliciesMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350PermitsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350SecretaryActionsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350CloneConfirmMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350BillsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350BillControlsMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350BillQueueMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350HandlerStateMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350MeleeCooldownMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("rjw", () => Patch_Light350RjwLoadTicksMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350GenesToilLoadMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("light350", () => Patch_Light350PrivacyCompMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_FacialAnimationMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlWeaponModePatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlJumpModeSyncPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlCultivationReadPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlCombatStabilityPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlJumpLandingPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlFlyerCarrySaveFixPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlVerbSaveFixPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => ApplyAxolotlCommsPatches());
+                CompatibilityPatchCategories.Apply("axolotl", () => Patch_AxolotlAlchemyStoveMp.Apply());
+                CompatibilityPatchCategories.Apply("axolotl", () => Patch_AxolotlMoteRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("axolotl", () => Patch_AxolotlCrossbowVerbDeterminism.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_MedicalSurgeryCompat.Apply(Harmony));
 
                 if (!ModsConfig.IsActive(MeowFrameworkPackageId))
                 {
@@ -472,9 +472,9 @@ namespace MP_MeowOnlineShop
                     return;
                 }
 
-                ApplySellSlingshotPatches();
-                ApplyCommsConsolePatch();
-                ApplyMeowPurchasePatch();
+                CompatibilityPatchCategories.Apply("meow", () => ApplySellSlingshotPatches());
+                CompatibilityPatchCategories.Apply("meow", () => ApplyCommsConsolePatch());
+                CompatibilityPatchCategories.Apply("meow", () => ApplyMeowPurchasePatch());
 
                 Log.Message("[MP-MeowOnlineShop] MP 兼容启动完成（含 Meow Framework 相关补丁）。");
             }

@@ -26,6 +26,7 @@ public static class MilianModification_RandCoverage
 
     static MilianModification_RandCoverage()
     {
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
         if (MiliraMpCompatGate.ReferenceModActive)
         {
             Log.Message(LogTag + " skipped: usamiseika.fixmod.miliramultiplayer is active.");

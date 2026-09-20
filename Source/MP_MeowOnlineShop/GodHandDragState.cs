@@ -31,6 +31,7 @@ namespace MP_MeowOnlineShop
         }
         public override void GameComponentUpdate()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("gameplay")) return;
             if (!MP.IsInMultiplayer || !Patch_GodHands.TargetFound) return;
             GodHandSync.UpdateLocalDragState();
             if (!MP.IsHosting || Time.realtimeSinceStartup < nextPolicyCheck) return;

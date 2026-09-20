@@ -87,6 +87,7 @@ namespace MP_MeowOnlineShop
     public sealed class Light350HandlerCleanup : MapComponent
     {
         public Light350HandlerCleanup(Map map) : base(map) { }
-        public override void MapComponentTick() => Patch_Light350HandlerStateMp.Tick(map);
+        public override void MapComponentTick() {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("light350")) return; Patch_Light350HandlerStateMp.Tick(map); }
     }
 }

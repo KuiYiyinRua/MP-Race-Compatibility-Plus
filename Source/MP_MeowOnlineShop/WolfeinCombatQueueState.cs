@@ -18,6 +18,7 @@ namespace MP_MeowOnlineShop
 
         public WolfeinCombatQueueState(Game game)
         {
+            if (!CompatibilityPatchCategories.IsEnabled("wolfein")) return;
             Queue("MultiMeleeComboComponent")?.Clear();
             Queue("TachiExecutionComponent")?.Clear();
         }
@@ -42,13 +43,13 @@ namespace MP_MeowOnlineShop
         {
             IList queue = Queue(type);
             if (queue == null) return;
-            if (Scribe.mode == LoadSaveMode.Saving)
+            if (CompatibilityPatchCategories.IsEnabled("wolfein") && Scribe.mode == LoadSaveMode.Saving)
             {
                 records = new List<WolfeinCombatQueueRecord>();
                 foreach (object item in queue) records.Add(new WolfeinCombatQueueRecord(item));
             }
             Scribe_Collections.Look(ref records, label, LookMode.Deep);
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            if (CompatibilityPatchCategories.IsEnabled("wolfein") && Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 queue.Clear();
                 if (records != null)
@@ -64,6 +65,7 @@ namespace MP_MeowOnlineShop
         public WolfeinCombatMapTick(Map map) : base(map) { }
         public override void MapComponentTick()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("wolfein")) return;
             if (!MP.IsInMultiplayer || !ModsConfig.IsActive("wolfeinexpand.blackscience")) return;
             TickQueue("MultiMeleeComboComponent");
             TickQueue("TachiExecutionComponent");

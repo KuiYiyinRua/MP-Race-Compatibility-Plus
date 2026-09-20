@@ -18,6 +18,7 @@ public static class YaoYao_Compat
 
 	static YaoYao_Compat()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		if (MiliraMpCompatGate.ReferenceModActive)
 		{
 			Log.Message("[MP-MeowOnlineShop] Milira addon module skipped: usamiseika.fixmod.miliramultiplayer is active.");

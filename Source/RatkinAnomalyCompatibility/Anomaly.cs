@@ -26,6 +26,7 @@ namespace Meow.RatkinCompatibility
         }
         static Anomaly()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("ratkin")) return;
             if (!MP.enabled || !ModsConfig.IsActive("fxz.ratkinanomaly.update")) return;
             try
             {

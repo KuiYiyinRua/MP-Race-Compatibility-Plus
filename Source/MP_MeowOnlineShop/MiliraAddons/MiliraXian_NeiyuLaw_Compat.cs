@@ -17,6 +17,7 @@ public static class MiliraXian_NeiyuLaw_Compat
 
 	static MiliraXian_NeiyuLaw_Compat()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		if (MiliraMpCompatGate.ReferenceModActive)
 		{
 			Log.Message("[MP-MeowOnlineShop] Milira addon module skipped: usamiseika.fixmod.miliramultiplayer is active.");

@@ -20,6 +20,9 @@ namespace MP_MeowOnlineShop
         public const int OptimizationPresetVeryAggressive = 5;
         public const int OptimizationPresetExtreme = 6;
 
+        public bool compatibilityPatchesEnabled = true;
+        public List<string> disabledCompatibilityCategories = new List<string>();
+
         public bool tpsOptimizeEnabled = true;
         public bool enableOptimizationTelemetry = true;
         public int optimizationTelemetryIntervalTicks = 300;
@@ -56,6 +59,9 @@ namespace MP_MeowOnlineShop
         public override void ExposeData()
         {
             base.ExposeData();
+            Scribe_Values.Look(ref compatibilityPatchesEnabled, "mp_meow_compatibility_enabled", true);
+            Scribe_Collections.Look(ref disabledCompatibilityCategories, "mp_meow_disabled_compatibility_categories", LookMode.Value);
+            if (disabledCompatibilityCategories == null) disabledCompatibilityCategories = new List<string>();
             Scribe_Values.Look(ref enableTickListOrderNormalizer, "mp_meow_modcfg_ticklist_order_normalizer", true);
             Scribe_Values.Look(ref showCrossFactionCursors, "mp_meow_modcfg_cross_faction_cursors", false);
             Scribe_Values.Look(ref enableFactionStoryRoutingIsolation, "mp_meow_modcfg_faction_story_routing_isolation", false);
@@ -336,13 +342,15 @@ namespace MP_MeowOnlineShop
     {
         private static MpMeowOnlineShopSettings _settings;
         private Vector2 _settingsScrollPos;
+        private float _settingsContentHeight = 3400f;
 
         public static MpMeowOnlineShopSettings Settings => _settings;
 
         public MpMeowOnlineShopMod(ModContentPack content) : base(content)
         {
-            Patch_RimJobWorld.ApplyEarly();
             _settings = GetSettings<MpMeowOnlineShopSettings>();
+            CompatibilityPatchCategories.Capture(_settings);
+            CompatibilityPatchCategories.Apply("rjw", Patch_RimJobWorld.ApplyEarly);
         }
 
         public override string SettingsCategory()
@@ -353,10 +361,11 @@ namespace MP_MeowOnlineShop
         public override void DoSettingsWindowContents(Rect inRect)
         {
             _settings.ClampValues();
-            var viewRect = new Rect(0f, 0f, inRect.width - 20f, 2260f);
+            var viewRect = new Rect(0f, 0f, inRect.width - 20f, _settingsContentHeight);
             Widgets.BeginScrollView(inRect, ref _settingsScrollPos, viewRect);
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
+            CompatibilityPatchCategories.DrawSettings(listing, _settings);
             listing.CheckboxLabeled(
                 "启用多派系任务与事件隔离及跨派系接取保护（实验性）",
                 ref _settings.enableFactionStoryRoutingIsolation,
@@ -537,6 +546,7 @@ namespace MP_MeowOnlineShop
                 ref _settings.enableMpMissileGirlTimetableFix,
                 "\u65f6\u95f4\u8868\u5b9a\u4e49\u7f3a\u5931\u65f6\u56de\u9000\u4e3a Anything\uff0c\u907f\u514d\u5355\u7aef\u5f02\u5e38\u3002");
 
+            _settingsContentHeight = listing.CurHeight + 24f;
             listing.End();
             Widgets.EndScrollView();
         }

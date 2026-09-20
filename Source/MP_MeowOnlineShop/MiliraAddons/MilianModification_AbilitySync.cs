@@ -33,6 +33,7 @@ public static class MilianModification_AbilitySync
 
     static MilianModification_AbilitySync()
     {
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
         if (MiliraMpCompatGate.ReferenceModActive)
         {
             Log.Message(LogTag + " skipped: usamiseika.fixmod.miliramultiplayer is active.");

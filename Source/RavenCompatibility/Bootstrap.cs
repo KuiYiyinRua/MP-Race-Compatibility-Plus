@@ -9,6 +9,7 @@ namespace MP_MeowOnlineShop
  {
   static RavenCompatibilityBootstrap()
   {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("raven")) return;
    Patch_RavenIndustrialActions.Apply(new Harmony("meow.raven.compatibility"));
    if (ModsConfig.IsActive("ZuoYao.RavenRace")) Log.Message("[RAVEN-COMPAT] core MVID=" + typeof(RavenCompatibilityBootstrap).Assembly.ManifestModule.ModuleVersionId);
   }

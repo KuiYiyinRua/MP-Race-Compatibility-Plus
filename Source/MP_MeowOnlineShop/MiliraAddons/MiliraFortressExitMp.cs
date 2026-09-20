@@ -22,6 +22,7 @@ public static class MiliraFortressExitMp
 
     static MiliraFortressExitMp()
     {
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
         if (MiliraMpCompatGate.ReferenceModActive)
         {
             Log.Message(LogTag + " skipped: usamiseika.fixmod.miliramultiplayer is active.");

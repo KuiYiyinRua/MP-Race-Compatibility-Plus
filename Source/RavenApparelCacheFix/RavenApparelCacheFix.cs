@@ -13,6 +13,7 @@ namespace MP_MeowOnlineShop.RavenApparelCache
 
         static RavenApparelCacheFix()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("raven")) return;
             if (GenCommandLine.CommandLineArgPassed("meowdisableravenapparelcache"))
             {
                 Log.Message("[MP-MeowOnlineShop][RavenApparelCache] Disabled by startup argument.");

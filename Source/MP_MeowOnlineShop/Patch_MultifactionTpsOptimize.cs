@@ -1363,6 +1363,7 @@ namespace MP_MeowOnlineShop
     {
         static MultifactionTpsOptimizeBootstrap()
         {
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("performance")) return;
             LongEventHandler.ExecuteWhenFinished(() =>
             {
                 try

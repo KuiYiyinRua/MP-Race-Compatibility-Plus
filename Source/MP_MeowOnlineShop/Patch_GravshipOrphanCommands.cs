@@ -354,7 +354,10 @@ namespace MP_MeowOnlineShop
 
         private static void AbandonMapPostfix(Map map)
         {
-            if (!MP.IsInMultiplayer || !_inTakeoffEnded || map == null)
+            // Harmony postfixes run even when the prefix retained a foreign
+            // player's base. Only a map actually removed may lose commands.
+            if (!MP.IsInMultiplayer || !_inTakeoffEnded || map == null ||
+                IsMapPresent(map.uniqueID))
                 return;
 
             MarkAbandoned(map.uniqueID);

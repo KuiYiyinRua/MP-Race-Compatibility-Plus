@@ -14,6 +14,7 @@ namespace MP_MeowOnlineShop
     {
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
+            if (!CompatibilityPatchCategories.IsEnabled("meow")) yield break;
             CommsConsoleDebug.Log("CompMeowCommsConsole.CompGetGizmosExtra ENTER");
             if (!MP.enabled || !MP.IsInMultiplayer)
             {

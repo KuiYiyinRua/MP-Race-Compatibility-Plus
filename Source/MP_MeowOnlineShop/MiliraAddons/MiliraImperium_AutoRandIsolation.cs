@@ -31,6 +31,7 @@ public static class MiliraImperium_AutoRandIsolation
 
 	static MiliraImperium_AutoRandIsolation()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		if (MiliraMpCompatGate.ReferenceModActive)
 		{
 			Log.Message("[MP-MeowOnlineShop] Milira auto Rand isolation skipped: usamiseika.fixmod.miliramultiplayer is active.");

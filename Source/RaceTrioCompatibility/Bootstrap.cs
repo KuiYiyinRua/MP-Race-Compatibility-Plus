@@ -16,13 +16,18 @@ namespace Meow.RaceTrioCompatibility
         static Bootstrap()
         {
             if (!MP.enabled) return;
-            NivarianExpansions.Apply(new Harmony("meow.trio.nivarian-expansions"));
-            if (ModsConfig.IsActive("keeptpa.NivarianRace"))
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual")) FacialHealthBoundary.Apply(new Harmony("meow.trio.facial-health-thread"));
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("rjw")) BrothelBedPrices.Apply(new Harmony("meow.trio.brothel-bed-prices"));
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian")) NivarianExpansions.Apply(new Harmony("meow.trio.nivarian-expansions"));
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
             {
                 Recruitment.Apply(new Harmony("meow.trio.recruitment"));
                 NivarianUi.Apply(new Harmony("meow.trio.nivarian-ui"));
+                NivarianSimulationRandom.Apply(new Harmony("meow.trio.nivarian-simulation-random"));
                 Mothership.Apply(new Harmony("meow.trio.mothership"));
                 JoinDecisions.Apply(new Harmony("meow.trio.join-decisions"));
+                NivarianAidEvents.Apply(new Harmony("meow.trio.nivarian-aid-events"));
+                NivarianSelectionBoost.Apply(new Harmony("meow.trio.nivarian-selection-boost"));
                 Register(Building + "CompUplinkResearch", "StartNewProject", typeof(ResearchProjectDef));
                 Register(Building + "CompUplinkResearch", "CancelCurrentProject");
                 Register(Building + "Comp_NivarianPowerNetworkIO", "SetTargetPowerOutput", typeof(float));
@@ -30,6 +35,14 @@ namespace Meow.RaceTrioCompatibility
                 Register("Nivarian.NivarianDrones.NivarianDroneHubComp", "ToggleEnable");
                 Register("Nivarian.ThingCom_DroneHub", "ToggleEnable");
                 Register("Nivarian_Race.Code.Comps.ThingComps.CompEnergyWeaponBattery", "TogglePower");
+                Register("Nivarian_Race.Code.Comps.ThingComps.CompTransformableWeapon", "Transform");
+                Register("Nivarian_Race.Code.Comps.ThingComps.Comp_FlyActivator", "SwitchMode");
+                Register("Nivarian_Race.Code.Comps.ThingComps.ThingComp_ExpCanister", "StartAbsorption", typeof(Pawn));
+                Register(Building + "Comp_NivarianEnergyTower", "ToggleBatteryTarget", typeof(Thing));
+                Register(Building + "Comp_NivarianEnergyTower", "SelectAllBatteries");
+                Register(Building + "Comp_NivarianEnergyTower", "ClearBatteryTargets");
+                Register("Nivarian_Race.Code.MechModuleSystem.Nira_MechUnitCommon", "set_GlowColor", typeof(UnityEngine.Color));
+                Register("Nivarian_Race.Code.MechModuleSystem.Nira_MechUnitCommon", "set_RainbowGlow", typeof(bool));
                 Register("Nivarian_Race.Code.Comps.ThingComps.CompAttachTurret", "set_CurTarget", typeof(LocalTargetInfo));
                 Register("Nivarian_Race.Code.Comps.ThingComps.CompAttachTurret", "ClearTarget");
                 Register("Nivarian_Race.Code.Comps.ThingComps.ColdEssenceDrawUtility", "SetAllDrawOnWeapon", typeof(ThingWithComps), typeof(bool));
@@ -53,6 +66,10 @@ namespace Meow.RaceTrioCompatibility
                 Register("Nivarian.GameComp_NivarianNiraMetrics", "RollHoloDie", typeof(int));
                 Register("Nivarian.GameComp_NivarianNiraMetrics", "TriggerHoloDieOption", typeof(int), typeof(int));
                 Register("Nivarian.GameComp_NivarianNiraMetrics", "SkipHoloDie", typeof(int));
+                foreach(var setting in new[]{"EvaluationIntervalDays","ActivePeriodDays","DormantPeriodDays"})
+                    Register("Nivarian.GameComp_NivarianNiraMetrics", "set_"+setting, typeof(int));
+                foreach(var setting in new[]{"ActiveEventFrequency","BaseEventFrequency","RaidThreatMultiplier","RapidEventRate"})
+                    Register("Nivarian.GameComp_NivarianNiraMetrics", "set_"+setting, typeof(float));
                 Register("Nivarian_Race.Code.Helper.RebirthMonumentEffectUtility", "RefreshMechBackdoorOnAllMaps");
                 if (ModsConfig.RoyaltyActive) Register("Nivarian.Hediff_PsionicAttunement", "SetAbilityTree", typeof(string));
                 Type module = AccessTools.TypeByName("Nivarian_Race.Code.MechModuleSystem.ModuleDef");
@@ -72,7 +89,7 @@ namespace Meow.RaceTrioCompatibility
                 Register(shuttle, "CancelCurrentInstall");
                 Register(shuttle, "CancelCurrentUninstall");
             }
-            if (ModsConfig.IsActive("ASEL.MonolynRace"))
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("races") && ModsConfig.IsActive("ASEL.MonolynRace"))
             {
                 MonolynUi.Apply(new Harmony("meow.trio.monolyn-ui"));
                 Determinism.Monolyn(new Harmony("meow.trio.monolyn-random"));
@@ -89,7 +106,7 @@ namespace Meow.RaceTrioCompatibility
                 Register("ASEL.Extractor", "<GetGizmos>b__15_1");
                 Register("ASEL.Extractor", "EjectContents");
             }
-            if (ModsConfig.IsActive("hatena.VoiceroidAsAnimal"))
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("races") && ModsConfig.IsActive("hatena.VoiceroidAsAnimal"))
             {
                 Register("VoiceroidAsAnimal.CompVAAKotodama", "<CompGetGizmosExtra>b__3_1");
                 Register("VoiceroidAsAnimal.CompVAAKotodama", "set_AdditionalMechBandwidthValue", typeof(int));

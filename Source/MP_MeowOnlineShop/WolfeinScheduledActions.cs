@@ -49,6 +49,7 @@ namespace MP_MeowOnlineShop
         }
         public override void MapComponentTick()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("wolfein")) return;
             for (int i = actions.Count - 1; i >= 0; i--)
             {
                 var entry = actions[i];

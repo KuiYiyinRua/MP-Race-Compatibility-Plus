@@ -22,6 +22,7 @@ public static class ExileBrandLib_Compat
 
 	static ExileBrandLib_Compat()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		if (MiliraMpCompatGate.ReferenceModActive)
 		{
 			Log.Message("[MP-MeowOnlineShop] Milira addon module skipped: usamiseika.fixmod.miliramultiplayer is active.");

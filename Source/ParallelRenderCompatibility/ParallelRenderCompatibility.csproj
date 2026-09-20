@@ -8,4 +8,7 @@
   <Reference Include="Multiplayer"><HintPath>$(GameRoot)/Mods/Multiplayer/1.6/AssembliesCustom/Multiplayer.dll</HintPath><Private>false</Private></Reference>
   <Reference Include="MultiplayerCommon"><HintPath>$(GameRoot)/Mods/Multiplayer/1.6/AssembliesCustom/MultiplayerCommon.dll</HintPath><Private>false</Private></Reference>
  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MP_MeowOnlineShop"><HintPath>../../1.6/Assemblies/MP_MeowOnlineShop.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
 </Project>

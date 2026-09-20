@@ -1,18 +1,16 @@
 # [MP] Multiplayer Compatibility Patches
 
-## The Tale of Milira / Nivarian update (2026-09-14)
+## 3.0.130 (2026-09-20)
 
-Release boundary: the soak used a locally modified Raven module. This upload retains the previous Workshop Raven binary and its original eligibility restrictions, excluding that local change. The soak is therefore not an identical-environment test of the entire final Workshop package. The new dedicated DLL and XML are byte-identical to the tested files.
+- **Gravship compatibility**: updates Odyssey piloting, takeoff, placement and landing, retained-base ownership and faction context, and gravship/carried-shuttle cooldowns across asynchronous map clocks.
+- **Passenger shuttles and rejoining**: improves stale loading-command isolation, serialization and recovery of native unload queues, and passenger state after unloading at an owned or another player's base.
+- **Nivarian compatibility**: extends synchronization for research and control panels, Nira modules and metrics, drones, buildings and story interactions, with simulation/render-cache/save-state separation.
+- **Milira Imperium event-expansion compatibility**: updates related Milira compatibility, including The Tale of Milira event ownership, caravan-arrival context, recruitment and supply dialogs. Supply reward dialogs use event identity to reduce wrong-option routing when multiple dialogs coexist. Not every story branch has been verified.
+- **Compatibility category switches**: adds a master switch and 17 independent categories, all enabled by default, including gravships/transport, Nivarian, Milira, RJW, Ratkin, Wolfein, Raven and melee animation. These settings are separate from optimization presets, require a full restart, and must match on every peer.
 
-- **The Tale of Milira (3477405110)**: 49 caravan outcome callbacks use the caravan's faction and map context; special-pawn recruitment and supply-dialog synchronization are covered.
-- **Nivarian (3624805128)**: orbital fireworks use a consistent recipient roster across player factions, preventing a mood memory from being awarded on only one peer. Coverage also includes simulation randomness for drones/turrets/shields, rendering and saved-state separation, aid and joining decisions, flight/transformation/experience canisters, Nira parameters and control-panel actions.
-- **Other determinism fixes**: Privacy Please simulation randomness and saved cooldowns; fire smoke/spark visual randomness isolation; conditional legacy Def-reference corrections.
+Validation: 3.0.130 received build, static-entry, switch-logic and release-file checks. No new in-game testing was performed for this release, as requested. Historical concise host/client checks for the 3.0.129 gravship update covered 42 paired functional records and 12 passenger-ownership scenarios with async time on/off; they do not establish runtime verification of the complete 3.0.130 package. Nivarian and event-expansion coverage does not include every story branch, mod combination or cold-rejoin scenario.
 
-Validation: 91 checks against actual assemblies and IL passed. A combined host/client run with 317 user mods, three maps, multiple player factions and async time passed 120,000 shared ticks, including rejoin, serialization and Nira actions. Fireworks recipients matched under five player-faction contexts; natural outdoor rewards and subsequent mood calculations matched. Both peers ran on one computer; this does not cover every story branch or cross-PC combination.
-
-No new all-pawn per-tick polling. Fireworks processing stays at the original reward boundary (current XML interval: 300 ticks); rendering guards use cached access. No separate TPS A/B benchmark was run, so zero overhead is not claimed. All 16 available historical reports were analyzed, but some contain only downstream differences: not every historical root cause is proven fixed. There is no evidence that removing one ordinary mod resolves all desyncs.
-
-Core remains 3.0.128 and RaceTrio remains 1.1.0; the new dedicated assembly is 1.0.0. All peers must install identical files, fully restart, and keep other local settings consistent. Further tests stop after this release at the maintainer's request.
+All players must install matching files and fully restart. Disabling compatibility patches can reintroduce desyncs.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
@@ -179,4 +177,4 @@ Author: 尹怨怨
 
 GitHub: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus
 
-Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.128-tale-nivarian.md
+Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.130.md

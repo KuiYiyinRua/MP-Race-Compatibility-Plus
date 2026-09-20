@@ -28,7 +28,7 @@ namespace MP_MeowOnlineShop
     /// The capture prefix must run BEFORE Multiplayer's DateNotifierPatch
     /// prefix (default priority), the enforce prefix/finalizer must nest
     /// INSIDE it, so this installs one Priority.First prefix and one
-    /// Priority.Low prefix/finalizer pair on DateNotifierTick.
+    /// Priority.Low prefix and Priority.First finalizer on DateNotifierTick.
     /// </summary>
     internal static class Patch_DateNotifierMultifactionDeterminism
     {
@@ -102,7 +102,7 @@ namespace MP_MeowOnlineShop
             harmony.Patch(
                 target,
                 prefix: new HarmonyMethod(enforcePrefix) { priority = Priority.Low },
-                finalizer: new HarmonyMethod(restoreFinalizer) { priority = Priority.Low });
+                finalizer: new HarmonyMethod(restoreFinalizer) { priority = Priority.First });
             harmony.Patch(
                 target,
                 prefix: new HarmonyMethod(suppressPrefix) { priority = Priority.Last });

@@ -23,4 +23,7 @@
     <Reference Include="0MultiplayerAPI"><HintPath>$(MultiplayerApiPath)</HintPath><Private>false</Private></Reference>
     <Reference Include="zAnimationMod"><HintPath>$(TargetRoot)/1.6/Assemblies/zAnimationMod.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MP_MeowOnlineShop"><HintPath>../../1.6/Assemblies/MP_MeowOnlineShop.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
 </Project>

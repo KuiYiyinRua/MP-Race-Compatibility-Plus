@@ -63,6 +63,7 @@ namespace Meow.NivarianFocusCompatibility
 
         static Focus()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian")) return;
             if (!MP.enabled || !ModsConfig.IsActive("keeptpa.NivarianRace")) return;
             var harmony = new Harmony("meow.nivarian-focus.multiplayer");
             try

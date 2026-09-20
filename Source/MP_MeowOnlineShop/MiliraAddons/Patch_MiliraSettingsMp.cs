@@ -67,6 +67,7 @@ public static class Patch_MiliraSettingsMp
 
 	static Patch_MiliraSettingsMp()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		if (MiliraMpCompatGate.ReferenceModActive)
 		{
 			Log.Message("[MP-MeowOnlineShop] Milira settings sync skipped: usamiseika.fixmod.miliramultiplayer is active.");

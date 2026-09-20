@@ -24,6 +24,7 @@ public static class PLAMiliraSariel_RandIsolation
 
 	static PLAMiliraSariel_RandIsolation()
 	{
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
 		if (MiliraMpCompatGate.ReferenceModActive)
 		{
 			Log.Message("[MP-MeowOnlineShop] Milira addon module skipped: usamiseika.fixmod.miliramultiplayer is active.");

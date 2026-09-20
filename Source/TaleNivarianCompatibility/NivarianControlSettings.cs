@@ -23,6 +23,10 @@ namespace Meow.TaleNivarianCompatibility
             var draw=AccessTools.DeclaredMethod(AccessTools.TypeByName("Nivarian_Race.Code.UI.UplinkNiraMetricsTabPanel"),"DrawSettings") ?? throw new MissingMethodException("Nira settings panel");
             harmony.Patch(draw,prefix:new HarmonyMethod(typeof(NivarianControlSettings),nameof(Begin)),finalizer:new HarmonyMethod(typeof(NivarianControlSettings),nameof(End)));
             MP.RegisterSyncMethod(AccessTools.DeclaredMethod(metrics,"SetRankLevel")).SetDebugOnly();
+            MP.RegisterSyncMethod(AccessTools.DeclaredMethod(metrics,"ForceEvaluateTitle")
+                ?? throw new MissingMethodException(metrics.FullName,"ForceEvaluateTitle")).SetDebugOnly();
+            MP.RegisterSyncMethod(AccessTools.DeclaredMethod(metrics,"AddHoloDie")
+                ?? throw new MissingMethodException(metrics.FullName,"AddHoloDie")).SetDebugOnly();
             // God-mode buttons change saved progression; use the native GameComponent/Def serializers.
             var progress=AccessTools.TypeByName("Nivarian_Race.Code.Progress.ProgressManager") ?? throw new TypeLoadException("Nivarian progress manager");
             var node=AccessTools.TypeByName("Nivarian_Race.Code.Defs.ProgressNodeDef") ?? throw new TypeLoadException("Nivarian progress node");

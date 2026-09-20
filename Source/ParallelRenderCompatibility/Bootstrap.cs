@@ -14,6 +14,7 @@ namespace Meow.ParallelRenderCompatibility
         private const string Owner="meow.multiplayer.parallelrender";
         static Bootstrap()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("performance")) return;
             if(MP.enabled)LongEventHandler.ExecuteWhenFinished(Install);
         }
         private static HarmonyMethod CopyMetadata(MethodInfo method,Patch original) =>

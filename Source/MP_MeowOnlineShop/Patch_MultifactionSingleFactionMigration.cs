@@ -177,6 +177,7 @@ namespace MP_MeowOnlineShop
 
             public override void GameComponentTick()
             {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction")) return;
                 if (!MP.IsInMultiplayer ||
                     !MpRuntimeInfo.TryGetMultifactionActive(out bool multifaction) ||
                     multifaction ||

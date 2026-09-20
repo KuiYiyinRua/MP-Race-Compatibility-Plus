@@ -31,6 +31,7 @@ namespace MP_MeowOnlineShop.MiliraAddonCompat
 
         static MiliraConsulMechCarrier_Compat()
         {
+        if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira")) return;
             if (MiliraMpCompatGate.ReferenceModActive)
             {
                 Log.Message(

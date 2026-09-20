@@ -24,6 +24,7 @@ namespace MP_MeowOnlineShop
         private static readonly FieldInfo Credits = AccessTools.Field(typeof(ShipCountdown), "customLaunchString");
         public WolfeinAllegianceState(Game game)
         {
+            if (!CompatibilityPatchCategories.IsEnabled("wolfein")) return;
             if (Type("ArmyShuttleTracker") == null) return;
             if ((bool)Field("VictoryShuttleTracker", "waitingForFade").GetValue(null))
             {
@@ -47,7 +48,7 @@ namespace MP_MeowOnlineShop
         public override void ExposeData()
         {
             if (!ModsConfig.IsActive("leopoko.wolfeinallegiance")) return;
-            if (Scribe.mode == LoadSaveMode.Saving)
+            if (CompatibilityPatchCategories.IsEnabled("wolfein") && Scribe.mode == LoadSaveMode.Saving)
             {
                 records = new List<WolfeinAllegianceRecord>();
                 foreach (object entry in (IList)Field("ArmyShuttleTracker", "groups").GetValue(null))
@@ -70,7 +71,7 @@ namespace MP_MeowOnlineShop
             Scribe_Values.Look(ref waiting, "mpWolfeinWaitingForFade");
             Scribe_Values.Look(ref departureCountdown, "mpWolfeinDepartureCountdown", -1000f);
             Scribe_Values.Look(ref departureCredits, "mpWolfeinDepartureCredits");
-            if (Scribe.mode != LoadSaveMode.PostLoadInit) return;
+            if (Scribe.mode != LoadSaveMode.PostLoadInit || !CompatibilityPatchCategories.IsEnabled("wolfein")) return;
             var army = (IList)Field("ArmyShuttleTracker", "groups").GetValue(null);
             var restrictions = (IDictionary)Field("QuestShuttleTracker", "tracked").GetValue(null);
             var boarding = (IDictionary)Field("PickupShuttleBoardingTracker", "pending").GetValue(null);

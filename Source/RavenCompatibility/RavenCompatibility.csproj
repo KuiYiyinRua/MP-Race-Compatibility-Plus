@@ -4,7 +4,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>Meow.RavenCompatibility</AssemblyName>
     <GameRoot Condition="'$(GameRoot)' == ''">G:/Steam/steamapps/common/RimWorld</GameRoot>
-    <MultiplayerRoot Condition="'$(MultiplayerRoot)' == ''">$(MSBuildProjectDirectory)/../../../Multiplayer</MultiplayerRoot>
+    <MultiplayerRoot Condition="'$(MultiplayerRoot)' == ''">$(MSBuildProjectDirectory)/../../../Multiplayer/1.6</MultiplayerRoot>
     <HarmonyRoot Condition="'$(HarmonyRoot)' == ''">$(MSBuildProjectDirectory)/../../../2009463077</HarmonyRoot>
     <OutputPath>../../BuildValidation/RavenRace_20260907/ProductionBuild/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -16,5 +16,8 @@
     <Reference Include="0MultiplayerAPI"><HintPath>$(MultiplayerRoot)/Assemblies/0MultiplayerAPI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Multiplayer"><HintPath>$(MultiplayerRoot)/AssembliesCustom/Multiplayer.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="MultiplayerCommon"><HintPath>$(MultiplayerRoot)/AssembliesCustom/MultiplayerCommon.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MP_MeowOnlineShop"><HintPath>../../1.6/Assemblies/MP_MeowOnlineShop.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>

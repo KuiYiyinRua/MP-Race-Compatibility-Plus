@@ -16,6 +16,7 @@ namespace Meow.MultifactionStory
     {
         static Bootstrap()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction")) return;
             if (!MP.enabled) return;
             var h = new Harmony("meow.multifaction.story");
             try

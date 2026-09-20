@@ -18,6 +18,8 @@ namespace Meow.TaleNivarianCompatibility
             Patch(harmony,"Nivarian_Race.Code.NivarianThing.ProgrammableMoverThing","CreateParabolicArc");
             Patch(harmony,"Nivarian_Race.Code.Comps.ThingComps.CompAttachTurret","CompTick");
             if(ModsConfig.RoyaltyActive)Patch(harmony,"Nivarian.ReflectiveShield","LaunchReturnShot");
+            // Tick-driven conditional mote creation must make the same choice on every peer.
+            if(ModsConfig.BiotechActive)Patch(harmony,"Nivarian.Gene_UnyieldingFocus","EmitParticle");
         }
         internal static void Patch(Harmony harmony,string name,string method)
         {

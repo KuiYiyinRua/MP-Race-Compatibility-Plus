@@ -14,8 +14,9 @@ namespace Meow.TaleNivarianCompatibility
     {
         static readonly Dictionary<MethodBase, FieldInfo[]> CaravanPaths = new Dictionary<MethodBase, FieldInfo[]>();
         static FieldInfo mapIndex;
-        static Func<Faction, bool, Faction> pushFaction;
-        static Func<Faction> popFaction;
+        static readonly FieldInfo[] mapManagers = new[] { "designationManager", "areaManager", "zoneManager", "planManager", "haulDestinationManager", "listerHaulables", "resourceCounter", "listerFilthInHomeArea", "listerMergeables" }.Select(n => AccessTools.Field(typeof(Map), n) ?? throw new MissingFieldException(typeof(Map).FullName, n)).ToArray();
+        static Action<Map, Faction, bool> pushFaction;
+        static Func<Map, Faction> popFaction;
         static MethodInfo join;
         static ISyncMethod syncJoin;
 
@@ -25,14 +26,16 @@ namespace Meow.TaleNivarianCompatibility
             internal Map PreviousMap;
             internal sbyte PreviousIndex;
             internal bool Pushed;
+            internal Map ContextMap;
+            internal object[] PreviousManagers;
         }
 
         internal static void Apply(Harmony harmony)
         {
             var type = AccessTools.TypeByName("TheTaleofMilira.TaleOfMilira_TheBattlefield") ?? throw new TypeLoadException("Tale battlefield");
-            var context = AccessTools.TypeByName("Multiplayer.Client.FactionContext") ?? throw new TypeLoadException("MP faction context");
-            pushFaction = (Func<Faction, bool, Faction>)Delegate.CreateDelegate(typeof(Func<Faction, bool, Faction>), AccessTools.Method(context, "Push", new[] { typeof(Faction), typeof(bool) }));
-            popFaction = (Func<Faction>)Delegate.CreateDelegate(typeof(Func<Faction>), AccessTools.Method(context, "Pop", Type.EmptyTypes));
+            var context = AccessTools.TypeByName("Multiplayer.Client.Factions.FactionExtensions") ?? throw new TypeLoadException("MP faction context");
+            pushFaction = (Action<Map, Faction, bool>)Delegate.CreateDelegate(typeof(Action<Map, Faction, bool>), AccessTools.Method(context, "PushFaction", new[] { typeof(Map), typeof(Faction), typeof(bool) }));
+            popFaction = (Func<Map, Faction>)Delegate.CreateDelegate(typeof(Func<Map, Faction>), AccessTools.Method(context, "PopFaction", new[] { typeof(Map) }));
             mapIndex = AccessTools.Field(typeof(Game), "currentMapIndex") ?? throw new MissingFieldException("Game.currentMapIndex");
             var registrations = new List<MethodInfo>();
             foreach (var targetType in type.Assembly.GetTypes().OrderBy(t => t.FullName, StringComparer.Ordinal))
@@ -42,7 +45,10 @@ namespace Meow.TaleNivarianCompatibility
                 if (path == null) continue;
                 foreach (var method in targetType.GetMethods(AccessTools.allDeclared).OrderBy(m => m.MetadataToken))
                 {
-                    if (method.IsStatic || method.ReturnType != typeof(void) || method.GetParameters().Length != 0 || !method.Name.StartsWith("<Outcome_", StringComparison.Ordinal)) continue;
+                    bool outcome = method.Name.StartsWith("<Outcome_", StringComparison.Ordinal);
+                    bool deferredRaid = targetType.DeclaringType?.FullName == "TheTaleofMilira.RaidIncidentHandler"
+                        && method.Name.StartsWith("<TriggerRaid>", StringComparison.Ordinal);
+                    if (method.IsStatic || method.ReturnType != typeof(void) || method.GetParameters().Length != 0 || !(outcome || deferredRaid)) continue;
                     var calls = PatchProcessor.GetOriginalInstructions(method).Select(i => i.operand).OfType<MethodInfo>().ToArray();
                     if (!calls.Any(m => m.DeclaringType == typeof(Faction) && m.Name == "get_OfPlayer"
                         || m.DeclaringType == typeof(PawnGroupMakerUtility) && m.Name == "GeneratePawns"
@@ -100,14 +106,19 @@ namespace Meow.TaleNivarianCompatibility
             foreach (var field in CaravanPaths[__originalMethod]) value = value == null ? null : field.GetValue(value);
             if (!(value is Caravan caravan) || caravan.Faction?.def?.isPlayer != true) return;
             __state = new Scope { Game = Current.Game, PreviousMap = Find.CurrentMap, PreviousIndex = (sbyte)mapIndex.GetValue(Current.Game) };
-            pushFaction(caravan.Faction, false);
-            __state.Pushed = true;
             Map selected = null;
             foreach (var map in Find.Maps)
                 if (map.ParentFaction == caravan.Faction && (selected == null || map.uniqueID < selected.uniqueID)) selected = map;
             if (selected == null)
                 foreach (var map in Find.Maps)
                     if (selected == null || map.uniqueID < selected.uniqueID) selected = map;
+            // FactionContext.Push alone changes OfPlayer but leaves the previous
+            // faction's History/Archive, research and storyteller installed.
+            // Deferred callbacks must switch the complete native MP context.
+            __state.ContextMap = selected;
+            __state.PreviousManagers = selected == null ? null : mapManagers.Select(f => f.GetValue(selected)).ToArray();
+            pushFaction(selected, caravan.Faction, true);
+            __state.Pushed = true;
             mapIndex.SetValue(Current.Game, selected == null ? (sbyte)-1 : (sbyte)Find.Maps.IndexOf(selected));
         }
 
@@ -122,7 +133,18 @@ namespace Meow.TaleNivarianCompatibility
                     mapIndex.SetValue(__state.Game, (sbyte)index);
                 }
             }
-            finally { if (__state.Pushed) popFaction(); }
+            finally
+            {
+                try { if (__state.Pushed) popFaction(__state.ContextMap); }
+                finally
+                {
+                    // PopFaction restores the previous global faction, which can
+                    // differ from the map context entering a world command.
+                    if (__state.PreviousManagers != null)
+                        for (int i = 0; i < mapManagers.Length; i++)
+                            mapManagers[i].SetValue(__state.ContextMap, __state.PreviousManagers[i]);
+                }
+            }
         }
 
         static bool BeforeJoin(Pawn target)

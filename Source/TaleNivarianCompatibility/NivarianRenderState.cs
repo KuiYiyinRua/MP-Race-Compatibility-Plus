@@ -23,6 +23,7 @@ namespace Meow.TaleNivarianCompatibility
             swayTicks = Required(drone, "_swayLocalTicks"); swayActive = Required(drone, "_windSwayActive"); visualOffset = Required(drone, "_visualOffsets");
             turretId = Required(AccessTools.Property(turret, "Props").PropertyType, "turretID");
             Required(turret, "_cachedRenderingPos"); Required(turret, "_cachedRenderingPosTick");
+            Required(turret, "_lastAttackedTarget"); Required(turret, "_lastAttackTargetTick");
             harmony.Patch(AccessTools.PropertyGetter(turret, "GetRenderingPos"), prefix: Hook(nameof(BeforePosition)), finalizer: Hook(nameof(AfterPosition)));
             harmony.Patch(AccessTools.PropertyGetter(drone, "DrawRotation"), prefix: Hook(nameof(BeforeRotation)), finalizer: Hook(nameof(AfterRotation)));
             harmony.Patch(AccessTools.DeclaredMethod(turret, "PostExposeData"), postfix: Hook(nameof(ExposeTurret)));
@@ -62,11 +63,14 @@ namespace Meow.TaleNivarianCompatibility
                 if (Scribe.mode == LoadSaveMode.LoadingVars) field.SetValue(instance, value);
             }
         }
-        static void ExposeTurret(object __instance, ref int ____cachedRenderingPosTick)
+        static void ExposeTurret(object __instance, ref int ____cachedRenderingPosTick,
+            ref LocalTargetInfo ____lastAttackedTarget, ref int ____lastAttackTargetTick)
         {
             // Multiple turrets share their parent's Scribe node, as in the original implementation.
             string id = (string)turretId.GetValue(((ThingComp)__instance).props) ?? "anon_";
             ExposeFloats(__instance, turretFloats, "meowNivarianTurret_" + id);
+            Scribe_TargetInfo.Look(ref ____lastAttackedTarget, "meowNivarianTurret_" + id + "lastAttackedTarget");
+            Scribe_Values.Look(ref ____lastAttackTargetTick, "meowNivarianTurret_" + id + "lastAttackTargetTick");
             if (Scribe.mode == LoadSaveMode.PostLoadInit) ____cachedRenderingPosTick = -1;
         }
         static void ExposeDrone(object __instance)

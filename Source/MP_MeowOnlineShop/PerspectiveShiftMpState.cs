@@ -269,6 +269,7 @@ namespace MP_MeowOnlineShop
 
         public override void GameComponentTick()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("gameplay")) return;
             // Map-owned work is driven by AvatarMapPostTick with MP's map clock,
             // faction and Rand context, never from the shared world tick.
             if (!MP.IsInMultiplayer || !Patch_PerspectiveShiftMp.Active)
@@ -344,6 +345,7 @@ namespace MP_MeowOnlineShop
 
         public override void FinalizeInit()
         {
+            if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("gameplay")) return;
             base.FinalizeInit();
             NormalizeLoadedRegistry();
             Patch_PerspectiveShiftMp.SyncStaticSeekAtWillFromComponent();
