@@ -19,9 +19,9 @@ namespace MP_MeowOnlineShop
    h.Patch(AccessTools.DeclaredMethod(boothType,"TryAcceptPawn"),prefix:new HarmonyMethod(typeof(RavenConfessionActions),nameof(AdultEntry)));
    h.Patch(AccessTools.DeclaredMethod(boothType,"EjectAll"),prefix:new HarmonyMethod(typeof(RavenConfessionActions),nameof(Eject)));
   }
-  private static bool AdultAssignment(Pawn __0,ref AcceptanceReport __result){if(!MP.IsInMultiplayer||(__0!=null&&__0.ageTracker.AgeBiologicalYears>=18))return true;__result="仅限成年角色（18岁及以上）。";return false;}
-  private static bool AdultEntry(Pawn __0)=>!MP.IsInMultiplayer||(__0!=null&&__0.ageTracker.AgeBiologicalYears>=18);
-  private static bool Available(Pawn pawn,Map map)=>pawn!=null&&pawn.ageTracker.AgeBiologicalYears>=18&&pawn.Spawned&&pawn.Map==map&&!pawn.Dead&&!pawn.Downed&&!pawn.InMentalState&&!pawn.Drafted;
+  private static bool AdultAssignment(Pawn __0,ref AcceptanceReport __result)=>true;
+  private static bool AdultEntry(Pawn __0)=>true;
+  private static bool Available(Pawn pawn,Map map)=>pawn!=null&&pawn.Spawned&&pawn.Map==map&&!pawn.Dead&&!pawn.Downed&&!pawn.InMentalState&&!pawn.Drafted;
   private static bool Valid(ThingWithComps booth,Pawn believer,Pawn nun)
   {
    if(booth?.Map==null||booth.GetType()!=boothType||believer==nun||!Available(believer,booth.Map)||!Available(nun,booth.Map))return false;

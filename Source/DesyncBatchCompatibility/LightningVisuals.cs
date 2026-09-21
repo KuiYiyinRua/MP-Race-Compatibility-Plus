@@ -18,6 +18,21 @@ namespace Meow.DesyncBatchCompatibility
                 harmony.Patch(target, prefix: new HarmonyMethod(typeof(LightningVisuals), nameof(Before)),
                     finalizer: new HarmonyMethod(typeof(LightningVisuals), nameof(After)));
             }
+            // Desync-148/149: damage text has a separate visibility/saturation gate.
+            // Scope only the visual emitter, never Apply/Impact or actual injuries.
+            var damageText = Bootstrap.Method(Bootstrap.Type("AriandelLibrary.DamageWorker_AddInjury_NoDamageFactor"),
+                "ThrowDamageMote", typeof(Vector3), typeof(Map), typeof(string), typeof(Color));
+            harmony.Patch(damageText, prefix: new HarmonyMethod(typeof(LightningVisuals), nameof(Before)),
+                finalizer: new HarmonyMethod(typeof(LightningVisuals), nameof(After)));
+        }
+        internal static void ApplySnowball(Harmony harmony)
+        {
+            // Desync-151..153: ThrowObjectAt only creates a Fleck; duration, joy,
+            // movement and interaction state remain in the original job/toils.
+            var target = Bootstrap.Method(Bootstrap.Type("RomanceOnTheRim.JobDriver_SnowballFight"),
+                "ThrowObjectAt", typeof(Pawn), typeof(IntVec3), typeof(FleckDef));
+            harmony.Patch(target, prefix: new HarmonyMethod(typeof(LightningVisuals), nameof(Before)),
+                finalizer: new HarmonyMethod(typeof(LightningVisuals), nameof(After)));
         }
         internal static void Before(out bool __state)
         {

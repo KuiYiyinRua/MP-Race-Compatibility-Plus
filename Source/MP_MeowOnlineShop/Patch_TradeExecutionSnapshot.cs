@@ -22,7 +22,7 @@ namespace MP_MeowOnlineShop
     /// TradeDeal.TryExecute (including goodwill) while another rejects it.
     ///
     /// Replace only the UI accept boundary with one canonical intent command.
-    /// The command carries semantic tradeable keys and the final counts chosen
+    /// The command carries item-identity tradeable keys and the final counts chosen
     /// by the issuing player. At the shared command tick every peer regenerates
     /// settlement stock, rebuilds the deal from authoritative goods, clears all
     /// stale counts, applies the same intent, and finally delegates to native
@@ -31,7 +31,7 @@ namespace MP_MeowOnlineShop
     /// </summary>
     internal static class Patch_TradeExecutionSnapshot
     {
-        private const int CanonicalSnapshotRevision = 4;
+        private const int CanonicalSnapshotRevision = 5;
         private const string MultiplayerTypeName =
             "Multiplayer.Client.Multiplayer";
         private const string WorldCompTypeName =
@@ -599,6 +599,17 @@ namespace MP_MeowOnlineShop
                 if (keyed[i].Value.CountToTransfer == 0)
                     continue;
 
+                // An occurrence in an unstable sort is not an item identity.
+                // Settlement stock is regenerated and cannot retain Thing IDs;
+                // reject ambiguous semantic rows instead of guessing which one
+                // the player selected. Physical caravan/ship goods use IDs below.
+                if ((i > 0 && KeyComparer.Equals(keyed[i - 1].Key, key)) ||
+                    (i + 1 < keyed.Count && KeyComparer.Equals(keyed[i + 1].Key, key)))
+                {
+                    throw new InvalidOperationException(
+                        "selected trade item has no unique identity; reopen the trade");
+                }
+
                 encoded.Add(
                     Convert.ToBase64String(Encoding.UTF8.GetBytes(key)) +
                     "," + occurrence.ToString(CultureInfo.InvariantCulture) +
@@ -659,11 +670,11 @@ namespace MP_MeowOnlineShop
                 if (!byKey.TryGetValue(
                         row.Key,
                         out List<Tradeable> matches) ||
-                    row.Occurrence < 0 ||
-                    row.Occurrence >= matches.Count)
+                    matches.Count != 1 ||
+                    row.Occurrence != 0)
                 {
                     LogFailureOnce(
-                        "canonical trade item is absent after rebuild; " +
+                        "canonical trade item is absent or ambiguous after rebuild; " +
                         "trade aborted before mutation");
                     return false;
                 }
@@ -783,8 +794,15 @@ namespace MP_MeowOnlineShop
             if (tradeable == null)
                 return string.Empty;
 
-            string colony = BuildSideKey(tradeable.thingsColony);
-            string trader = BuildSideKey(tradeable.thingsTrader);
+            // Colony goods keep their identities even when a settlement's stock
+            // is regenerated. Visiting caravans and passing ships also retain
+            // their physical goods across the deal rebuild. Use those identities
+            // rather than outer defs: MinifiedThing hides its building, while
+            // gene packs, books and modded things can differ in unlisted comps.
+            string colony = BuildSideKey(tradeable.thingsColony, true);
+            string trader = BuildSideKey(
+                tradeable.thingsTrader,
+                !(TradeSession.trader is Settlement));
 
             return string.Join(
                 "|",
@@ -793,13 +811,16 @@ namespace MP_MeowOnlineShop
                 "T=" + trader);
         }
 
-        private static string BuildSideKey(IEnumerable<Thing> things)
+        private static string BuildSideKey(IEnumerable<Thing> things, bool useThingIds)
         {
             return string.Join(
                 "~",
                 things
                     .Where(thing => thing != null)
-                    .GroupBy(BuildThingIdentityKey, KeyComparer)
+                    .GroupBy(thing => BuildThingIdentityKey(thing) +
+                        (useThingIds
+                            ? "^id=" + thing.thingIDNumber.ToString(CultureInfo.InvariantCulture)
+                            : string.Empty), KeyComparer)
                     .OrderBy(group => group.Key, KeyComparer)
                     .Select(group =>
                         group.Key + "#" +

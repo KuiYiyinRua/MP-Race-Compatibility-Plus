@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
-    <AssemblyName>Meow.DesyncBatchCompatibility</AssemblyName><Version>1.0.0</Version>
+    <AssemblyName>Meow.DesyncBatchCompatibility</AssemblyName><Version>1.0.1</Version>
     <GameRoot Condition="'$(GameRoot)' == ''">$(MSBuildProjectDirectory)/../../../..</GameRoot>
   </PropertyGroup>
   <ItemGroup>

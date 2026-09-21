@@ -19,6 +19,12 @@ namespace Meow.DesyncBatchCompatibility
         {
             bool ok = true;
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("lazy-caches", LazySimulationCaches.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("world-component-clock", WorldComponentClock.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual") &&
+                (ModsConfig.IsActive("telardo.RomanceOnTheRim.chillkill190.pe") || ModsConfig.IsActive("telardo.RomanceOnTheRim")))
+                ok &= InstallGroup("snowball-visual", LightningVisuals.ApplySnowball);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("races") && ModsConfig.IsActive("HAR.MugirlRace"))
+                ok &= InstallGroup("mugirl-dismount", MugirlDismount.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
                 ok &= InstallGroup("fruit-tree", FruitTree.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Ariandel.AriandelLibrary"))
@@ -26,7 +32,7 @@ namespace Meow.DesyncBatchCompatibility
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction") && ModsConfig.IsActive("trigger.eliteRaid"))
                 ok &= InstallGroup("elite-state", EliteState.Apply);
             Ready = ok;
-            if (ok) Log.Message("[DesyncBatchCompat] 1.0.0 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
+            if (ok) Log.Message("[DesyncBatchCompat] 1.0.1 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
         }
 
         static bool InstallGroup(string name, Action<Harmony> install)

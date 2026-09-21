@@ -16,3 +16,4 @@
     <Reference Include="MP_MeowOnlineShop"><HintPath>../../1.6/Assemblies/MP_MeowOnlineShop.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>
+

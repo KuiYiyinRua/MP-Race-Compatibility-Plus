@@ -16,6 +16,7 @@ namespace MP_MeowOnlineShop
         {
             systemType = AccessTools.TypeByName("RavenRace.Features.CentralHub.GameComponent_RavenCentralHubSystem")
                 ?? throw new TypeLoadException("Raven central research");
+            RavenResearchClock.Apply(harmony, systemType);
             foreach (string name in new[] { "TryEnqueue", "TryRemoveAt", "TryMove", "TryUpgrade" })
                 harmony.Patch(AccessTools.DeclaredMethod(systemType, name) ?? throw new MissingMethodException(systemType.FullName, name),
                     prefix: new HarmonyMethod(typeof(RavenCentralResearch), nameof(BeforeBoolAction)));
