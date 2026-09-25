@@ -54,8 +54,7 @@ public static class FunnelBit_RandIsolation
 		num += PatchDetRand(harmony, "FunnelBit.Projectile_FunnelBit", "Tick_PostAttackWaiting", DetRandType.Thing);
 		num += PatchDetRand(harmony, "FunnelBit.Projectile_FunnelBit", "Tick_Returning", DetRandType.Thing);
 		num += PatchDetRand(harmony, "FunnelBit.Projectile_FunnelBit", "Tick_SpecialAction", DetRandType.Thing);
-		global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility.WrapDetRandCompTick(harmony, "FunnelBit.CompTurretGun_FunnelBit");
-		num++;
+		num += PatchCompTick(harmony);
 		num += PatchDetRand(harmony, "FunnelBit.GameComponent_FunnelBit", "GameComponentTick", DetRandType.Tick);
 		num += PatchDetRand(harmony, "FunnelBit.FunnelBitMoveWorker_DragoonEx", "Tick", DetRandType.Tick);
 		num += PatchDetRand(harmony, "FunnelBit.FunnelBitMoveWorker_MeleeChargeEx", "Tick", DetRandType.Tick);
@@ -68,6 +67,32 @@ public static class FunnelBit_RandIsolation
 		num += PatchPushPopRand(harmony, "FunnelBit.FunnelBitEffectHandler", "Tick");
 		num += PatchPushPopRand(harmony, "FunnelBit.FunnelBitTrailRenderer", "Tick");
 		Log.Message($"[FunnelBit_RandIsolation] patched {num} targets");
+	}
+
+	public static void PushThing(Thing __instance) => CompatUtility.PushDetRand_Thing(__instance);
+
+	public static void PushComp(ThingComp __instance) => CompatUtility.PushDetRand_ThingComp(__instance);
+
+	private static int PatchCompTick(Harmony harmony)
+	{
+		Type type = ResolveType("FunnelBit.CompTurretGun_FunnelBit");
+		MethodInfo method = type == null ? null : AccessTools.DeclaredMethod(type, "CompTick", Type.EmptyTypes);
+		if (method == null)
+		{
+			Log.Error("[FunnelBit_RandIsolation] required CompTurretGun_FunnelBit.CompTick missing");
+			return 0;
+		}
+		try
+		{
+			harmony.Patch(method, new HarmonyMethod(typeof(FunnelBit_RandIsolation), nameof(PushComp)),
+				null, null, new HarmonyMethod(typeof(CompatUtility), nameof(CompatUtility.PopDetRandFinalizer)));
+			return 1;
+		}
+		catch (Exception error)
+		{
+			Log.Error("[FunnelBit_RandIsolation] CompTick patch failed: " + error);
+			return 0;
+		}
 	}
 
 	private static int PatchDetRand(Harmony harmony, string typeName, string methodName, DetRandType randType)
@@ -102,7 +127,7 @@ public static class FunnelBit_RandIsolation
 		{
 			if (randType == DetRandType.Thing)
 			{
-				harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(typeof(global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility), "PushDetRand_Thing", (Type[])null), new HarmonyMethod(typeof(global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility), "PopDetRand", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null);
+				harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(typeof(FunnelBit_RandIsolation), nameof(PushThing)), null, null, new HarmonyMethod(typeof(CompatUtility), nameof(CompatUtility.PopDetRandFinalizer)));
 			}
 			else
 			{

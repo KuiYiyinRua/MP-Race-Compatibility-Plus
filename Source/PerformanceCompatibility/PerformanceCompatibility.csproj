@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Meow.PerformanceCompatibility</AssemblyName>
+    <Version>1.0.0</Version>
+    <GameRoot Condition="'$(GameRoot)' == ''">$(MSBuildProjectDirectory)/../../../..</GameRoot>
+    <WorkshopRoot Condition="'$(WorkshopRoot)' == ''">G:/Steam/steamapps/workshop/content/294100</WorkshopRoot>
+    <HarmonyDllPath Condition="'$(HarmonyDllPath)' == ''">$(GameRoot)/Mods/2009463077/Current/Assemblies/0Harmony.dll</HarmonyDllPath>
+    <MultiplayerApiPath Condition="'$(MultiplayerApiPath)' == ''">$(GameRoot)/Mods/Multiplayer/1.6/Assemblies/0MultiplayerAPI.dll</MultiplayerApiPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(HarmonyDllPath)</HintPath><Private>false</Private></Reference>
+    <Reference Include="0MultiplayerAPI"><HintPath>$(MultiplayerApiPath)</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

@@ -56,6 +56,13 @@ namespace Meow.RaceTrioCompatibility
         internal static PropertyInfo IsReplay, Simulating;
         internal static void Apply(Harmony harmony)
         {
+            // The standalone companion can initialize before OR after this class.
+            // Select one owner by assembly presence, not startup patch order.
+            if (AccessTools.TypeByName("Meow.NivarianFocusCompatibility.Focus") != null)
+            {
+                Log.Message("[NivarianFocusCompat] standalone focus companion owns selection synchronization.");
+                return;
+            }
             var type = AccessTools.TypeByName("Nivarian.MapComp_NivarianSelectionBoost");
             var tick = type == null ? null : AccessTools.DeclaredMethod(type, "MapComponentTick");
             var helper = AccessTools.TypeByName("Nivarian.Helper.NivarianHelper");

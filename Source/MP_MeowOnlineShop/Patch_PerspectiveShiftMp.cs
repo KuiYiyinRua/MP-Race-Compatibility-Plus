@@ -405,6 +405,14 @@ namespace MP_MeowOnlineShop
                 postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(AvatarMapPostTick)));
             harmony.Patch(stateOnGui, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateOnGuiPrefix)));
             harmony.Patch(isAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(IsAvatarPrefix)));
+            MethodInfo draftedSetter = AccessTools.PropertySetter(
+                typeof(Pawn_DraftController), nameof(Pawn_DraftController.Drafted));
+            if (draftedSetter != null)
+                harmony.Patch(draftedSetter,
+                    prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(CaptureDraftedState)),
+                    postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(ReleaseAvatarOnUndraft)));
+            else
+                Log.Warning("[MP-MeowOnlineShop] Perspective Shift undraft release target not resolved.");
             harmony.Patch(updatePhysics, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(UpdatePhysicsPrefix)));
             harmony.Patch(renderPawn,
                 prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(RenderPawnPrefix)),
@@ -2263,11 +2271,32 @@ namespace MP_MeowOnlineShop
         private static PerspectiveShiftMpComponent CurrentComponent()
         {
             Game game = Current.Game;
-            if (!_componentCacheValid || !ReferenceEquals(game, _componentCacheGame))
+            List<GameComponent> components = game?.components;
+            // Loading replaces Game.components without replacing Current.Game.
+            // Validate the cached slot, including in-place list replacement/removal,
+            // so simulation cannot keep a constructor-time, empty owner registry.
+            if (!_componentCacheValid || !ReferenceEquals(game, _componentCacheGame) ||
+                _componentCache == null || components == null ||
+                _componentCacheIndex < 0 || _componentCacheIndex >= components.Count ||
+                !ReferenceEquals(components[_componentCacheIndex], _componentCache))
             {
-                _componentCache = game?.GetComponent<PerspectiveShiftMpComponent>();
+                _componentCache = null;
+                _componentCacheIndex = -1;
+                if (components != null)
+                {
+                    for (int i = 0; i < components.Count; i++)
+                    {
+                        if (components[i] is PerspectiveShiftMpComponent component)
+                        {
+                            _componentCache = component;
+                            _componentCacheIndex = i;
+                            break;
+                        }
+                    }
+                }
                 _componentCacheGame = game;
                 _componentCacheValid = true;
+                InvalidateControlledCache();
             }
 
             return _componentCache;
@@ -2782,5 +2811,32 @@ namespace MP_MeowOnlineShop
             IntVec3 cell = position.ToIntVec3();
             return cell.InBounds(pawn.Map) && cell.WalkableBy(pawn.Map, pawn);
         }
+
+        public static void CaptureDraftedState(Pawn_DraftController __instance, out bool __state)
+        {
+            __state = __instance.Drafted;
+        }
+
+        public static void ReleaseAvatarOnUndraft(
+            Pawn_DraftController __instance, bool value, bool __state)
+        {
+            // MP already synchronizes the vanilla Drafted setter. A UI-side
+            // invocation may be intercepted before the command is replayed;
+            // releasing the lease there would mutate only the issuing peer.
+            if (!MP.IsInMultiplayer || !Active || !MP.IsExecutingSyncCommand ||
+                !__state || value || __instance.Drafted)
+                return;
+
+            Pawn pawn = __instance.pawn;
+            PerspectiveShiftMpComponent component = CurrentComponent();
+            PerspectiveShiftControlledAvatar state = component?.ForPawn(pawn);
+            if (state == null)
+                return;
+
+            component.Release(state.owner, state.epoch);
+            InvalidateControlledCache();
+        }
+
+        private static int _componentCacheIndex;
     }
 }

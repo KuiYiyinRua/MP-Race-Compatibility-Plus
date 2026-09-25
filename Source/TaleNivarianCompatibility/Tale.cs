@@ -156,8 +156,11 @@ namespace Meow.TaleNivarianCompatibility
 
         public static void Join(Map map, Pawn target)
         {
-            if (map == null || target == null || target.Dead || target.Map != map || map.ParentFaction != Faction.OfPlayer) return;
-            join.Invoke(null, new object[] { target });
+            if (map == null || target == null || target.Dead || target.Map != map || map.ParentFaction?.def?.isPlayer != true) return;
+            var managers = new SavedMapManagers(map);
+            pushFaction(map, map.ParentFaction, true);
+            try { join.Invoke(null, new object[] { target }); }
+            finally { try { popFaction(map); } finally { managers.Restore(); } }
         }
     }
 }

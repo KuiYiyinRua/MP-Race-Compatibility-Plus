@@ -9,14 +9,18 @@
 *.log
 *.tmp
 *.bak
+# Visual Studio project conversion reports
+/Source/MP_MeowOnlineShop/UpgradeLog*.htm
 
 # Compiled mod output and local Harmony copy
 /1.6/Assemblies/
+/MeleeAnimation/Assemblies/
 /Source/MP_MeowOnlineShop/Libs/*
 !/Source/MP_MeowOnlineShop/Libs/README.txt
 
 # Local validation workspace: build candidates, decompiled sources, desync evidence
 /BuildValidation/
+/P0Decompiled/
 
 # RimWorld config captured in the repo root by local test runs
 /System.Management.Automation.Internal.Host.InternalHost/
@@ -37,11 +41,3 @@ _candidate_*/
 # OS noise
 Thumbs.db
 Desktop.ini
-
-# Runtime binaries, local profiling and publication mirrors
-*.dll
-*.pdb
-*.7z
-*.remote.txt
-*.preview-url.txt
-/P0Decompiled/

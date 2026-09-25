@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony"><HintPath>../../MP_MeowOnlineShop/Libs/0Harmony.dll</HintPath></Reference>
+    <Compile Include="../../MP_MeowOnlineShop/Patch_CaravanEscortSelectionMp.cs" Link="PatchUnderTest.cs" />
+  </ItemGroup>
+</Project>

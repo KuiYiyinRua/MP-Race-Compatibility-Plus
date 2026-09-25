@@ -36,6 +36,7 @@ namespace Meow.TaleNivarianCompatibility
                     NivarianFireworks.Apply(harmony);
                     NivarianRemainingActions.Apply(harmony);
                     NivarianSelfBuilding.Apply(harmony);
+                    NivarianPlacementPayload.Apply(harmony);
                     NivarianWindowDebugTools.Apply(harmony);
                     NivarianWindowQuestButtons.Apply(harmony);
                     NivarianDroneDeveloperActions.Apply(harmony);
@@ -92,7 +93,7 @@ namespace Meow.TaleNivarianCompatibility
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Pakerwot.MiliraEventandStortExpandTheTaleofMilira")) { Tale.Apply(harmony); TaleArrival.Apply(harmony); TaleSupplyDialog.Apply(harmony); }
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("rjw") && ModsConfig.IsActive("abscon.privacy.please")) Privacy.Apply(harmony);
                 Ready = true;
-                Log.Message("[TaleNivarianCompat] 1.1.0 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
+                Log.Message("[TaleNivarianCompat] 1.1.3 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
             }
             catch (Exception e)
             {

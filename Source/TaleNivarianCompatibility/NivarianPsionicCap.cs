@@ -46,7 +46,9 @@ namespace Meow.TaleNivarianCompatibility
                 new Site("Verse.Hediff_VatLearning", "PostTickInterval", 1, typeof(System.Int32)),
                 new Site("Verse.Hediff_Level", "ChangeLevel", 1, typeof(System.Int32)),
                 new Site("Verse.Hediff_Psylink", "ChangeLevel", 1, typeof(System.Int32), typeof(System.Boolean)),
-                new Site("Verse.DebugToolsPawns", "GivePsylink", 1),
+                // GivePsylink reads only PsychicAmplifier, never our attunement Def.
+                // VPE replaces that read with its own limit; requiring it aborts
+                // every subsequent compatibility registration (Desync-178 logs).
                 new Site("Verse.Dialog_DebugSetSeverity", ".ctor", 2, typeof(Verse.Hediff)),
                 new Site("RimWorld.IncidentWorker_Disease", "TryExecuteWorker", 1, typeof(RimWorld.IncidentParms)),
                 new Site("RimWorld.Recipe_ChangeImplantLevel", "Operable", 1, typeof(Verse.Hediff), typeof(Verse.RecipeDef)),

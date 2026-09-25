@@ -34,6 +34,16 @@ namespace Meow.DesyncBatchCompatibility
             harmony.Patch(target, prefix: new HarmonyMethod(typeof(LightningVisuals), nameof(Before)),
                 finalizer: new HarmonyMethod(typeof(LightningVisuals), nameof(After)));
         }
+        internal static void ApplyFlight(Harmony harmony)
+        {
+            var type = Bootstrap.Type("ChezhouLib.ClThingComp.ThingComp_RaceFly");
+            var entry = Bootstrap.Method(type, "SpawnConfiguredFleck",
+                Bootstrap.Type("ChezhouLib.ClThingComp.FlightEffectEntry"));
+            // Include GetEffectLocation's randomness before the visibility gate.
+            // Do not enclose flight transitions, jobs or hediff application.
+            harmony.Patch(entry, prefix: new HarmonyMethod(typeof(LightningVisuals), nameof(Before)),
+                finalizer: new HarmonyMethod(typeof(LightningVisuals), nameof(After)));
+        }
         internal static void Before(out bool __state)
         {
             __state = MP.IsInMultiplayer;

@@ -24,6 +24,29 @@ namespace Meow.DesyncBatchCompatibility
                 throw new InvalidOperationException("MP world clock signature changed");
             harmony.Patch(Bootstrap.Method(typeof(GameComponentUtility), "GameComponentTick"),
                 transpiler: new HarmonyMethod(typeof(WorldComponentClock), nameof(Rewrite)));
+            // WorldPawns and FactionManager execute before GameComponentUtility.
+            // Desync-172/173 show map time leaking into these world-only managers.
+            foreach (var target in new[] {
+                Bootstrap.Method(typeof(RimWorld.Planet.WorldPawns), "WorldPawnsTick"),
+                Bootstrap.Method(typeof(RimWorld.FactionManager), "FactionManagerTick") })
+                harmony.Patch(target,
+                    prefix: new HarmonyMethod(typeof(WorldComponentClock), nameof(BeforeManager)) { priority = Priority.Last },
+                    finalizer: new HarmonyMethod(typeof(WorldComponentClock), nameof(AfterManager)));
+        }
+
+        internal static void BeforeManager(out int? __state)
+        {
+            __state = null;
+            if (!MP.IsInMultiplayer || !(bool)tickingWorld.GetValue(null)) return;
+            var clock = worldTime.Invoke(null, null);
+            if (clock == null) throw new InvalidOperationException("Missing active MP world clock");
+            __state = Find.TickManager.TicksGame;
+            Find.TickManager.DebugSetTicksGame((int)worldTicks.GetValue(clock) + 1);
+        }
+
+        internal static void AfterManager(int? __state)
+        {
+            if (__state.HasValue) Find.TickManager.DebugSetTicksGame(__state.Value);
         }
 
         internal static IEnumerable<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> instructions)

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion></PropertyGroup>
+  <ItemGroup><Reference Include="0Harmony"><HintPath>../../MP_MeowOnlineShop/Libs/0Harmony.dll</HintPath></Reference></ItemGroup>
+</Project>

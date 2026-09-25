@@ -1,5 +1,15 @@
 # [MP] Multiplayer Compatibility Patches
 
+## 3.0.136 (2026-09-25)
+
+- **Melpomene Avatar**: fixes a multiplayer compatibility issue with drafting.
+- **Turret Combat Sleep Experimental 1.3.0**: includes a standalone assembly, disabled by default in mod settings. When enabled, it reduces work in reviewed idle turret combat paths without changing save data.
+- **Raven Industry Optimization 1.0.0**: adds a separate multiplayer-only optimization, disabled by default. The host's setting is synchronized and saved with the game. Review its scope and rollback instructions before enabling it.
+
+Validation: the user verified the Melpomene Avatar fix in game. Turret Combat Sleep 1.3.0 and Raven Industry Optimization 1.0.0 received build and static checks only; no in-game runtime, multiplayer, or TPS verification was performed for them. Both options are disabled by default. This does not establish multiplayer validation for every turret or conveyor mod combination.
+
+All players must use matching files and fully restart. When enabling turret sleep, every multiplayer participant must use the same mod setting and restart. Enable the Raven option for a save only after reviewing its compatibility conditions. To roll back, disable and save the corresponding option, or remove the standalone assembly after all players exit.
+
 ## 3.0.130 (2026-09-20)
 
 - **Gravship compatibility**: updates Odyssey piloting, takeoff, placement and landing, retained-base ownership and faction context, and gravship/carried-shuttle cooldowns across asynchronous map clocks.

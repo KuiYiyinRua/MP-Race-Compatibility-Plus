@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <GameRoot>$(MSBuildProjectDirectory)/../../../../..</GameRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony"><HintPath>../../MP_MeowOnlineShop/Libs/0Harmony.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>
