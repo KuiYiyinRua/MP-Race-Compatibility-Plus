@@ -8,10 +8,12 @@ namespace Meow.RaceTrioCompatibility
 {
     internal static class MonolynUi
     {
+        static Type consumerType, producerType;
         internal static void Apply(Harmony harmony)
         {
-            var consumer=AccessTools.TypeByName("ASEL.MonolynConsumer");
-            MP.RegisterSyncField(consumer,"sliderValue");
+            consumerType=AccessTools.TypeByName("ASEL.MonolynConsumer");
+            producerType=AccessTools.TypeByName("ASEL.Building_MonolynProducer");
+            MP.RegisterSyncField(consumerType,"sliderValue");
             var slider=AccessTools.TypeByName("ASEL.Building_GravityPillar+<>c");
             harmony.Patch(AccessTools.Method(slider,"<GetGizmos>b__12_2"),prefix:new HarmonyMethod(typeof(MonolynUi),nameof(SliderPrefix)),finalizer:new HarmonyMethod(typeof(MonolynUi),nameof(Finish)));
             var menu=AccessTools.TypeByName("ASEL.ITab_MonolynRecipeList+<>c__DisplayClass27_0");
@@ -31,15 +33,20 @@ namespace Meow.RaceTrioCompatibility
         static void SliderPrefix(object __0,out bool __state)
         {
             __state=MP.IsInMultiplayer&&MP.InInterface;
-            if(__state){MP.WatchBegin();MP.Watch(__0,"sliderValue");}
+            if(__state){MP.WatchBegin();MP.Watch(consumerType,"sliderValue",__0);}
         }
         static void MenuPrefix(object __instance,out bool __state)
         {
-            __state=MP.IsInMultiplayer&&MP.InInterface;
-            if(!__state)return;
+            __state=false;
+            if(!MP.IsInMultiplayer||!MP.InInterface)return;
             var tab=AccessTools.Field(__instance.GetType(),"<>4__this").GetValue(__instance);
             var fabricator=AccessTools.Property(tab.GetType(),"fabricator").GetValue(tab);
-            MP.WatchBegin();MP.Watch(fabricator,"selectedOption");
+            MP.WatchBegin();
+            __state=true;
+            // MP keys SyncFields by the registered type, without walking base
+            // classes. Fabricators inherit this field from the producer type
+            // registered by Patch_AselMonolynMp in the core module.
+            MP.Watch(producerType,"selectedOption",fabricator);
         }
         static Exception Finish(Exception __exception,bool __state){if(__state)MP.WatchEnd();return __exception;}
     }
