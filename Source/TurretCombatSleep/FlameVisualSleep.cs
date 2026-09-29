@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
@@ -53,7 +53,7 @@ namespace Meow.TurretCombatSleep
                 }
                 Log.Message("[Meow.TurretCombatSleep] Idle flame visuals sleep until changed; active playback remains live");
             }
-            catch (Exception e) { Log.Error("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED flame visual sleep " + e); }
+            catch (Exception e) { TurretCombatSleep.RequiredTargetFailed("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED flame visual sleep " + e); }
         }
 
         private static bool NeedsRefresh(ThingComp comp)
@@ -69,14 +69,14 @@ namespace Meow.TurretCombatSleep
             return effect == null && parent.IsHashIntervalTick(60);
         }
 
-        private static bool TickPrefix(ThingComp __instance) => !MP.IsInMultiplayer || NeedsRefresh(__instance);
+        private static bool TickPrefix(ThingComp __instance) => !TurretCombatSleep.Active || NeedsRefresh(__instance);
 
         private static bool NotifyPrefix(ThingComp __instance, bool __0)
-            => !MP.IsInMultiplayer || __0 || Wants(__instance) || NeedsRefresh(__instance);
+            => !TurretCombatSleep.Active || __0 || Wants(__instance) || NeedsRefresh(__instance);
 
         private static void Refreshed(ThingComp __instance, bool __runOriginal)
         {
-            if (!MP.IsInMultiplayer || !__runOriginal || __instance.parent == null) return;
+            if (!TurretCombatSleep.Active || !__runOriginal || __instance.parent == null) return;
             var state = States.GetValue(__instance, _ => new State());
             state.Dirty = false;
             state.Map = __instance.parent.Map;

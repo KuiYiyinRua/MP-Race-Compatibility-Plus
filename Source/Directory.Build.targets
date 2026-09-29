@@ -1,0 +1,11 @@
+<Project>
+  <!-- Full release builds bind every module to the core built in the same run. -->
+  <Target Name="UseFullReleaseCore" BeforeTargets="ResolveAssemblyReferences" Condition="'$(MainCompatDllPath)' != ''">
+    <ItemGroup>
+      <Reference Condition="'%(Reference.Identity)' == 'MP_MeowOnlineShop'">
+        <HintPath>$(MainCompatDllPath)</HintPath>
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
+  </Target>
+</Project>

@@ -211,6 +211,7 @@ public static class AriandelMiliraImperium_Compat
 		//IL_0098: Expected O, but got Unknown
 		//IL_01ad: Unknown result type (might be due to invalid IL or missing references)
 		//IL_01b9: Expected O, but got Unknown
+		RegisterImperiumJumpAbilityOrders();
 		RegisterAbilityEffects();
 		RegisterPermitWorkers();
 		TryReg(typeof(AriandelMiliraImperium_Compat).GetMethod("SyncBoolField", BindingFlags.Static | BindingFlags.Public));
@@ -261,6 +262,43 @@ public static class AriandelMiliraImperium_Compat
 			_fiLockEnabled = AccessTools.DeclaredField(type6, "enabled");
 			PatchGizmoMethod(type6, "CompGetGizmos", "WrapLockGizmos");
 		}
+	}
+
+	// These verbs override the vanilla targeting executor and create CastJump jobs
+	// directly. Syncing the resulting job loses its verbToUse reference; replay the
+	// stable verb order on every peer before the job is constructed instead.
+	private static void RegisterImperiumJumpAbilityOrders()
+	{
+		string[] verbNames =
+		{
+			"MI_Verb_CastAbilityMiliraFly_Rakuyo",
+			"MI_Verb_CastAbilityMiliraFly_GreatSword",
+			"Verb_CastAbilityFly_Psyblade",
+			"Verb_CastAbilityMiliraFly_Hammer_Thunder",
+			"MI_Verb_CastAbilityMiliraFly_MichaSlice",
+			"Verb_CastAbilityMiliraFly_Micha"
+		};
+		int registered = 0;
+		foreach (string name in verbNames)
+		{
+			Type type = Resolve(NS + name);
+			MethodInfo order = type == null ? null : AccessTools.DeclaredMethod(type, "OrderForceTarget", new[] { typeof(LocalTargetInfo) });
+			if (order == null)
+			{
+				Log.Warning("[MiliraCompat] Missing jump ability order: " + name);
+				continue;
+			}
+			try
+			{
+				MP.RegisterSyncMethod(order, null);
+				registered++;
+			}
+			catch (Exception ex)
+			{
+				Log.Warning("[MiliraCompat] Failed to sync jump ability order " + name + ": " + ex.Message);
+			}
+		}
+		Log.Message("[MiliraCompat] Jump ability orders registered: " + registered + "/" + verbNames.Length);
 	}
 
 	private static void PatchGizmoMethod(Type compType, string methodName, string wrapperName)

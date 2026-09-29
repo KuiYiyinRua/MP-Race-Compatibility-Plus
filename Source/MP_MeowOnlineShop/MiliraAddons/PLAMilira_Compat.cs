@@ -288,6 +288,8 @@ public static class PLAMilira_Compat
 			return true;
 		}
 		needSilver = AdjustSilverForCooldown("HarrierSupport", needSilver);
+		Map targetMap = Find.CurrentMap;
+		Thing instigator = AccessTools.Field(__instance.GetType(), "instigator")?.GetValue(__instance) as Thing;
 		((Window)__instance).Close(true);
 		string capturedName = thingDefName;
 		int capturedCd = cooldownTicks;
@@ -301,9 +303,9 @@ public static class PLAMilira_Compat
 		{
 			//IL_000c: Unknown result type (might be due to invalid IL or missing references)
 			//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-			if (target.IsValid && GenGrid.InBounds(target.Cell, Find.CurrentMap))
+			if (targetMap != null && target.IsValid && GenGrid.InBounds(target.Cell, targetMap))
 			{
-				SyncedHarrierStrike(capturedName, target.Cell, capturedCd, capturedSilver);
+				SyncedHarrierStrike(instigator, targetMap, capturedName, target.Cell, capturedCd, capturedSilver);
 			}
 		}, (Pawn)null, (Action)null, (Texture2D)null, true);
 		return false;
@@ -529,11 +531,13 @@ public static class PLAMilira_Compat
 		global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility.PopRand();
 	}
 
-	public static void SyncedHarrierStrike(string thingDefName, IntVec3 cell, int cdTicks, int needSilver)
+	// MP's Thing writer selects its holder map. Serialize the explicit target
+	// map after the instigator so a caller on another map cannot overwrite it.
+	public static void SyncedHarrierStrike(Thing instigator, Map targetMap, string thingDefName, IntVec3 cell, int cdTicks, int needSilver)
 	{
 		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		Map currentMap = Find.CurrentMap;
+		Map currentMap = targetMap;
 		if (currentMap == null || !GenGrid.InBounds(cell, currentMap))
 		{
 			return;
@@ -544,7 +548,10 @@ public static class PLAMilira_Compat
 			ThingDef named = DefDatabase<ThingDef>.GetNamed(thingDefName, false);
 			if (named != null)
 			{
-				GenSpawn.Spawn(named, cell, currentMap, (WipeMode)0);
+				Thing strike = ThingMaker.MakeThing(named);
+				GenPlace.TryPlaceThing(strike, cell, currentMap, ThingPlaceMode.Near);
+				AccessTools.Field(strike.GetType(), "instigator")?.SetValue(strike, instigator);
+				if (val != null && needSilver > 0) TradeUtility.LaunchSilver(val, needSilver);
 				RecordCooldown("HarrierSupport", cdTicks);
 			}
 		}

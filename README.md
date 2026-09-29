@@ -1,12 +1,12 @@
-# MP Race Compatibility Plus
+﻿# MP Race Compatibility Plus
 
 这是一个面向 RimWorld Multiplayer 的兼容性补丁模组，用于降低特定模组在多人游戏中的不同步风险，并修复部分联机状态、随机数和事件流程问题。
 
-## 当前发布：3.0.136
+## 当前发布：3.0.141
 
-本次更新 Melpomene Avatar 征召兼容，并加入可选的炮台战斗休眠与渡鸦工业流水线优化模块。两项均为独立程序集且默认关闭；启用后需所有玩家保持一致并完全重启游戏。
+本版发布全部 22 个生产程序集与完整源码，包含此前本地 3.0.140 的兼容模块、Monolyn 生产菜单修复，以及 3.0.141 的入房配置保护和炮台休眠 1.5.0。炮台优化仍默认关闭；启用 Multiplayer 配置同步的房间可在入房时验证并导入房主的该模块开关。
 
-详见 [中英文更新日志](Docs/releases/3.0.136.md)、[炮台休眠说明](Docs/TurretCombatSleep.md)、[渡鸦工业优化说明](Docs/RavenIndustryOptimization.md) 与 [配置开关说明](Docs/CompatibilityPatchSwitches.md)。新增优化模块完成编译和静态检查；未对它们进行新的游戏运行验证。Melpomene Avatar 修复由用户实机验证。完整范围见更新日志。
+22 个项目已完整编译。入房配置补丁完成原生窗口断言和一张地图的双端短测；最终整合组合尚未完成多地图冷重连与长测。主客端必须更新完整目录并完全重启，不能只更新主 DLL。详见 [3.0.141 发布说明](Docs/releases/3.0.141.md)。
 
 ## 提交补丁的必要说明
 

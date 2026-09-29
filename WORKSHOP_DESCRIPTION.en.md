@@ -1,6 +1,16 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.136 (2026-09-25)
+## 3.0.141 (2026-09-29)
+
+- Publishes the complete 22-module runtime and matching source, including compatibility work from the local 3.0.140 build for airstrikes, shuttle flight, trading, and other paths.
+- Fixes joining with a mismatched turret-sleep setting. Turret Combat Sleep 1.5.0 checks and imports the host setting before world download when Multiplayer config synchronization is enabled. Settings that cannot be safely applied still require a restart.
+- Includes the Monolyn production-menu and gravity-slider sync-field fix (RaceTrio 1.1.5).
+
+Validation: all 22 projects built. The join fix passed native admission checks and a one-map, two-peer smoke run of about 10,000 shared ticks. The full mod collection, multi-map cold rejoins, and long soak remain unverified. This does not establish that every reported desync is resolved. All players must install matching files and restart; turret optimization remains disabled by default.
+
+Details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.141.md
+
+## 3.0.136 (2026-09-25, previous update)
 
 - **Melpomene Avatar**: fixes a multiplayer compatibility issue with drafting.
 - **Turret Combat Sleep Experimental 1.3.0**: includes a standalone assembly, disabled by default in mod settings. When enabled, it reduces work in reviewed idle turret combat paths without changing save data.
@@ -9,18 +19,6 @@
 Validation: the user verified the Melpomene Avatar fix in game. Turret Combat Sleep 1.3.0 and Raven Industry Optimization 1.0.0 received build and static checks only; no in-game runtime, multiplayer, or TPS verification was performed for them. Both options are disabled by default. This does not establish multiplayer validation for every turret or conveyor mod combination.
 
 All players must use matching files and fully restart. When enabling turret sleep, every multiplayer participant must use the same mod setting and restart. Enable the Raven option for a save only after reviewing its compatibility conditions. To roll back, disable and save the corresponding option, or remove the standalone assembly after all players exit.
-
-## 3.0.130 (2026-09-20)
-
-- **Gravship compatibility**: updates Odyssey piloting, takeoff, placement and landing, retained-base ownership and faction context, and gravship/carried-shuttle cooldowns across asynchronous map clocks.
-- **Passenger shuttles and rejoining**: improves stale loading-command isolation, serialization and recovery of native unload queues, and passenger state after unloading at an owned or another player's base.
-- **Nivarian compatibility**: extends synchronization for research and control panels, Nira modules and metrics, drones, buildings and story interactions, with simulation/render-cache/save-state separation.
-- **Milira Imperium event-expansion compatibility**: updates related Milira compatibility, including The Tale of Milira event ownership, caravan-arrival context, recruitment and supply dialogs. Supply reward dialogs use event identity to reduce wrong-option routing when multiple dialogs coexist. Not every story branch has been verified.
-- **Compatibility category switches**: adds a master switch and 17 independent categories, all enabled by default, including gravships/transport, Nivarian, Milira, RJW, Ratkin, Wolfein, Raven and melee animation. These settings are separate from optimization presets, require a full restart, and must match on every peer.
-
-Validation: 3.0.130 received build, static-entry, switch-logic and release-file checks. No new in-game testing was performed for this release, as requested. Historical concise host/client checks for the 3.0.129 gravship update covered 42 paired functional records and 12 passenger-ownership scenarios with async time on/off; they do not establish runtime verification of the complete 3.0.130 package. Nivarian and event-expansion coverage does not include every story branch, mod combination or cold-rejoin scenario.
-
-All players must install matching files and fully restart. Disabling compatibility patches can reintroduce desyncs.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
@@ -187,4 +185,4 @@ Author: 尹怨怨
 
 GitHub: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus
 
-Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.130.md
+Full coverage and validation details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.136.md

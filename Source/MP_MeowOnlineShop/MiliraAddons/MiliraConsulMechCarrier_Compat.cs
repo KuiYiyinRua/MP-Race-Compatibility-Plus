@@ -165,7 +165,9 @@ namespace MP_MeowOnlineShop.MiliraAddonCompat
                 GizmoCarriers.Add(draw, carrier);
             }
 
-            _consulType = consulType;
+            // Bishop II and Rook use the base carrier directly; Consul is only
+            // one subclass. All users of these two Ancot gizmos mutate this field.
+            _consulType = storageType;
             _maxToFill = MP.RegisterSyncField(maximum.DeclaringType, maximum.Name).SetBufferChanges();
             var harmony = new Harmony("mp.meowonlineshop.miliraconsulstorage");
             foreach (MethodBase draw in GizmoCarriers.Keys)

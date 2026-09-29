@@ -53,6 +53,7 @@ namespace MP_MeowOnlineShop
 
             try
             {
+                Patch_PassengerShuttleFlightClock.Apply(harmony);
                 MethodInfo consumeFuel = AccessTools.Method(
                     typeof(CaravanShuttleUtility),
                     "ConsumeFuelFromCaravanInventory",

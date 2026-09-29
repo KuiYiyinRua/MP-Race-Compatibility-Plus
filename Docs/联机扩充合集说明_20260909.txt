@@ -1,0 +1,36 @@
+[h1]MP联机推荐 · 多种族与官方兼容扩展库[/h1]
+当前共 545 项。以原136项推荐列表为基础，扫描作者 Mods 目录中 904 个有工坊ID的模组包，按当前官方兼容库、Multiplayer Compatibility 模块和本补丁已有适配继续扩充，新增 409 项。
+
+[b]本合集是可选模组库，不是要求全部同时启用的整合包。[/b]请围绕想玩的种族、战斗、建筑、种植、生活和界面功能选用内容，补齐前置后共同开档。原136项起步加载配置仍保留；扩充项没有自动写入你的正在使用的模组配置。
+
+[h2]必须保留的联机组件[/h2]
+[list]
+[*]Multiplayer（工坊2606448745），不要同时启用另一版Multiplayer。
+[*]官方 Multiplayer Compatibility（1629973374）。本次专门核对了安装该兼容模组后的支持范围，不能只装Multiplayer就省略它。
+[*]MP多种族联机兼容-联机TPS优化（3777248347），放在Multiplayer与所有被适配模组之后、列表末尾。
+[*]Harmony、Prepatcher及你选择的内容所要求的框架和DLC。所有玩家保持相同游戏版本、模组版本、配置和加载顺序。
+[/list]
+
+[h2]收录依据[/h2]
+收录官方数据库评分4的模组、当前官方兼容程序集有对应支持的模组、本补丁已有专项适配，以及没有独立程序集的XML/贴图/汉化内容。存在已知联机错误时，不因它是XML模组或曾有官方兼容代码就直接放行。
+官方数据库的低评分如果明确写明“需要Multiplayer Compatibility”，会检查具体补丁后再判断；其他标明仍会失步、加入失败或主要功能不可用的模组暂不加入。
+无工坊ID、无法公开访问、缺少可推荐前置、不支持1.6、已知冲突和重复工坊条目已筛除。部分多目标汉化包涵盖本合集之外的模组，只使用已选本体对应译文即可，无需为汉化启用所有额外目标。
+
+[h2]有条件使用[/h2]
+[list]
+[*]Allow Tool：仅推荐共同派系；关闭 Storage space alert（储存空间警报）。官方记录指出多派系模式使用 Allow all 会失步。
+[*]Exosuit Framework：必须配合官方Multiplayer Compatibility。框架获得适配不代表所有依赖它的外骨骼内容都兼容；有明确故障记录的内容未纳入。
+[*]本库选择 Vanilla Psycasts Expanded，未同时加入与其声明冲突的 Choice Of Psycasts。
+[*]Dubs Performance Analyzer 与 Facial Animation 合用时，关闭 reduce stutters while panning。Dubs Mint Menus 关闭 plant menus（种植菜单）。
+[*]Facial Animation Experimentals 的 Face Select 修改由主机完成，其他玩家重连后查看。Vanilla Expanded Framework 避免取消雇佣兵合同；Replace Stuff 使用直接覆盖建造，Replace按钮目前有功能限制。
+[*]官方评分4也可能带版本或功能备注，不能把评分单独当作全功能认证；性能类扩展按需选用，不要把合集里所有性能方案一起打开。
+[*]不要另外叠加 RimThreaded、Slower Pawn Tick Rate、TPS Optimizer、Performance Esmolas 等不同Tick/线程调度方案。Performance Optimizer 使用本补丁专项适配，与这些模组不同。
+[/list]
+
+[h2]验证范围[/h2]
+核对日期：2026-09-09。核对工坊身份、公开状态、本地版本声明、依赖关系、官方兼容记录与已有适配证据；没有新增全合集双端运行测试，也不保证所有条目一起启用后完全不失步。推荐先使用共同派系、关闭异步时间和实验性多地图调度，再逐组增加内容。
+
+[url=https://github.com/rwmt/Multiplayer-Compatibility]官方Multiplayer Compatibility项目[/url]
+[url=https://bot.rimworldmultiplayer.com/mod-compatibility?version=1.1&format=metadata]官方实时兼容数据库[/url]
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3777248347]本联机兼容补丁[/url]
+封面与本联机模组相同。

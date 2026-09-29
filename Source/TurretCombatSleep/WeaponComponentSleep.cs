@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -52,7 +52,7 @@ namespace Meow.TurretCombatSleep
                     harmony.Patch(tick, transpiler: new HarmonyMethod(typeof(WeaponComponentSleep), nameof(Rewrite)));
                     Log.Message("[Meow.TurretCombatSleep] COMPONENT_SLEEP " + name);
                 }
-                catch (Exception e) { Log.Error("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED weapon component " + name + " " + e); }
+                catch (Exception e) { TurretCombatSleep.RequiredTargetFailed("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED weapon component " + name + " " + e); }
             }
         }
 
@@ -60,7 +60,7 @@ namespace Meow.TurretCombatSleep
 
         private static bool CanSleep(ThingComp component, int index)
         {
-            if (!MP.IsInMultiplayer || !(component.parent is Building building) || !building.Spawned ||
+            if (!TurretCombatSleep.Active || !(component.parent is Building building) || !building.Spawned ||
                 building.Faction == null || !building.Faction.IsPlayer) return false;
             if (building is Building_Turret turret && (turret.ForcedTarget.IsValid || turret.CurrentTarget.IsValid)) return false;
             var layout = Layouts[index];

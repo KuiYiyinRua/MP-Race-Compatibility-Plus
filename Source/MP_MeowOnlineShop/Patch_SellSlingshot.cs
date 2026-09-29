@@ -398,6 +398,7 @@ namespace MP_MeowOnlineShop
                 CompatibilityPatchCategories.Apply("multifaction", () => Patch_GoodwillRecalcMultifactionDeterminism.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("core", () => Patch_TraderStockDeterminism.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("core", () => Patch_TradeSessionRejoinMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("core", () => Patch_TradeWindowAutoOpen.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("core", () => Patch_TradeExecutionSnapshot.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("core", () => Patch_JobEndDiagnostic.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("core", () => Patch_WorldPauseDiagnostic.Apply(Harmony));

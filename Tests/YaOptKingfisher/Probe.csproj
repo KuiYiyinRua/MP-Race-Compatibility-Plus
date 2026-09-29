@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion></PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony"><HintPath>../../Source/MP_MeowOnlineShop/Libs/0Harmony.dll</HintPath></Reference>
+    <Reference Include="Assembly-CSharp"><HintPath>../../../../RimWorldWin64_Data/Managed/Assembly-CSharp.dll</HintPath></Reference>
+    <Compile Include="../../Source/MP_MeowOnlineShop/Patch_YaOptKingfisherRemove.cs" Link="ProductionPatch.cs" />
+  </ItemGroup>
+</Project>

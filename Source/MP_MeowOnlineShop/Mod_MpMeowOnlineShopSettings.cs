@@ -39,6 +39,7 @@ namespace MP_MeowOnlineShop
         public bool enableMpMissileGirlTimetableFix = true;
         public bool blockGodHandsWhilePaused;
         public bool showCrossFactionCursors;
+        public bool tradeWindowOnlyForInitiator = true;
         public bool enableFactionStoryRoutingIsolation;
         public bool enableTickListOrderNormalizer = true;
         public int mediumAlertRecheckIntervalTicks = 180;
@@ -64,6 +65,7 @@ namespace MP_MeowOnlineShop
             if (disabledCompatibilityCategories == null) disabledCompatibilityCategories = new List<string>();
             Scribe_Values.Look(ref enableTickListOrderNormalizer, "mp_meow_modcfg_ticklist_order_normalizer", true);
             Scribe_Values.Look(ref showCrossFactionCursors, "mp_meow_modcfg_cross_faction_cursors", false);
+            Scribe_Values.Look(ref tradeWindowOnlyForInitiator, "mp_meow_modcfg_trade_window_only_for_initiator", true);
             Scribe_Values.Look(ref enableFactionStoryRoutingIsolation, "mp_meow_modcfg_faction_story_routing_isolation", false);
             Scribe_Values.Look(ref tpsOptimizeEnabled, "mp_meow_modcfg_tps_opt_enabled", true);
             Scribe_Values.Look(ref enableOptimizationTelemetry, "mp_meow_modcfg_opt_telemetry_enabled", true);
@@ -366,6 +368,11 @@ namespace MP_MeowOnlineShop
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
             CompatibilityPatchCategories.DrawSettings(listing, _settings);
+            listing.CheckboxLabeled(
+                "交易界面仅向发起玩家自动弹出（联机）",
+                ref _settings.tradeWindowOnlyForInitiator,
+                "默认开启，仅影响本机界面，切换立即生效。其他玩家发起据点或世界远行队交易时，不自动弹出或切换交易页；仍可主动打开交易入口查看。关闭后恢复 Multiplayer 的自动弹窗行为。断线重连后，途中旧交易指令若无法确认发起者，需主动打开查看。原有交易操作权限不变。");
+            listing.Gap(8f);
             listing.CheckboxLabeled(
                 "启用多派系任务与事件隔离及跨派系接取保护（实验性）",
                 ref _settings.enableFactionStoryRoutingIsolation,

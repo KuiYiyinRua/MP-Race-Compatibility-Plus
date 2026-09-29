@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -36,7 +36,7 @@ namespace Meow.TurretCombatSleep
                 harmony.Patch(target, transpiler: new HarmonyMethod(typeof(RavenAccessorCache), nameof(Rewrite)));
                 Log.Message("[Meow.TurretCombatSleep] Raven warmup accessor cached (values remain live)");
             }
-            catch (Exception e) { Log.Error("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED Raven accessor: " + e); }
+            catch (Exception e) { TurretCombatSleep.RequiredTargetFailed("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED Raven accessor: " + e); }
         }
 
         private static IEnumerable<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> instructions)

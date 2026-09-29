@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -78,7 +78,11 @@ namespace Meow.TurretCombatSleep
                      patches.Transpilers.All(p => p.owner == TurretCombatSleep.HarmonyId)));
                 if (!safe)
                 {
-                    Log.Message("[Meow.TurretCombatSleep] Deep entry retained original due to other Tick hooks: " + type.FullName);
+                    var owners = patches == null ? "none" : string.Join(", ", patches.Prefixes.Concat(patches.Postfixes)
+                        .Concat(patches.Finalizers).Concat(patches.Transpilers)
+                        .Select(p => p.owner + ":" + p.PatchMethod.DeclaringType?.FullName + "." + p.PatchMethod.Name).Distinct());
+                    Log.Message("[Meow.TurretCombatSleep] Deep entry retained original: " + type.FullName +
+                        " ravenSafe=" + ravenSafe + " hooks=" + owners);
                     continue;
                 }
                 harmony.Patch(tick,
@@ -102,7 +106,7 @@ namespace Meow.TurretCombatSleep
         private static bool Before(Building_Turret __instance, MethodBase __originalMethod, out Frame __state)
         {
             __state = null;
-            if (!Enabled.Contains(__originalMethod) || !MP.IsInMultiplayer || !Eligible(__instance, __originalMethod)) return true;
+            if (!Enabled.Contains(__originalMethod) || !TurretCombatSleep.Active || !TurretCombatSleep.CanAttemptDeepSleep(__instance)) return true;
             bool native = __originalMethod.DeclaringType == typeof(Building_TurretGun);
             if (native && remote != null)
             {

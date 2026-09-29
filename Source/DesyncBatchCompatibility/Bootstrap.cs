@@ -18,9 +18,20 @@ namespace Meow.DesyncBatchCompatibility
         static void Install()
         {
             bool ok = true;
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") &&
+                !ModsConfig.IsActive("usamiseika.fixmod.miliramultiplayer"))
+            {
+                if (ModsConfig.IsActive("sleepycot.wingsofdemocracy"))
+                    ok &= InstallGroup("airstrike-simulation", MiliraActionBoundaries.ApplyAirstrike);
+                if (ModsConfig.IsActive("Ancot.MiliraRace"))
+                    ok &= InstallGroup("milian-hair-actions", MiliraActionBoundaries.ApplyHair);
+            }
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Ariandel.MiliraImperium") &&
                 !ModsConfig.IsActive("usamiseika.fixmod.miliramultiplayer"))
+            {
                 ok &= InstallGroup("imperium-donation", ImperiumDonation.Apply);
+                ok &= InstallGroup("imperium-console-actions", ImperiumConsoleActions.Apply);
+            }
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core") && ModsConfig.IsActive("Chezhou.ChezhouLib.lib"))
                 ok &= InstallGroup("flight-simulation-boundary", FlightSimulationBoundary.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("rjw") && ModsConfig.IsActive("TeheeItsMe525.RJWGenderOrgansMod"))
@@ -49,7 +60,7 @@ namespace Meow.DesyncBatchCompatibility
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction") && ModsConfig.IsActive("trigger.eliteRaid"))
                 ok &= InstallGroup("elite-state", EliteState.Apply);
             Ready = ok;
-            if (ok) Log.Message("[DesyncBatchCompat] 1.0.5 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
+            if (ok) Log.Message("[DesyncBatchCompat] " + typeof(Bootstrap).Assembly.GetName().Version + " READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
         }
 
         static bool InstallGroup(string name, Action<Harmony> install)

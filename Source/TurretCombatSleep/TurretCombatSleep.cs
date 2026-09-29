@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,14 +15,18 @@ namespace Meow.TurretCombatSleep
     public sealed class TurretCombatSleepMod : Mod
     {
         private readonly TurretCombatSleepSettings settings;
+        internal static TurretCombatSleepSettings RuntimeSettings;
 
         public TurretCombatSleepMod(ModContentPack content) : base(content)
         {
             settings = GetSettings<TurretCombatSleepSettings>();
-            if (settings.enabled && ModsConfig.IsActive("rwmt.Multiplayer"))
+            RuntimeSettings = settings;
+            if (ModsConfig.IsActive("rwmt.Multiplayer"))
                 LongEventHandler.ExecuteWhenFinished(TurretCombatSleep.Install);
             else
-                Log.Message("[Meow.TurretCombatSleep] Disabled by mod setting (default OFF)");
+                Log.Message(settings.enabled
+                    ? "[Meow.TurretCombatSleep] Not installed: rwmt.Multiplayer is inactive"
+                    : "[Meow.TurretCombatSleep] Disabled by mod setting (default OFF)");
         }
 
         public override string SettingsCategory() => "炮台战斗休眠（实验）";
@@ -31,8 +35,11 @@ namespace Meow.TurretCombatSleep
         {
             var listing = new Listing_Standard();
             listing.Begin(inRect);
-            listing.CheckboxLabeled("启用炮台战斗休眠实验（默认关闭；重启后生效）", ref settings.enabled);
-            listing.Label("所有联机玩家必须设置相同并重启。未完成游戏运行验证；关闭时不安装本模块的模拟补丁。");
+            if (MP.IsInMultiplayer)
+                listing.Label("联机中由主机配置决定；请退出房间后修改。");
+            else
+                listing.CheckboxLabeled("启用炮台战斗休眠实验（默认关闭；入房时同步主机配置）", ref settings.enabled);
+            listing.Label("客户端在下载世界前导入主机开关；补丁入口始终注册，关闭时保留原模拟行为。");
             listing.End();
         }
     }
@@ -49,6 +56,16 @@ namespace Meow.TurretCombatSleep
     public static class TurretCombatSleep
     {
         public const string HarmonyId = "meow.turretcombatsleep";
+        public static bool SupportsHostConfigHotSync { get; private set; }
+        public static bool Active => SupportsHostConfigHotSync &&
+            (TurretCombatSleepMod.RuntimeSettings?.enabled ?? false) && MP.IsInMultiplayer;
+
+        internal static void RequiredTargetFailed(string message)
+        {
+            installationFailed = true;
+            Log.Error(message);
+        }
+        private static bool installationFailed;
         private static readonly AccessTools.FieldRef<Building_TurretGun, int> Cooldown =
             AccessTools.FieldRefAccess<Building_TurretGun, int>("burstCooldownTicksLeft");
         private static readonly AccessTools.FieldRef<Building_TurretGun, int> Warmup =
@@ -70,7 +87,7 @@ namespace Meow.TurretCombatSleep
             public Func<Building_Turret, bool> Activated;
             public Func<Building_Turret, Effecter> Progress;
             public Func<Building_Turret, Thing> Gun;
-            public bool WatchesProjectiles;
+            public bool WatchesProjectiles, NativeFields;
         }
 
         private static Func<Building_Turret, T> Getter<T>(Type type, string name, bool required = false)
@@ -115,7 +132,10 @@ namespace Meow.TurretCombatSleep
                             Gun = Getter<Thing>(type, "gun", true),
                             Activated = Getter<bool>(type, "burstActivated"),
                             Progress = Getter<Effecter>(type, "progressBarEffecter"),
-                            WatchesProjectiles = NeedsProjectileWatch(type)
+                            WatchesProjectiles = NeedsProjectileWatch(type),
+                            NativeFields = typeof(Building_TurretGun).IsAssignableFrom(type) &&
+                                new[] { "burstCooldownTicksLeft", "burstWarmupTicksLeft", "gun", "burstActivated", "progressBarEffecter" }
+                                    .All(n => AccessTools.Field(type, n)?.DeclaringType == typeof(Building_TurretGun))
                         };
                         for (var current = type; current != null && typeof(Building_Turret).IsAssignableFrom(current); current = current.BaseType)
                         {
@@ -133,7 +153,7 @@ namespace Meow.TurretCombatSleep
                 foreach (var tick in ticks.OrderBy(t => t.DeclaringType.FullName, StringComparer.Ordinal))
                 {
                     try { harmony.Patch(tick, transpiler: new HarmonyMethod(typeof(TurretCombatSleep), nameof(RewriteTick))); }
-                    catch (Exception e) { Log.Error("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED " + tick + " " + e); }
+                    catch (Exception e) { TurretCombatSleep.RequiredTargetFailed("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED " + tick + " " + e); }
                 }
                 // Shared fallback for building-mounted weapon components and unfamiliar
                 // turret classes: suppress only an empty native targeting query. Their
@@ -159,18 +179,21 @@ namespace Meow.TurretCombatSleep
                 RavenPowerLookup.Install(harmony);
                 FlameVisualSleep.Install(harmony);
                 DeepSleepEntry.Install(harmony);
-                Log.Message("[Meow.TurretCombatSleep] READY version=1.3.0 profiles=" + supported + " tickMethods=" + ticks.Count + " nativeQueries=" + queryMethods + " flameScan=" + (scan != null) + " mvid=" +
+                NivarianTurretSleep.Install(harmony);
+                SupportsHostConfigHotSync = !installationFailed;
+                Log.Message("[Meow.TurretCombatSleep] HOST_CONFIG_HOT_SYNC ready=" + SupportsHostConfigHotSync + " enabled=" + (TurretCombatSleepMod.RuntimeSettings?.enabled ?? false));
+                Log.Message("[Meow.TurretCombatSleep] READY version=1.5.0 profiles=" + supported + " tickMethods=" + ticks.Count + " nativeQueries=" + queryMethods + " flameScan=" + (scan != null) + " mvid=" +
                     typeof(TurretCombatSleep).Assembly.ManifestModule.ModuleVersionId);
             }
             catch (Exception e)
             {
-                Log.Error("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED " + e);
+                TurretCombatSleep.RequiredTargetFailed("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED " + e);
             }
         }
 
         public static bool ShouldSleep(Building_TurretGun turret)
         {
-            if (!MP.IsInMultiplayer || turret == null || !turret.Spawned ||
+            if (!TurretCombatSleep.Active || turret == null || !turret.Spawned ||
                 turret.Faction == null ||
                 !turret.Faction.IsPlayer ||
                 turret.ForcedTarget.IsValid || turret.CurrentTarget.IsValid ||
@@ -210,7 +233,7 @@ namespace Meow.TurretCombatSleep
 
         public static bool MapIsQuiet(Thing thing)
         {
-            if (!MP.IsInMultiplayer || thing == null || !thing.Spawned || thing.Faction == null || !thing.Faction.IsPlayer)
+            if (!TurretCombatSleep.Active || thing == null || !thing.Spawned || thing.Faction == null || !thing.Faction.IsPlayer)
                 return false;
             if (!SharedThreatIndex.Quiet(thing)) return false;
             // Native/Raven guns cannot target projectiles. Unknown/custom target
@@ -226,12 +249,15 @@ namespace Meow.TurretCombatSleep
             string owner = finder?.DeclaringType?.FullName;
             return owner != "RimWorld.Building_TurretGun" && owner != "AncotLibrary.Building_SpinTurretGun" &&
                 owner != "RavenRace.Features.CustomTurrets.PatternTurrets.Building_PatternTurret" &&
-                owner != "RavenRace.Features.CustomTurrets.Arknights.Flame.Building_FlamePatternTurret";
+                owner != "RavenRace.Features.CustomTurrets.Arknights.Flame.Building_FlamePatternTurret" &&
+                owner != "NivarianRace.DraconicMilitary.Building_TurretWithValidator" &&
+                owner != "NivarianRace.DraconicMilitary.Building_TurretWinter";
         }
 
         public static bool ShouldPauseCombat(Building_Turret turret)
         {
-            if (!MP.IsInMultiplayer || turret == null || !turret.Spawned || turret.Faction == null || !turret.Faction.IsPlayer ||
+            if (turret is Building_TurretGun gun && Layouts.TryGetValue(turret.GetType(), out var native) && native.NativeFields) return ShouldSleep(gun);
+            if (!TurretCombatSleep.Active || turret == null || !turret.Spawned || turret.Faction == null || !turret.Faction.IsPlayer ||
                 turret.ForcedTarget.IsValid || turret.CurrentTarget.IsValid ||
                 !Layouts.TryGetValue(turret.GetType(), out var layout) ||
                 layout.Warmup(turret) > 0 || layout.Activated(turret) || layout.Progress(turret) != null)
@@ -244,6 +270,21 @@ namespace Meow.TurretCombatSleep
             return MapIsQuiet(turret);
         }
 
+        // Preliminary entry filter only. Base components run before the single
+        // complete live eligibility check. A failed check resumes the same Tick.
+        internal static bool CanAttemptDeepSleep(Building_Turret turret)
+        {
+            if (turret == null || !turret.Spawned || turret.Faction == null || !turret.Faction.IsPlayer ||
+                turret.ForcedTarget.IsValid || turret.CurrentTarget.IsValid) return false;
+            if (turret is Building_TurretGun gun)
+            {
+                var manning = Manning(gun);
+                return Warmup(gun) <= 0 && !Activated(gun) && Progress(gun) == null &&
+                    (manning == null || !manning.MannedNow) && (Cooldown(gun) <= 0 || manning != null);
+            }
+            return Layouts.TryGetValue(turret.GetType(), out var layout) &&
+                layout.Warmup(turret) <= 0 && !layout.Activated(turret) && layout.Progress(turret) == null;
+        }
         private static bool FlameSearchPrefix(ThingComp __instance, ref Pawn __0, ref bool __result)
         {
             if (!MapIsQuiet(__instance.parent)) return true;
@@ -255,7 +296,7 @@ namespace Meow.TurretCombatSleep
         private static bool BuildingSearchPrefix(IAttackTargetSearcher __0, TargetScanFlags __1, ref IAttackTarget __result)
         {
             // Do not change callers intentionally searching for non-threatening targets.
-            if (!MP.IsInMultiplayer || (__1 & TargetScanFlags.NeedThreat) == 0 || __0 == null || !(__0.Thing is Building building) ||
+            if (!TurretCombatSleep.Active || (__1 & TargetScanFlags.NeedThreat) == 0 || __0 == null || !(__0.Thing is Building building) ||
                 !MapIsQuiet(building)) return true;
             __result = null;
             return false;

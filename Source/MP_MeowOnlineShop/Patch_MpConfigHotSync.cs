@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -70,6 +70,7 @@ namespace MP_MeowOnlineShop
         private static readonly HashSet<string> LoggedDiagnosticPhases =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        private static string mainStartupSignature;
         private static bool _applied;
         private static bool _disabledLogged;
         private static MethodInfo _joinDataWindowCloseMethod;
@@ -82,6 +83,11 @@ namespace MP_MeowOnlineShop
                 return;
 
             _applied = true;
+            var startup = MpMeowOnlineShopMod.Settings;
+            if (startup != null)
+                mainStartupSignature = MainStartupSignature(startup.compatibilityPatchesEnabled,
+                    startup.disabledCompatibilityCategories, startup.enableTickListOrderNormalizer,
+                    startup.enableThirdPartyPerfCleanup);
 
             if (!IsEnabled())
             {
@@ -93,10 +99,11 @@ namespace MP_MeowOnlineShop
                         $"{EnableArg}=false; config mismatches stay on the native " +
                         "Multiplayer temp-config + restart flow.");
                 }
-                return;
             }
 
-            ApplyIgnoredConfigFilters();
+            // Admission safety is independent of the optional hot-import feature.
+            if (IsEnabled())
+                ApplyIgnoredConfigFilters();
 
             if (IsDiagnosticEnabled())
             {
@@ -198,6 +205,22 @@ namespace MP_MeowOnlineShop
             if (__instance == null)
                 return;
 
+            // Desync-295..297: automatic import correctly required a restart,
+            // but the native "connect anyway" button still downloaded the world.
+            // Startup-installed simulation patches cannot be repaired by rejoin.
+            // Run before both opt-out and restart-child shortcuts: a remaining
+            // mismatch is unsafe even in a process using MP's temporary configs.
+            if (!IsEnabled() && BlockStartupConfigMismatch(__instance))
+            {
+                Log.Warning("[MP-MeowOnlineShop] Join blocked: startup-bound compatibility " +
+                    "settings differ. Use Multiplayer Fix and Restart; reconnecting " +
+                    "without restarting cannot replace the loaded simulation patches.");
+                return;
+            }
+
+            if (!IsEnabled())
+                return;
+
             // Multiplayer's native Fix and Restart flow has already replaced
             // GetSettingsFilename with its temp-config override in this child
             // process.  Do not reopen a second transaction against that view:
@@ -205,6 +228,9 @@ namespace MP_MeowOnlineShop
             Type syncConfigsType = AccessTools.TypeByName("Multiplayer.Client.Util.SyncConfigs");
             if (GetStaticFieldOrProperty<bool>(syncConfigsType, "Applicable"))
             {
+                // A restart child with a remaining compatibility mismatch is
+                // still unsafe; never let the native bypass undo this guard.
+                BlockStartupConfigMismatch(__instance);
                 if (IsDiagnosticEnabled())
                 {
                     Log.Message(
@@ -220,7 +246,10 @@ namespace MP_MeowOnlineShop
             try
             {
                 if (!TryResolveAutoHotSyncContext(__instance, out var remote, out var connectAnyway))
+                {
+                    BlockStartupConfigMismatch(__instance);
                     return;
+                }
 
                 var localOnlyConfigs = GetLocalOnlyConfigPaths(
                     GetFieldOrProperty<object>(__instance, "configsRoot"),
@@ -233,6 +262,7 @@ namespace MP_MeowOnlineShop
 
                 if (!result.SafeToAutoConnect)
                 {
+                    BlockStartupConfigMismatch(__instance);
                     Log.Warning(
                         "[MP-MeowOnlineShop] MP config hot sync cannot safely continue: " +
                         "automatic join is suppressed and already-applied changes were " +
@@ -262,8 +292,84 @@ namespace MP_MeowOnlineShop
             }
             catch (Exception e)
             {
+                BlockStartupConfigMismatch(__instance);
                 Log.Warning("[MP-MeowOnlineShop] MP config hot sync runtime error: " + e);
             }
+        }
+
+        private static string MainStartupSignature(bool master, IEnumerable<string> disabled, bool tickOrder, bool cleanup)
+            => master + ":" + tickOrder + ":" + cleanup + ":" +
+                string.Join(",", (disabled ?? Enumerable.Empty<string>()).Distinct().OrderBy(x => x, StringComparer.Ordinal));
+
+        private static bool RequiresRestart(string modId, string fileName, string contents)
+        {
+            if (!StartupBoundConfigModIds.Contains(modId)) return false;
+            if (string.Equals(fileName, "TurretCombatSleepMod", StringComparison.OrdinalIgnoreCase))
+            {
+                var type = AccessTools.TypeByName("Meow.TurretCombatSleep.TurretCombatSleep");
+                return !GetStaticFieldOrProperty<bool>(type, "SupportsHostConfigHotSync");
+            }
+            if (string.Equals(fileName, "MpMeowOnlineShopMod", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var node = XDocument.Parse(contents).Root?.Element("ModSettings");
+                    if (node == null || mainStartupSignature == null) return true;
+                    bool ReadBool(string name, bool fallback)
+                    {
+                        var value = node.Element(name)?.Value;
+                        return value == null ? fallback : bool.Parse(value);
+                    }
+                    return mainStartupSignature != MainStartupSignature(
+                        ReadBool("mp_meow_compatibility_enabled", true),
+                        node.Element("mp_meow_disabled_compatibility_categories")?.Elements("li").Select(e => e.Value),
+                        ReadBool("mp_meow_modcfg_ticklist_order_normalizer", true),
+                        ReadBool("mp_meow_modcfg_opt_thirdparty_perf_cleanup_enabled", true));
+                }
+                catch { return true; }
+            }
+            // Other independent modules have not advertised a hot-reload contract.
+            var path = ResolveSettingsPath(modId, fileName);
+            var bytes = string.IsNullOrEmpty(path) ? null : ReadFileBytesOrNull(path);
+            return bytes == null || !XmlSemanticallyEqual(Encoding.UTF8.GetString(bytes), contents);
+        }
+
+        internal static bool BlockStartupConfigMismatch(object joinDataWindow)
+        {
+            var remote = GetFieldOrProperty<object>(joinDataWindow, "remote");
+            if (!GetFieldOrProperty<bool>(remote, "hasConfigs"))
+                return false;
+
+            var root = GetFieldOrProperty<object>(joinDataWindow, "configsRoot");
+            var paths = GetFieldOrProperty<IEnumerable>(root, "paths");
+            if (paths == null)
+                return false;
+
+            var mismatches = new List<string>();
+            foreach (object value in paths)
+            {
+                var path = value as string;
+                int slash = path?.IndexOf('/') ?? -1;
+                if (slash <= 0 || !StartupBoundConfigModIds.Contains(path.Substring(0, slash)))
+                    continue;
+                mismatches.Add(path);
+            }
+            if (mismatches.Count == 0)
+                return false;
+
+            mismatches.Sort(StringComparer.Ordinal);
+            // Preserve an existing protocol/definition failure explanation.
+            if (!IsConnectAnywayDisabled(joinDataWindow))
+                SetFieldOrProperty(joinDataWindow, "connectAnywayDisabled",
+                    "联机模拟补丁配置不同，请点击“修复并重启”。仅重新连接无法生效。\n" +
+                    "Startup patch settings differ. Use Fix and Restart.\n" +
+                    string.Join("\n", mismatches));
+
+            // Also protect callers invoking the delegate directly; leave native
+            // FixAndRestartWindow and Quit available. This window stays blocked
+            // until a fresh connection compares the restarted process's configs.
+            SetFieldOrProperty(joinDataWindow, "connectAnywayCallback", (Action)(() => { }));
+            return true;
         }
 
         private static bool ValidateJoinDataWindowShape(Type joinDataWindowType)
@@ -452,7 +558,7 @@ namespace MP_MeowOnlineShop
                     continue;
                 }
 
-                if (StartupBoundConfigModIds.Contains(record.ModId))
+                if (RequiresRestart(record.ModId, record.FileName, record.HostContents))
                 {
                     result.AddItem(
                         record.ModId,
@@ -532,7 +638,7 @@ namespace MP_MeowOnlineShop
             var record = new RemoteConfigRecord(key, modId, fileName, hostContents);
             string runtimeBefore = GetRuntimeSettingsFingerprint(modId, fileName);
 
-            if (StartupBoundConfigModIds.Contains(modId))
+            if (RequiresRestart(modId, fileName, hostContents))
             {
                 // Preflight is expected to reject this whole batch before any
                 // state changes.  Keep a fail-closed guard in the executor.

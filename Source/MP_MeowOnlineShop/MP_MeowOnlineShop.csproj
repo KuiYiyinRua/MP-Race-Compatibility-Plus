@@ -241,6 +241,7 @@
     <Compile Include="Patch_GoodwillRecalcMultifactionDeterminism.cs" />
     <Compile Include="Patch_TraderStockDeterminism.cs" />
     <Compile Include="Patch_TradeSessionRejoinMp.cs" />
+    <Compile Include="Patch_TradeWindowAutoOpen.cs" />
     <Compile Include="Patch_TradeExecutionSnapshot.cs" />
 <Compile Include="Patch_JobEndDiagnostic.cs" />
 <Compile Include="Patch_WorldPauseDiagnostic.cs" />
@@ -364,6 +365,7 @@
     <Compile Include="Patch_InvalidMapIndexSafety.cs" />
     <Compile Include="Patch_CaravanMapRemovalSafety.cs" />
     <Compile Include="Patch_CaravanShuttleMp.cs" />
+    <Compile Include="Patch_PassengerShuttleFlightClock.cs" />
     <Compile Include="Patch_CaravanEscortSelectionMp.cs" />
     <Compile Include="Patch_TransportLaunchBoundary.cs" />
     <Compile Include="Patch_TransportArrivalDeterminism.cs" />

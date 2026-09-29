@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +61,7 @@ namespace Meow.TurretCombatSleep
                     transpiler: new HarmonyMethod(typeof(RavenPowerLookup), nameof(Rewrite)));
                 Log.Message("[Meow.TurretCombatSleep] Raven power sum shares one option index; live power values preserved");
             }
-            catch (Exception e) { Log.Error("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED Raven power lookup " + e); }
+            catch (Exception e) { TurretCombatSleep.RequiredTargetFailed("[Meow.TurretCombatSleep] REQUIRED_TARGET_FAILED Raven power lookup " + e); }
         }
 
         private static class Original<TExtension, TOption>
@@ -72,7 +72,7 @@ namespace Meow.TurretCombatSleep
         private static void Begin(out Frame __state)
         {
             __state = new Frame { Previous = current, Entered = true };
-            if (!MP.IsInMultiplayer) { current = null; return; }
+            if (!TurretCombatSleep.Active) { current = null; return; }
             current = spare ?? new Scope();
             spare = null;
             current.Ready = false;

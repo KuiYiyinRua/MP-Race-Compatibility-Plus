@@ -1,0 +1,112 @@
+[
+  {
+    "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
+    "assembly": "Meow.DesyncBatchCompatibility",
+    "destination": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll"
+  },
+  {
+    "project": "Source/FactionDiplomacyIsolation/FactionDiplomacyIsolation.csproj",
+    "assembly": "Meow.FactionDiplomacy",
+    "destination": "1.6/Assemblies/Meow.FactionDiplomacy.dll"
+  },
+  {
+    "project": "Source/FactionPurge/FactionPurge.csproj",
+    "assembly": "Meow.FactionPurge",
+    "destination": "1.6/Assemblies/Meow.FactionPurge.dll"
+  },
+  {
+    "project": "Source/FactionStoryIsolation/FactionStoryIsolation.csproj",
+    "assembly": "Meow.FactionStoryIsolation",
+    "destination": "1.6/Assemblies/Meow.FactionStoryIsolation.dll"
+  },
+  {
+    "project": "Source/LatestSavePerformance/LatestSavePerformance.csproj",
+    "assembly": "Meow.LatestSavePerformance",
+    "destination": "RavenCompatibility/Assemblies/Meow.LatestSavePerformance.dll"
+  },
+  {
+    "project": "Source/MeleeAnimationCompat/MeleeAnimationCompat.csproj",
+    "assembly": "MP_MeowOnlineShop.MeleeAnimation",
+    "destination": "MeleeAnimation/Assemblies/MP_MeowOnlineShop.MeleeAnimation.dll"
+  },
+  {
+    "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
+    "assembly": "MP_MeowOnlineShop",
+    "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll"
+  },
+  {
+    "project": "Source/MultifactionStoryCompatibility/MultifactionStoryCompatibility.csproj",
+    "assembly": "Meow.MultifactionStory",
+    "destination": "1.6/Assemblies/Meow.MultifactionStory.dll"
+  },
+  {
+    "project": "Source/NivarianFocusCompatibility/NivarianFocusCompatibility.csproj",
+    "assembly": "Meow.NivarianFocusCompatibility",
+    "destination": "1.6/Assemblies/Meow.NivarianFocusCompatibility.dll"
+  },
+  {
+    "project": "Source/ParallelRenderCompatibility/ParallelRenderCompatibility.csproj",
+    "assembly": "Meow.ParallelRenderCompatibility",
+    "destination": "1.6/Assemblies/Meow.ParallelRenderCompatibility.dll"
+  },
+  {
+    "project": "Source/PerformanceCompatibility/PerformanceCompatibility.csproj",
+    "assembly": "Meow.PerformanceCompatibility",
+    "destination": "1.6/Assemblies/Meow.PerformanceCompatibility.dll"
+  },
+  {
+    "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
+    "assembly": "Meow.RaceTrioCompatibility",
+    "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll"
+  },
+  {
+    "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
+    "assembly": "Meow.RatkinCompatibility",
+    "destination": "1.6/Assemblies/Meow.RatkinCompatibility.dll"
+  },
+  {
+    "project": "Source/RatkinUndergroundCompatibility/RatkinUndergroundCompatibility.csproj",
+    "assembly": "Meow.RatkinUndergroundCompatibility",
+    "destination": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll"
+  },
+  {
+    "project": "Source/RavenApparelCacheFix/RavenApparelCacheFix.csproj",
+    "assembly": "Meow.RavenApparelCacheFix",
+    "destination": "RavenCompatibility/Assemblies/Meow.RavenApparelCacheFix.dll"
+  },
+  {
+    "project": "Source/RavenCompatibility/RavenCompatibility.csproj",
+    "assembly": "Meow.RavenCompatibility",
+    "destination": "RavenCompatibility/Assemblies/Meow.RavenCompatibility.dll"
+  },
+  {
+    "project": "Source/RavenIndustryOptimization/RavenIndustryOptimization.csproj",
+    "assembly": "Meow.RavenIndustryOptimization",
+    "destination": "RavenCompatibility/Assemblies/Meow.RavenIndustryOptimization.dll"
+  },
+  {
+    "project": "Source/RjwInfrastructureCompatibility/RjwInfrastructureCompatibility.csproj",
+    "assembly": "Meow.RjwInfrastructure",
+    "destination": "1.6/Assemblies/Meow.RjwInfrastructure.dll"
+  },
+  {
+    "project": "Source/SpecialPawnIdeologyCompatibility/SpecialPawnIdeologyCompatibility.csproj",
+    "assembly": "Meow.SpecialPawnIdeologyCompatibility",
+    "destination": "1.6/Assemblies/Meow.SpecialPawnIdeologyCompatibility.dll"
+  },
+  {
+    "project": "Source/TaleNivarianCompatibility/TaleNivarianCompatibility.csproj",
+    "assembly": "Meow.TaleNivarianCompatibility",
+    "destination": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll"
+  },
+  {
+    "project": "Source/TurretCombatSleep/TurretCombatSleep.csproj",
+    "assembly": "Meow.TurretCombatSleep",
+    "destination": "1.6/Assemblies/Meow.TurretCombatSleep.dll"
+  },
+  {
+    "project": "Source/WolfeinAchtungCompatibility/WolfeinAchtungCompatibility.csproj",
+    "assembly": "Meow.WolfeinAchtungCompatibility",
+    "destination": "1.6/Assemblies/Meow.WolfeinAchtungCompatibility.dll"
+  }
+]

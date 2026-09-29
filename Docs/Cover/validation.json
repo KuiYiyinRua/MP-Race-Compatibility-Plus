@@ -1,0 +1,38 @@
+[
+  {
+    "file": "About\\Preview.png",
+    "size": [
+      640,
+      360
+    ],
+    "format": "PNG",
+    "bytes": 218893
+  },
+  {
+    "file": "Preview.png",
+    "size": [
+      640,
+      360
+    ],
+    "format": "PNG",
+    "bytes": 218893
+  },
+  {
+    "file": "Preview.jpg",
+    "size": [
+      640,
+      360
+    ],
+    "format": "JPEG",
+    "bytes": 127317
+  },
+  {
+    "file": "Docs\\Cover\\cover-1280x720.png",
+    "size": [
+      1280,
+      720
+    ],
+    "format": "PNG",
+    "bytes": 450172
+  }
+]
