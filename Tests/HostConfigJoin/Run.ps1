@@ -26,6 +26,7 @@ try{
  if(!$p.HasExited){throw 'Startup/window test timed out'}
  if(!(Test-Path "$run/User/result.txt")){throw 'No result; inspect player.log'}
  Get-Content "$run/User/result.txt"
+ if(!(Get-Content "$run/User/result.txt" -Raw).StartsWith('PASS ')){throw 'Native config checks failed; inspect result.txt'}
  $records=Get-Content "$run/candidate-hashes.json" -Raw | ConvertFrom-Json
  foreach($record in $records){if((Get-FileHash -LiteralPath $record.Path).Hash -ne $record.Hash){throw 'Candidate changed during run'}}
 }finally{

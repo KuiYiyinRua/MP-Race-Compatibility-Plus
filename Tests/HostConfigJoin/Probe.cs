@@ -11,6 +11,27 @@ using RimWorld;
 using Multiplayer.Common;
 using UnityEngine;
 
+public sealed class StaticConfigProbeSettings : ModSettings
+{
+    public static bool enabled;
+    public override void ExposeData() => Scribe_Values.Look(ref enabled, "enabled", false);
+}
+public sealed class StaticConfigProbeMod : Mod
+{
+    public static StaticConfigProbeMod Instance;
+    public static bool FailWrite;
+    public StaticConfigProbeMod(ModContentPack pack) : base(pack)
+    {
+        Instance = this;
+        GetSettings<StaticConfigProbeSettings>();
+    }
+    public override void WriteSettings()
+    {
+        base.WriteSettings();
+        if (FailWrite) throw new Exception("intentional callback failure after writing");
+    }
+}
+
 [StaticConstructorOnStartup]
 public static class HostConfigJoinProbe
 {
@@ -40,6 +61,73 @@ public static class HostConfigJoinProbe
         return r;
     }
     static string Xml(bool on) => "<SettingsBlock><ModSettings Class=\"Meow.TurretCombatSleep.TurretCombatSleepSettings\"><turretCombatSleepEnabled>" + on + "</turretCombatSleepEnabled></ModSettings></SettingsBlock>";
+    static string PathFor(string folder, string handle) => (string)AccessTools.Method(typeof(LoadedModManager), "GetSettingsFilename").Invoke(null, new object[]{folder,handle});
+    static void RestartMode(bool on) => AccessTools.PropertySetter(typeof(SyncConfigs), "Applicable").Invoke(null,new object[]{on});
+    static int PersistenceAssertions(Type turret)
+    {
+        string permanent=PathFor("Candidate","TurretCombatSleepMod");
+        File.WriteAllText(permanent,Xml(false));
+        SyncConfigs.SaveConfigs(new List<ModConfig>{new ModConfig(Package,"TurretCombatSleepMod",Xml(true))});
+        string absent=Path.Combine(GenFilePaths.ConfigFolderPath,"Mod_Probe_StaticConfigProbeMod.xml");
+        File.WriteAllText(absent,"<SettingsBlock><ModSettings><enabled>true</enabled></ModSettings></SettingsBlock>");
+        try
+        {
+            RestartMode(true);
+            Check(PathFor("Candidate","TurretCombatSleepMod")==permanent,"restart child still uses temporary config");
+            Check(File.ReadAllText(permanent)==Xml(true),"host config not migrated to permanent file");
+            string backup=Path.Combine(GenFilePaths.SaveDataFolderPath,"MPMeowHostConfigBackup",Path.GetFileName(permanent)+".original");
+            Check(File.ReadAllText(backup)==Xml(false),"original config backup missing");
+            // Model the settings object already loaded by MP before our late
+            // migration hook, then join a host using a different live switch.
+            var settings=Settings(turret);
+            AccessTools.Field(settings.GetType(),"enabled").SetValue(settings,true);
+            int calls=0;
+            var window=new JoinDataWindow(Remote(Xml(false))){connectAnywayCallback=()=>calls++};
+            Find.WindowStack.Add(window);
+            Check(calls==1,"restart child cannot hot-sync another host");
+            Check(File.ReadAllText(permanent)==Xml(false),"restart-child hot sync did not persist");
+            Check(!(bool)AccessTools.Field(settings.GetType(),"enabled").GetValue(settings),"restart child live switch stale");
+            Check(PathFor("Candidate","TurretCombatSleepMod")==permanent && File.ReadAllText(permanent)==Xml(false),"stale temp file overwrote later hot sync");
+
+            // Native absence means defaults; do not revive a client-only file
+            // at the next normal launch.
+            Check(PathFor("Probe","StaticConfigProbeMod")==absent && !File.Exists(absent),"host-absent config was not durably reset");
+        }
+        finally { RestartMode(false); }
+        Check(PathFor("Candidate","TurretCombatSleepMod")==permanent,"normal launch path differs");
+        var read=AccessTools.Method(typeof(LoadedModManager),"ReadModSettings").MakeGenericMethod(Settings(turret).GetType());
+        var fresh=read.Invoke(null,new object[]{"Candidate","TurretCombatSleepMod"});
+        Check(!(bool)AccessTools.Field(fresh.GetType(),"enabled").GetValue(fresh),"fresh settings instance restored stale client value");
+        Log.Message("HOST_CONFIG PASS restart persistence, backup, child hot sync, stale-temp protection, host-absent reset, fresh normal read");
+        return 6;
+    }
+    static int StaticAssertions()
+    {
+        const string id="local.meow.hostconfigjoinprobe", handle="StaticConfigProbeMod";
+        StaticConfigProbeSettings.enabled=false;
+        StaticConfigProbeMod.Instance.WriteSettings();
+        foreach(bool reject in new[]{false,true})
+        {
+            string path=PathFor("Probe",handle), before=File.ReadAllText(path);
+            var remote=Remote(Xml(false));
+            for(int i=remote.remoteModConfigs.Count-1;i>=0;i--)
+                if(remote.remoteModConfigs[i].ModId==id && remote.remoteModConfigs[i].FileName==handle)remote.remoteModConfigs.RemoveAt(i);
+            remote.remoteModConfigs.Add(new ModConfig(id,handle,"<SettingsBlock><ModSettings><enabled>"+(!reject)+"</enabled></ModSettings></SettingsBlock>"));
+            StaticConfigProbeMod.FailWrite=reject;
+            int calls=0;
+            var window=new JoinDataWindow(remote){connectAnywayCallback=()=>calls++};
+            try
+            {
+                Find.WindowStack.Add(window);
+                Check(calls==(reject?0:1),"static-field reload/rollback continuation incorrect");
+                Check(StaticConfigProbeSettings.enabled,"static host value missing or callback rollback failed");
+                if(reject)Check(File.ReadAllText(path)==before,"failed callback left durable file changed");
+            }
+            finally{StaticConfigProbeMod.FailWrite=false;window.Close(false);}
+        }
+        Log.Message("HOST_CONFIG PASS static settings hot import and failed-callback disk/runtime rollback");
+        return 2;
+    }
     public static void Run()
     {
         if (ran || LongEventHandler.AnyEventNowOrWaiting) return;
@@ -90,6 +178,8 @@ public static class HostConfigJoinProbe
                 unsafeWindow.connectAnywayCallback(); Check(calls == 0, "unsafe delegate bypass");
                 Check(!(bool)AccessTools.Field(Settings(mod).GetType(), "enabled").GetValue(Settings(mod)), "preflight changed turret before rejecting batch");
                 unsafeWindow.Close(false); assertions++;
+                assertions+=PersistenceAssertions(mod);
+                assertions+=StaticAssertions();
             }
             string pass = "PASS native JoinDataWindow assertions=" + assertions + " optOut=" + optOut;
             File.WriteAllText(result, pass); Log.Message("HOST_CONFIG " + pass);

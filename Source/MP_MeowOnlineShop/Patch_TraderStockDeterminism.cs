@@ -56,8 +56,6 @@ namespace MP_MeowOnlineShop
         [ThreadStatic]
         private static Map _tradeCompletionMapForPop;
 
-        private static MethodInfo _regenerateStockMethod;
-
         private static Type _mpTradeSessionType;
         private static MethodInfo _tradeSessionTryCreateMethod;
         private static MethodInfo _tradeSessionGetTransferableMethod;
@@ -97,8 +95,6 @@ namespace MP_MeowOnlineShop
                         "resolution failed; settlement stock can desync.");
                     return;
                 }
-
-                _regenerateStockMethod = target;
 
                 MethodInfo stockGetter = AccessTools.PropertyGetter(
                     typeof(Settlement_TraderTracker),
@@ -233,7 +229,7 @@ namespace MP_MeowOnlineShop
 
                 Log.Message(
                     "[MP-MeowOnlineShop] Trade session stock sync active: " +
-                    "settlement stock is refreshed deterministically at session " +
+                    "existing settlement stock is preserved and missing stock is initialized at session " +
                     "creation and missing tradeable lookups are reconciled before " +
                     "applying count commands.");
             }
@@ -361,7 +357,7 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            TryRegenerateDeterministicStock(settlement.trader);
+            TryEnsureDeterministicStock(settlement.trader);
         }
 
         private static bool IsMultiplayerTickingOrExecuting()
@@ -392,7 +388,7 @@ namespace MP_MeowOnlineShop
             catch
             {
                 // Fail open: TryCreate itself is already MP-gated, so allowing
-                // the deterministic refresh is safer than skipping it.
+                // stock initialization is safer than skipping it.
                 return true;
             }
 
@@ -477,20 +473,24 @@ namespace MP_MeowOnlineShop
             return null;
         }
 
-        private static void TryRegenerateDeterministicStock(
+        private static void TryEnsureDeterministicStock(
             Settlement_TraderTracker tracker)
         {
-            if (tracker == null || _regenerateStockMethod == null)
+            if (tracker == null)
                 return;
 
             try
             {
-                _regenerateStockMethod.Invoke(tracker, null);
+                // Native stock expiration controls restocking. Opening/reopening
+                // a trade must preserve prior purchases/sales and physical IDs.
+                // Missing/empty stock still generates under the shared command
+                // and the existing deterministic Rand scope above.
+                _ = tracker.StockListForReading;
             }
             catch (Exception e)
             {
                 Log.Warning(
-                    "[MP-MeowOnlineShop] Forced settlement stock regeneration " +
+                    "[MP-MeowOnlineShop] Settlement stock initialization " +
                     "failed: " + e.Message);
             }
         }

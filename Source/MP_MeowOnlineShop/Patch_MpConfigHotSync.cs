@@ -76,6 +76,8 @@ namespace MP_MeowOnlineShop
         private static MethodInfo _joinDataWindowCloseMethod;
         private static bool _joinDataWindowMembersValidated;
         private static MethodInfo _getSettingsFilenameMethod;
+        private static readonly HashSet<string> PersistedRestartPaths =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         internal static void Apply(Harmony harmony)
         {
@@ -103,7 +105,10 @@ namespace MP_MeowOnlineShop
 
             // Admission safety is independent of the optional hot-import feature.
             if (IsEnabled())
+            {
                 ApplyIgnoredConfigFilters();
+                InstallPersistentConfigPaths(harmony);
+            }
 
             if (IsDiagnosticEnabled())
             {
@@ -152,6 +157,137 @@ namespace MP_MeowOnlineShop
             catch (Exception e)
             {
                 Log.Warning("[MP-MeowOnlineShop] MP config hot sync patch failed: " + e);
+            }
+        }
+
+        private static bool IsRestartChild()
+            => GetStaticFieldOrProperty<bool>(
+                AccessTools.TypeByName("Multiplayer.Client.Util.SyncConfigs"), "Applicable");
+
+        private static void InstallPersistentConfigPaths(Harmony harmony)
+        {
+            try
+            {
+                // MP redirects BOTH reads and writes to MultiplayerTempConfigs
+                // in its restart child. Migrate once, then return the original
+                // Verse path for the rest of this process (including saves).
+                harmony.Patch(AccessTools.Method(typeof(LoadedModManager), "GetSettingsFilename"),
+                    postfix: new HarmonyMethod(typeof(Patch_MpConfigHotSync), nameof(PersistRestartSettingsPath))
+                    { priority = Priority.Last, after = new[] { "multiplayer" } });
+                LongEventHandler.ExecuteWhenFinished(MigrateRestartSettings);
+            }
+            catch (Exception e)
+            {
+                Log.Error("[MP-MeowOnlineShop] Persistent host-config setup failed: " + e.Message);
+            }
+        }
+
+        private static bool IsTemporaryConfigPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            string root = Normalize(Path.Combine(GenFilePaths.SaveDataFolderPath, "MultiplayerTempConfigs"))
+                .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            return Normalize(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void PersistRestartSettingsPath(string __0, string __1, ref string __result)
+        {
+            if (!IsRestartChild() || !IsSafeSettingsFileName(__1) || !IsTemporaryConfigPath(__result)) return;
+            // Exact unpatched Verse.LoadedModManager filename formula. FolderName
+            // is the local mod folder, never the host's folder or package ID.
+            string permanent = Path.Combine(GenFilePaths.ConfigFolderPath,
+                GenText.SanitizeFilename("Mod_" + __0 + "_" + __1 + ".xml"));
+            if (TryPersistRestartFile(__result, permanent)) __result = permanent;
+        }
+
+        private static bool TryPersistRestartFile(string temporary, string permanent)
+        {
+            try
+            {
+                if (!IsUnderSaveData(permanent) || !IsTemporaryConfigPath(temporary)) return false;
+                permanent = Normalize(permanent);
+                if (PersistedRestartPaths.Contains(permanent)) return true;
+                byte[] contents = File.Exists(temporary) ? File.ReadAllBytes(temporary) : null;
+                if (contents != null)
+                {
+                    if (contents.Length > 8 * 1024 * 1024) throw new InvalidDataException("Config exceeds 8 MB");
+                    XDocument.Parse(Encoding.UTF8.GetString(contents));
+                }
+                byte[] original = File.Exists(permanent) ? File.ReadAllBytes(permanent) : null;
+                if (!ByteArrayEquals(contents, original))
+                {
+                    if (original != null)
+                    {
+                        string backup = Path.Combine(GenFilePaths.SaveDataFolderPath,
+                            "MPMeowHostConfigBackup", Path.GetFileName(permanent) + ".original");
+                        Directory.CreateDirectory(Path.GetDirectoryName(backup));
+                        if (!File.Exists(backup)) File.WriteAllBytes(backup, original);
+                    }
+                    if (contents == null)
+                    {
+                        // Absence in the host snapshot means native defaults.
+                        // Keep that absence across normal future launches too.
+                        if (File.Exists(permanent)) File.Delete(permanent);
+                    }
+                    else if (!TryRestoreFileBytesAtomic(permanent, contents))
+                        throw new IOException("Could not write persistent host config");
+                    byte[] persisted = File.Exists(permanent) ? File.ReadAllBytes(permanent) : null;
+                    if (!ByteArrayEquals(contents, persisted)) throw new IOException("Persistent config readback differs");
+                }
+                PersistedRestartPaths.Add(permanent);
+                return true;
+            }
+            catch (Exception e)
+            {
+                // Keep MP's temporary path on failure, never pretend the old
+                // permanent config is the authoritative runtime value.
+                Log.Error("[MP-MeowOnlineShop] Host config could not be saved permanently: " +
+                    Path.GetFileName(permanent) + ": " + e.Message);
+                return false;
+            }
+        }
+
+        private static void MigrateRestartSettings()
+        {
+            try
+            {
+                if (IsRestartChild())
+                {
+                    foreach (object instance in GetRunningModInstances() ?? Enumerable.Empty<object>())
+                    {
+                        if (instance == null || GetModSettingsObject(instance) == null) continue;
+                        foreach (ModContentPack pack in LoadedModManager.RunningMods)
+                            if (pack.assemblies.loadedAssemblies.Contains(instance.GetType().Assembly))
+                                InvokeGetSettingsFilename(pack.FolderName, instance.GetType().Name);
+                    }
+                }
+
+                // HugsLib does not use Verse's filename resolver. Move its
+                // active override and MP's snapshot path together. Outside a
+                // restart child, stale temporary files must never be exported.
+                Type overrideType = AccessTools.TypeByName("Multiplayer.Client.Util.HugsLib_OverrideConfigsPatch");
+                FieldInfo overridePath = AccessTools.Field(overrideType, "HugsLibConfigOverridePath");
+                if (overridePath != null)
+                {
+                    string temporary = overridePath.GetValue(null) as string;
+                    string permanent = Path.Combine(GenFilePaths.SaveDataFolderPath, "HugsLib", "ModSettings.xml");
+                    object manager = GetStaticFieldOrProperty<object>(
+                        AccessTools.TypeByName("HugsLib.HugsLibController"), "SettingsManager");
+                    if (!IsRestartChild()) overridePath.SetValue(null, permanent);
+                    else if (manager != null && TryPersistRestartFile(temporary, permanent))
+                    {
+                        if (!SetFieldOrProperty(manager, "OverrideFilePath", permanent))
+                            throw new InvalidOperationException("HugsLib persistent override setter missing");
+                        overridePath.SetValue(null, permanent);
+                    }
+                }
+                if (IsRestartChild())
+                    Log.Message("[MP-MeowOnlineShop] Host configs retained for future launches: " +
+                        PersistedRestartPaths.Count + " files; original backups in MPMeowHostConfigBackup.");
+            }
+            catch (Exception e)
+            {
+                Log.Error("[MP-MeowOnlineShop] Persistent host-config migration failed: " + e.Message);
             }
         }
 
@@ -221,24 +357,8 @@ namespace MP_MeowOnlineShop
             if (!IsEnabled())
                 return;
 
-            // Multiplayer's native Fix and Restart flow has already replaced
-            // GetSettingsFilename with its temp-config override in this child
-            // process.  Do not reopen a second transaction against that view:
-            // the native child is authoritative and should join normally.
-            Type syncConfigsType = AccessTools.TypeByName("Multiplayer.Client.Util.SyncConfigs");
-            if (GetStaticFieldOrProperty<bool>(syncConfigsType, "Applicable"))
-            {
-                // A restart child with a remaining compatibility mismatch is
-                // still unsafe; never let the native bypass undo this guard.
-                BlockStartupConfigMismatch(__instance);
-                if (IsDiagnosticEnabled())
-                {
-                    Log.Message(
-                        "[MP-MeowOnlineShop][ConfigDiag] phase=restart-child-skip, " +
-                        "restartChildProcess=True");
-                }
-                return;
-            }
+            // Restart-child settings now resolve to durable files. They can
+            // use the same verified transaction when another host differs.
 
             if (!ProcessedWindows.Add(__instance))
                 return;
@@ -505,22 +625,32 @@ namespace MP_MeowOnlineShop
             }
 
             var transaction = new HotSyncTransaction();
-            foreach (RemoteConfigRecord record in records)
+            try
             {
-                ProcessRemoteConfig(
-                    result,
-                    transaction,
-                    record.Key,
-                    record.ModId,
-                    record.FileName,
-                    record.HostContents);
-            }
+                foreach (RemoteConfigRecord record in records)
+                {
+                    ProcessRemoteConfig(
+                        result,
+                        transaction,
+                        record.Key,
+                        record.ModId,
+                        record.FileName,
+                        record.HostContents);
+                }
 
-            result.Finish();
-            if (!result.SafeToAutoConnect)
+                result.Finish();
+                if (!result.SafeToAutoConnect)
+                {
+                    transaction.Rollback();
+                    result.MarkRolledBack(transaction.RollbackCount);
+                }
+            }
+            catch
             {
+                // A reflection/snapshot exception in a later item must not
+                // leave earlier host settings committed as a partial batch.
                 transaction.Rollback();
-                result.MarkRolledBack(transaction.RollbackCount);
+                throw;
             }
 
             return result;
@@ -707,8 +837,7 @@ namespace MP_MeowOnlineShop
             string stagingPath = Path.Combine(
                 GenFilePaths.SaveDataFolderPath,
                 "MPMeowHotSync",
-                GenText.SanitizeFilename(
-                    Guid.NewGuid().ToString("N") + "-" + modId + "-" + fileName + ".xml"));
+                Guid.NewGuid().ToString("N") + ".xml");
 
             if (!TryWriteFileAtomic(stagingPath, hostContents, out string stagingMessage))
             {
@@ -754,6 +883,7 @@ namespace MP_MeowOnlineShop
             if (!hot)
             {
                 snapshot.Rollback();
+                TryRestoreFileBytesAtomic(path, originalBytes);
                 TryDeleteFile(stagingPath);
 
                 result.AddItem(
@@ -770,6 +900,7 @@ namespace MP_MeowOnlineShop
             if (!TryWriteFileAtomic(path, hostContents, out string canonicalMessage))
             {
                 snapshot.Rollback();
+                TryRestoreFileBytesAtomic(path, originalBytes);
                 TryDeleteFile(stagingPath);
                 result.AddItem(
                     modId,
@@ -1155,7 +1286,8 @@ namespace MP_MeowOnlineShop
                 }
 
                 foreach (FieldInfo field in GetConcreteSettingsFields(modSettings.GetType()))
-                    before.Add(new KeyValuePair<FieldInfo, object>(field, field.GetValue(modSettings)));
+                    before.Add(new KeyValuePair<FieldInfo, object>(field,
+                        StandardSettingsSnapshot.SnapshotFieldValue(field.GetValue(modSettings))));
 
                 Scribe.loader.InitLoading(path);
                 loadingInitialized = true;
@@ -1370,6 +1502,7 @@ namespace MP_MeowOnlineShop
             {
                 FieldInfo[] fields = current.GetFields(
                     BindingFlags.Instance |
+                    BindingFlags.Static |
                     BindingFlags.Public |
                     BindingFlags.NonPublic |
                     BindingFlags.DeclaredOnly);
@@ -1516,8 +1649,10 @@ namespace MP_MeowOnlineShop
                     File.Move(tempPath, path);
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Log.Warning("[MP-MeowOnlineShop] Atomic config restore failed: " +
+                    Path.GetFileName(path) + ": " + e.Message);
                 TryDeleteFile(tempPath);
                 return false;
             }
@@ -2023,10 +2158,18 @@ namespace MP_MeowOnlineShop
                 }
             }
 
-            private static object SnapshotFieldValue(object value)
+            internal static object SnapshotFieldValue(object value)
             {
                 if (value is Array array)
                     return array.Clone();
+
+                if (value is IDictionary dictionary)
+                {
+                    var clone = Activator.CreateInstance(value.GetType()) as IDictionary;
+                    if (clone == null) throw new InvalidOperationException("Cannot snapshot settings dictionary");
+                    foreach (DictionaryEntry item in dictionary) clone.Add(item.Key, item.Value);
+                    return clone;
+                }
 
                 if (value is IList list)
                 {

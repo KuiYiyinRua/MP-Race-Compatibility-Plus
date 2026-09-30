@@ -16,6 +16,7 @@
     <Deterministic>true</Deterministic>
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GameRoot Condition="'$(GameRoot)' == ''">$(MSBuildProjectDirectory)\..\..\..\..</GameRoot>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,6 +37,7 @@
   </PropertyGroup>
   <!-- 0Harmony 路径：优先本地 Libs，其次 RimWorld/Workshop，本地 NuGet 仅做最后兜底 -->
   <PropertyGroup>
+    <HarmonyDllPath Condition="'$(HarmonyPath)' != '' and Exists('$(HarmonyPath)')">$(HarmonyPath)</HarmonyDllPath>
     <HarmonyDllPath Condition="Exists('$(MSBuildProjectDirectory)\Libs\0Harmony.dll')">$(MSBuildProjectDirectory)\Libs\0Harmony.dll</HarmonyDllPath>
     <HarmonyDllPath Condition="'$(HarmonyDllPath)' == '' and Exists('$(MSBuildProjectDirectory)\..\..\..\Harmony\Current\Assemblies\0Harmony.dll')">$(MSBuildProjectDirectory)\..\..\..\Harmony\Current\Assemblies\0Harmony.dll</HarmonyDllPath>
     <HarmonyDllPath Condition="'$(HarmonyDllPath)' == '' and Exists('$(MSBuildProjectDirectory)\..\..\..\..\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll')">$(MSBuildProjectDirectory)\..\..\..\..\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll</HarmonyDllPath>
@@ -57,29 +59,29 @@
     </Reference>
     <!-- Multiplayer API -->
     <Reference Include="0MultiplayerAPI">
-      <HintPath>..\..\..\Multiplayer\1.6\Assemblies\0MultiplayerAPI.dll</HintPath>
+      <HintPath>$(GameRoot)\Mods\Multiplayer\1.6\Assemblies\0MultiplayerAPI.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <!-- RimWorld 核心 -->
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(GameRoot)\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <!-- Unity Engine -->
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(GameRoot)\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(GameRoot)\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>$(GameRoot)\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>$(GameRoot)\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="System" />

@@ -10,8 +10,25 @@ using UnityEngine;
 using Verse;
 using Meow.DesyncBatchCompatibility;
 
+namespace Meow.DesyncBatchCompatibility
+{
+    internal static class Bootstrap
+    {
+        internal static Type Type(string name) => AccessTools.TypeByName(name) ?? throw new TypeLoadException(name);
+        internal static System.Reflection.MethodInfo Method(Type type,string name,params Type[] args) =>
+            AccessTools.DeclaredMethod(type,name,args) ?? throw new MissingMethodException(type.FullName,name);
+        internal static System.Reflection.FieldInfo Field(Type type,string name,Type expected)
+        {
+            var field=AccessTools.Field(type,name);
+            if(field==null||field.FieldType!=expected)throw new MissingFieldException(type.FullName,name);
+            return field;
+        }
+    }
+}
+
 namespace Multiplayer.API { public static class MP { public static bool enabled, IsInMultiplayer, InInterface; } }
 namespace Multiplayer.Client { public static class AsyncTimeComp { public static Map tickingMap, executingCmdMap; } }
+namespace Multiplayer.Client.Patches { public static class UniqueIdsPatch { public static bool useLocalIdsOverride; } }
 namespace UnityEngine
 {
     public struct Color { public float r; public Color(float value) { r=value; } public static Color white => new Color(1); }
@@ -24,8 +41,32 @@ namespace Verse
     public static class ModsConfig { public static bool IsActive(string id) => false; }
     public static class Log { public static void Message(string s) { } public static void Error(string s) => throw new Exception(s); }
     public class CompProperties { }
+    public struct IntVec3 { }
+    public class FleckDef { }
     public class ThingComp { public ThingWithComps parent; public CompProperties props; }
-    public class ThingWithComps { public List<ThingComp> AllComps = new List<ThingComp>(); }
+    public class ThingDef { public string defName; public bool isSaveable; public Type thingClass; }
+    public class Thing { public ThingDef def; public int thingIDNumber; }
+    public class ThingWithComps : Thing { public List<ThingComp> AllComps = new List<ThingComp>(); }
+    public class PawnKindDef { public List<ThingDef> apparelRequired; }
+    public struct PawnGenerationRequest { public PawnKindDef KindDef; }
+    public static class ThingMaker
+    {
+        public static int ids=100, local=-2;
+        [MethodImpl(MethodImplOptions.NoInlining)] public static Thing MakeThing(ThingDef def, ThingDef stuff=null)
+        {
+            float draw=Rand.Value;
+            var thing=(Thing)Activator.CreateInstance(def.thingClass); thing.def=def;
+            thing.thingIDNumber=Multiplayer.Client.Patches.UniqueIdsPatch.useLocalIdsOverride?local--:ids++;
+            return thing;
+        }
+    }
+    public static class GenSpawn
+    {
+        [MethodImpl(MethodImplOptions.NoInlining)] public static Thing Spawn(ThingDef def, Map map)
+        { var t=ThingMaker.MakeThing(def); return Spawn(t,map); }
+        [MethodImpl(MethodImplOptions.NoInlining)] public static Thing Spawn(Thing thing, Map map)
+        { float draw=Rand.Value; return thing; }
+    }
     public class Map { public Faction ParentFaction; }
     public class Pawn { public int thingIDNumber; public Map MapHeld; public Faction Faction; public GeneTracker genes; }
     public enum EndogeneCategory { Melanin, Other }
@@ -65,6 +106,52 @@ namespace Verse
     public static class Scribe_Values
     {
         public static void Look(ref int value,string key,int fallback) { if(Scribe.Saving) Scribe.data[key]=value; else value=Scribe.data.TryGetValue(key,out int old)?old:fallback; }
+    }
+}
+namespace Nivarian_Race.Code.NivarianThing.Base
+{
+    public class ProgrammableThing : Thing
+    {
+        public static bool Fail;
+        [MethodImpl(MethodImplOptions.NoInlining)] public void Tick()
+        { float draw=Rand.Value; if(Fail)throw new Exception("trail fixture"); }
+    }
+}
+namespace Nivarian_Race.Code.NivarianThing
+{
+    public class ProgrammableMoverThing : Base.ProgrammableThing { }
+}
+namespace Nivarian_Race.Code.Comps.BuildingComps
+{
+    public class CompNiraControlCenter
+    {
+        public List<int> pending=new List<int>(); public ThingDef trail;
+        [MethodImpl(MethodImplOptions.NoInlining)] public void EnqueueControlTrail(Thing target=null,string trailerDefName=null,bool reversed=false)
+        { int v=(int)(Rand.Value*40); pending.Add(v); }
+        [MethodImpl(MethodImplOptions.NoInlining)] public void TickPendingTrails()
+        { foreach(var p in pending)SpawnControlTrail();pending.Clear(); }
+        [MethodImpl(MethodImplOptions.NoInlining)] public void SpawnControlTrail(ThingDef def=null,Thing target=null,bool reversed=false)
+        { float draw=Rand.Value; GenSpawn.Spawn(def??trail,null); }
+    }
+}
+namespace Nivarian_Race.Code.Comps.ThingComps
+{
+    public class ThingComp_ExpCanister
+    {
+        public ThingDef trail;
+        [MethodImpl(MethodImplOptions.NoInlining)] public void SpawnAbsorbTrail() { GenSpawn.Spawn(trail,null); }
+    }
+}
+namespace Milira
+{
+    public static class Milira_MilianPawnGenerator_Patch
+    {
+        public static ThingDef Chosen; public static bool Fail; public static List<ThingDef> Used;
+        [MethodImpl(MethodImplOptions.NoInlining)] public static void Postfix(ref Pawn pawn, PawnGenerationRequest request)
+        {
+            var apparel=request.KindDef.apparelRequired; apparel.Add(Chosen); Used=apparel;
+            if(Fail)throw new Exception("apparel fixture");
+        }
     }
 }
 namespace RimWorld
@@ -121,6 +208,10 @@ namespace Nivarian_Race.Code.Comps.ThingComps
 }
 namespace AriandelLibrary
 {
+    public class DamageWorker_AddInjury_NoDamageFactor
+    {
+        [MethodImpl(MethodImplOptions.NoInlining)] public void ThrowDamageMote(Vector3 pos,Map map,string text,Color color) { float draw=Rand.Value; }
+    }
     public class Visual_Lightning_Red
     {
         public static bool Visible, Fail;
@@ -218,6 +309,62 @@ class Program
         Check(spawn==3&&current==44&&wound==59,"all elite schedule fields roundtrip");
         Scribe.data.Clear();EliteState.Expose(ref spawn,ref current,ref wound);
         Check(spawn==0&&current==0&&wound==0,"old saves use constructor defaults");
+        TransientChecks(h);
         Console.WriteLine("OFFLINE_FIXTURE_PASS checks="+checks);
+    }
+
+    static void TransientChecks(Harmony h)
+    {
+        MP.InInterface=false; MP.IsInMultiplayer=true;
+        var trail=new ThingDef {defName="Nivarian_SimpleTrailer_Blue", thingClass=typeof(Nivarian_Race.Code.NivarianThing.ProgrammableMoverThing)};
+        var mover=new ThingDef {defName="GameplayDrone",isSaveable=true,thingClass=trail.thingClass};
+        DefDatabase<ThingDef>.AllDefs.Add(trail);
+        uint rng=Rand.State; int next=ThingMaker.ids;
+        GenSpawn.Spawn(trail,null);
+        Check(Rand.State!=rng&&ThingMaker.ids!=next,"old unsaved trail advances shared RNG and IDs");
+        NivarianTrailBoundary.Apply(h);
+        rng=Rand.State;next=ThingMaker.ids;
+        var host=(Nivarian_Race.Code.NivarianThing.ProgrammableMoverThing)GenSpawn.Spawn(trail,null);
+        Check(host.thingIDNumber<0&&Rand.State==rng&&ThingMaker.ids==next,"visual spawn uses local IDs and restores nested RNG scopes");
+        for(int i=0;i<30;i++)host.Tick(); // A cold peer has none of these unsaved things.
+        Check(Rand.State==rng&&ThingMaker.ids==next,"host-only unsaved trail ticks leave cold peer baseline intact");
+        var center=new Nivarian_Race.Code.Comps.BuildingComps.CompNiraControlCenter {trail=trail};
+        center.EnqueueControlTrail(); center.EnqueueControlTrail();center.TickPendingTrails();
+        Check(Rand.State==rng&&ThingMaker.ids==next&&center.pending.Count==0,"host-only pending queue dispatch is cosmetic");
+        new Nivarian_Race.Code.Comps.ThingComps.ThingComp_ExpCanister {trail=trail}.SpawnAbsorbTrail();
+        Check(Rand.State==rng&&ThingMaker.ids==next,"experience canister visual preserves shared streams");
+        var drone=(Nivarian_Race.Code.NivarianThing.ProgrammableMoverThing)GenSpawn.Spawn(mover,null);drone.Tick();
+        Check(drone.thingIDNumber>=0&&Rand.State!=rng&&ThingMaker.ids==next+1,"saveable gameplay mover retains native RNG and ID allocation");
+        rng=Rand.State;
+        Nivarian_Race.Code.NivarianThing.Base.ProgrammableThing.Fail=true;bool threw=false;
+        try{host.Tick();}catch(Exception){threw=true;}
+        Nivarian_Race.Code.NivarianThing.Base.ProgrammableThing.Fail=false;
+        Check(threw&&Rand.State==rng&&Rand.states.Count==0&&!Multiplayer.Client.Patches.UniqueIdsPatch.useLocalIdsOverride,"exception restores local ID override and Rand stack");
+        Multiplayer.Client.Patches.UniqueIdsPatch.useLocalIdsOverride=true;host.Tick();
+        Check(Multiplayer.Client.Patches.UniqueIdsPatch.useLocalIdsOverride,"preexisting local ID override preserved");
+        Multiplayer.Client.Patches.UniqueIdsPatch.useLocalIdsOverride=false;
+        MP.IsInMultiplayer=false;next=ThingMaker.ids;GenSpawn.Spawn(trail,null);
+        Check(ThingMaker.ids==next+1&&Rand.State!=rng,"single-player trail allocation remains native");MP.IsInMultiplayer=true;
+
+        var fixedArmor=new ThingDef{defName="fixed"};var tagged=new ThingDef{defName="tagged"};
+        var kind=new PawnKindDef {apparelRequired=new List<ThingDef>{fixedArmor}};
+        var req=new PawnGenerationRequest {KindDef=kind};var pawn=new Pawn();
+        Milira.Milira_MilianPawnGenerator_Patch.Chosen=tagged;
+        Milira.Milira_MilianPawnGenerator_Patch.Postfix(ref pawn,req);
+        Milira.Milira_MilianPawnGenerator_Patch.Postfix(ref pawn,req);
+        Check(kind.apparelRequired.Count==3,"old generator permanently accumulates shared-def equipment");
+        kind.apparelRequired=new List<ThingDef>{fixedArmor};MilianApparelBoundary.Apply(h);
+        for(int i=0;i<3;i++) { Milira.Milira_MilianPawnGenerator_Patch.Postfix(ref pawn,req);
+            Check(kind.apparelRequired.Count==1&&Milira.Milira_MilianPawnGenerator_Patch.Used.Count==2,"generated equipment retained without def mutation round "+i); }
+        var coldKind=new PawnKindDef{apparelRequired=new List<ThingDef>{fixedArmor}};
+        Milira.Milira_MilianPawnGenerator_Patch.Postfix(ref pawn,new PawnGenerationRequest{KindDef=coldKind});
+        Check(Milira.Milira_MilianPawnGenerator_Patch.Used.Count==2&&coldKind.apparelRequired.Count==kind.apparelRequired.Count,"cold peer and warmed host use equal generation inputs");
+        Milira.Milira_MilianPawnGenerator_Patch.Fail=true;threw=false;
+        try{Milira.Milira_MilianPawnGenerator_Patch.Postfix(ref pawn,req);}catch(Exception){threw=true;}
+        Check(threw&&kind.apparelRequired.Count==1,"generator exception cannot leak apparel into defs");
+        Milira.Milira_MilianPawnGenerator_Patch.Fail=false;
+        Check(MilianApparelBoundary.ForGeneration(null)==null,"null source preserved");
+        MP.IsInMultiplayer=false;Milira.Milira_MilianPawnGenerator_Patch.Postfix(ref pawn,req);
+        Check(kind.apparelRequired.Count==2,"single-player generator behavior retained");MP.IsInMultiplayer=true;
     }
 }

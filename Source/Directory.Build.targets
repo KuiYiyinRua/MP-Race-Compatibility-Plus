@@ -1,11 +1,29 @@
 <Project>
-  <!-- Full release builds bind every module to the core built in the same run. -->
-  <Target Name="UseFullReleaseCore" BeforeTargets="ResolveAssemblyReferences" Condition="'$(MainCompatDllPath)' != ''">
-    <ItemGroup>
-      <Reference Condition="'%(Reference.Identity)' == 'MP_MeowOnlineShop'">
-        <HintPath>$(MainCompatDllPath)</HintPath>
-        <Private>false</Private>
-      </Reference>
-    </ItemGroup>
-  </Target>
+  <!-- Explicit release-build paths also work outside the installed Mods tree. -->
+  <ItemGroup Condition="'$(GameRoot)' != ''">
+    <Reference Update="RatkinUnderground">
+      <HintPath>$(GameRoot)/Mods/3613814532/1.6/Assemblies/RatkinUnderground.dll</HintPath><Private>false</Private>
+    </Reference>
+    <Reference Update="0PrepatcherAPI">
+      <HintPath>$(GameRoot)/Mods/2934420800/Assemblies/0PrepatcherAPI.dll</HintPath><Private>false</Private>
+    </Reference>
+    <Reference Update="Assembly-CSharp;UnityEngine;UnityEngine.CoreModule;UnityEngine.IMGUIModule;UnityEngine.TextRenderingModule;UnityEngine.InputLegacyModule;UnityEngine.AudioModule;UnityEngine.PhysicsModule;UnityEngine.AnimationModule;UnityEngine.AssetBundleModule;UnityEngine.ImageConversionModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.JSONSerializeModule">
+      <HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/%(Identity).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Update="0MultiplayerAPI">
+      <HintPath>$(GameRoot)/Mods/Multiplayer/1.6/Assemblies/0MultiplayerAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Update="Multiplayer;MultiplayerCommon">
+      <HintPath>$(GameRoot)/Mods/Multiplayer/1.6/AssembliesCustom/%(Identity).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(HarmonyPath)' != ''">
+    <Reference Update="0Harmony"><HintPath>$(HarmonyPath)</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(MainCompatDllPath)' != ''">
+    <Reference Update="MP_MeowOnlineShop"><HintPath>$(MainCompatDllPath)</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
 </Project>

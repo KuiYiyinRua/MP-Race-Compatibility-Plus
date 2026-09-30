@@ -54,6 +54,11 @@ namespace Meow.DesyncBatchCompatibility
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual"))
                 ok &= InstallGroup("aurora-visual-random", AuroraVisualRandom.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
+                ok &= InstallGroup("nivarian-transient-trails", NivarianTrailBoundary.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Ancot.MiliraRace") &&
+                !ModsConfig.IsActive("usamiseika.fixmod.miliramultiplayer"))
+                ok &= InstallGroup("milian-apparel-def-isolation", MilianApparelBoundary.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
                 ok &= InstallGroup("fruit-tree", FruitTree.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Ariandel.AriandelLibrary"))
                 ok &= InstallGroup("lightning", LightningVisuals.Apply);

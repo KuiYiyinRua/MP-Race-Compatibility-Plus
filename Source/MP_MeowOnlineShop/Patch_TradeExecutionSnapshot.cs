@@ -23,15 +23,15 @@ namespace MP_MeowOnlineShop
     ///
     /// Replace only the UI accept boundary with one canonical intent command.
     /// The command carries item-identity tradeable keys and the final counts chosen
-    /// by the issuing player. At the shared command tick every peer regenerates
-    /// settlement stock, rebuilds the deal from authoritative goods, clears all
+    /// by the issuing player. At the shared command tick every peer
+    /// rebuilds the deal from authoritative goods, clears all
     /// stale counts, applies the same intent, and finally delegates to native
     /// MpTradeSession.TryExecute. Native pricing, transfer, goodwill, session
     /// removal, and Multiplayer command context remain authoritative.
     /// </summary>
     internal static class Patch_TradeExecutionSnapshot
     {
-        private const int CanonicalSnapshotRevision = 5;
+        private const int CanonicalSnapshotRevision = 6;
         private const string MultiplayerTypeName =
             "Multiplayer.Client.Multiplayer";
         private const string WorldCompTypeName =
@@ -72,7 +72,6 @@ namespace MP_MeowOnlineShop
 
         private static MethodInfo _setTradeSessionMethod;
         private static MethodInfo _tryExecuteMethod;
-        private static MethodInfo _regenerateStockMethod;
         private static MethodInfo _addToTradeablesMethod;
         private static MethodInfo _addAllTradeablesMethod;
 
@@ -140,10 +139,6 @@ namespace MP_MeowOnlineShop
                 _tryExecuteMethod = AccessTools.Method(
                     _mpTradeSessionType,
                     "TryExecute",
-                    Type.EmptyTypes);
-                _regenerateStockMethod = AccessTools.Method(
-                    typeof(Settlement_TraderTracker),
-                    "RegenerateStock",
                     Type.EmptyTypes);
                 _addToTradeablesMethod = AccessTools.DeclaredMethod(
                     typeof(TradeDeal),
@@ -270,7 +265,6 @@ namespace MP_MeowOnlineShop
             Require(_recacheThingsField, "MpTradeDeal.recacheThings", missing);
             Require(_setTradeSessionMethod, "MpTradeSession.SetTradeSession", missing);
             Require(_tryExecuteMethod, "MpTradeSession.TryExecute", missing);
-            Require(_regenerateStockMethod, "Settlement_TraderTracker.RegenerateStock", missing);
             Require(_addToTradeablesMethod, "TradeDeal.AddToTradeables", missing);
             Require(_addAllTradeablesMethod, "TradeDeal.AddAllTradeables", missing);
             Require(tradeDealTryExecute, "TradeDeal.TryExecute", missing);
@@ -511,22 +505,11 @@ namespace MP_MeowOnlineShop
 
             try
             {
-                object trader = _traderField.GetValue(session);
-                Settlement_TraderTracker settlementTracker =
-                    Patch_TradeSessionRejoinMp.ResolveSettlementTracker(
-                        trader);
-                if (settlementTracker != null)
-                {
-                    // The previous guard checked for a tracker directly even
-                    // though MpTradeSession stores the Settlement ITrader.
-                    // Regenerate unconditionally here so restored and fresh
-                    // sessions allocate the same stock objects at this shared
-                    // command tick before the deal is reconstructed.
-                    _regenerateStockMethod.Invoke(
-                        settlementTracker,
-                        null);
-                }
-
+                // Rebuild the transaction, never replace the seller's inventory.
+                // RegenerateStock destroys displayed furniture/books/genepacks,
+                // discards previous sales, and may generate different pawns.
+                // AddAllTradeables reads the authoritative current stock; its
+                // native getter initializes missing stock inside this command.
                 tradeables = (deal as TradeDeal)?.AllTradeables;
                 if (tradeables == null)
                     return false;
@@ -600,9 +583,8 @@ namespace MP_MeowOnlineShop
                     continue;
 
                 // An occurrence in an unstable sort is not an item identity.
-                // Settlement stock is regenerated and cannot retain Thing IDs;
-                // reject ambiguous semantic rows instead of guessing which one
-                // the player selected. Physical caravan/ship goods use IDs below.
+                // Reject malformed duplicate identities rather than guessing
+                // which physical item the player selected.
                 if ((i > 0 && KeyComparer.Equals(keyed[i - 1].Key, key)) ||
                     (i + 1 < keyed.Count && KeyComparer.Equals(keyed[i + 1].Key, key)))
                 {
@@ -794,15 +776,14 @@ namespace MP_MeowOnlineShop
             if (tradeable == null)
                 return string.Empty;
 
-            // Colony goods keep their identities even when a settlement's stock
-            // is regenerated. Visiting caravans and passing ships also retain
-            // their physical goods across the deal rebuild. Use those identities
-            // rather than outer defs: MinifiedThing hides its building, while
-            // gene packs, books and modded things can differ in unlisted comps.
+            // Every seller retains its current physical goods during a rebuild.
+            // Include settlement IDs too: outer defs do not identify a minified
+            // building, a book's contents, or a gene pack's genes. Stale IDs are
+            // rejected by TryApplyIntent before any item/currency transfer.
             string colony = BuildSideKey(tradeable.thingsColony, true);
             string trader = BuildSideKey(
                 tradeable.thingsTrader,
-                !(TradeSession.trader is Settlement));
+                true);
 
             return string.Join(
                 "|",

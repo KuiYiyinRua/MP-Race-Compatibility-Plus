@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.141</modVersion>
+  <modVersion>3.0.142</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
@@ -11,6 +11,8 @@
 MP-Race-Compatibility-Plus 是面向 RimWorld 1.6 Multiplayer 的联机兼容补丁合集，提供 RJW、多个种族与第三方模组的确定性、同步动作和多地图稳定性修复。
 
 MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch collection covering RJW, race mods, synchronized actions, deterministic randomness, and multi-map stability.
+本地修复模块 DesyncBatch 1.0.7：隔离落舱、雷枪与冷重连针对性回归通过；原始整合长测未完成。
+Local DesyncBatch 1.0.7: targeted wakeup, thunder and cold-rejoin regression passed; representative long soak incomplete.
 ]]></description>
   <modDependencies>
     <li>

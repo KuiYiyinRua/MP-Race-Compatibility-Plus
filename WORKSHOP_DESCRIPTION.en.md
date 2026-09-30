@@ -1,24 +1,10 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.141 (2026-09-29)
+## 3.0.142 (2026-09-30)
 
-- Publishes the complete 22-module runtime and matching source, including compatibility work from the local 3.0.140 build for airstrikes, shuttle flight, trading, and other paths.
-- Fixes joining with a mismatched turret-sleep setting. Turret Combat Sleep 1.5.0 checks and imports the host setting before world download when Multiplayer config synchronization is enabled. Settings that cannot be safely applied still require a restart.
-- Includes the Monolyn production-menu and gravity-slider sync-field fix (RaceTrio 1.1.5).
+Rebuilds and publishes all 22 production modules and matching source, including every existing experimental feature. Includes persistent host configuration, the settlement-trade hotfix, DesyncBatch 1.0.7, turret sleep, Raven industry and existing performance modules. Experimental settings retain their existing switches and defaults.
 
-Validation: all 22 projects built. The join fix passed native admission checks and a one-map, two-peer smoke run of about 10,000 shared ticks. The full mod collection, multi-map cold rejoins, and long soak remain unverified. This does not establish that every reported desync is resolved. All players must install matching files and restart; turret optimization remains disabled by default.
-
-Details: https://github.com/KuiYiyinRua/MP-Race-Compatibility-Plus/blob/main/Docs/releases/3.0.141.md
-
-## 3.0.136 (2026-09-25, previous update)
-
-- **Melpomene Avatar**: fixes a multiplayer compatibility issue with drafting.
-- **Turret Combat Sleep Experimental 1.3.0**: includes a standalone assembly, disabled by default in mod settings. When enabled, it reduces work in reviewed idle turret combat paths without changing save data.
-- **Raven Industry Optimization 1.0.0**: adds a separate multiplayer-only optimization, disabled by default. The host's setting is synchronized and saved with the game. Review its scope and rollback instructions before enabling it.
-
-Validation: the user verified the Melpomene Avatar fix in game. Turret Combat Sleep 1.3.0 and Raven Industry Optimization 1.0.0 received build and static checks only; no in-game runtime, multiplayer, or TPS verification was performed for them. Both options are disabled by default. This does not establish multiplayer validation for every turret or conveyor mod combination.
-
-All players must use matching files and fully restart. When enabling turret sleep, every multiplayer participant must use the same mod setting and restart. Enable the Raven option for a save only after reviewing its compatibility conditions. To roll back, disable and save the corresponding option, or remove the standalone assembly after all players exit.
+Validation: 22 projects compiled; 363 category-setting assertions and 60 DesyncBatch offline checks passed. The two settlement hotfix files match the previously tested source byte for byte; other core configuration code changed, so earlier targeted tests do not establish validation of this combined build. The final 3.0.142 combination has not completed a new two-peer, multi-map, cold-rejoin or 120,000-shared-tick soak. HugsLib configuration persistence remains runtime-unverified. Every player must install identical complete files and fully restart.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
