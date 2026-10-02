@@ -66,17 +66,19 @@ public static class HostConfigJoinProbe
     static int PersistenceAssertions(Type turret)
     {
         string permanent=PathFor("Candidate","TurretCombatSleepMod");
+        string backup=Path.Combine(GenFilePaths.SaveDataFolderPath,"MPMeowHostConfigBackup",Path.GetFileName(permanent)+".original");
+        string firstOriginal=File.Exists(backup)?File.ReadAllText(backup):Xml(false);
         File.WriteAllText(permanent,Xml(false));
-        SyncConfigs.SaveConfigs(new List<ModConfig>{new ModConfig(Package,"TurretCombatSleepMod",Xml(true))});
         string absent=Path.Combine(GenFilePaths.ConfigFolderPath,"Mod_Probe_StaticConfigProbeMod.xml");
         File.WriteAllText(absent,"<SettingsBlock><ModSettings><enabled>true</enabled></ModSettings></SettingsBlock>");
+        SyncConfigs.SaveConfigs(new List<ModConfig>{new ModConfig(Package,"TurretCombatSleepMod",Xml(true))});
+        Check(!File.Exists(absent), "parent restart staging did not reset host-absent config");
         try
         {
             RestartMode(true);
             Check(PathFor("Candidate","TurretCombatSleepMod")==permanent,"restart child still uses temporary config");
             Check(File.ReadAllText(permanent)==Xml(true),"host config not migrated to permanent file");
-            string backup=Path.Combine(GenFilePaths.SaveDataFolderPath,"MPMeowHostConfigBackup",Path.GetFileName(permanent)+".original");
-            Check(File.ReadAllText(backup)==Xml(false),"original config backup missing");
+            Check(File.ReadAllText(backup)==firstOriginal,"original config backup missing or overwritten");
             // Model the settings object already loaded by MP before our late
             // migration hook, then join a host using a different live switch.
             var settings=Settings(turret);
@@ -121,7 +123,12 @@ public static class HostConfigJoinProbe
                 Find.WindowStack.Add(window);
                 Check(calls==(reject?0:1),"static-field reload/rollback continuation incorrect");
                 Check(StaticConfigProbeSettings.enabled,"static host value missing or callback rollback failed");
-                if(reject)Check(File.ReadAllText(path)==before,"failed callback left durable file changed");
+                if(reject)
+                {
+                    Check(File.ReadAllText(path).Contains("<enabled>False</enabled>"), "restart-only host setting was not durably staged");
+                    Check(string.IsNullOrEmpty(window.connectAnywayDisabled), "failed hot reload blocks native manual join");
+                    window.connectAnywayCallback(); Check(calls == 1, "manual delegate replaced on failed reload");
+                }
             }
             finally{StaticConfigProbeMod.FailWrite=false;window.Close(false);}
         }
@@ -147,8 +154,8 @@ public static class HostConfigJoinProbe
                 Find.WindowStack.Add(w); // actual PostOpen, comparison and Harmony callback
                 if (optOut)
                 {
-                    Check(!string.IsNullOrEmpty(w.connectAnywayDisabled), "opt-out permits unsafe manual join");
-                    w.connectAnywayCallback(); Check(calls == 0, "opt-out delegate bypass");
+                    Check(string.IsNullOrEmpty(w.connectAnywayDisabled), "opt-out blocks native manual join");
+                    w.connectAnywayCallback(); Check(calls == 1, "opt-out delegate replaced");
                     w.Close(false); assertions++; break;
                 }
                 Check(calls == 1, "host setting was not applied before automatic continuation enabled=" + enabled + " calls=" + calls);
@@ -174,9 +181,11 @@ public static class HostConfigJoinProbe
                 int calls = 0;
                 var unsafeWindow = new JoinDataWindow(Remote(Xml(true), true)) { connectAnywayCallback = () => calls++ };
                 Find.WindowStack.Add(unsafeWindow);
-                Check(!string.IsNullOrEmpty(unsafeWindow.connectAnywayDisabled), "startup category mismatch permits manual join");
-                unsafeWindow.connectAnywayCallback(); Check(calls == 0, "unsafe delegate bypass");
-                Check(!(bool)AccessTools.Field(Settings(mod).GetType(), "enabled").GetValue(Settings(mod)), "preflight changed turret before rejecting batch");
+                Check(string.IsNullOrEmpty(unsafeWindow.connectAnywayDisabled), "startup category mismatch blocks manual join");
+                Check(calls == 0, "restart-only item automatically joined");
+                unsafeWindow.connectAnywayCallback(); Check(calls == 1, "native delegate replaced");
+                Check((bool)AccessTools.Field(Settings(mod).GetType(), "enabled").GetValue(Settings(mod)), "mixed batch rolled back independently hot turret setting");
+                Check(File.ReadAllText(PathFor("Candidate", "MpMeowOnlineShopMod")).Contains("<mp_meow_compatibility_enabled>false"), "startup setting not durable");
                 unsafeWindow.Close(false); assertions++;
                 assertions+=PersistenceAssertions(mod);
                 assertions+=StaticAssertions();

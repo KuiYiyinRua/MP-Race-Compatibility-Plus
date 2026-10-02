@@ -180,9 +180,10 @@ namespace Meow.TurretCombatSleep
                 FlameVisualSleep.Install(harmony);
                 DeepSleepEntry.Install(harmony);
                 NivarianTurretSleep.Install(harmony);
+                NivarianWirelessRestart.Install(harmony);
                 SupportsHostConfigHotSync = !installationFailed;
                 Log.Message("[Meow.TurretCombatSleep] HOST_CONFIG_HOT_SYNC ready=" + SupportsHostConfigHotSync + " enabled=" + (TurretCombatSleepMod.RuntimeSettings?.enabled ?? false));
-                Log.Message("[Meow.TurretCombatSleep] READY version=1.5.0 profiles=" + supported + " tickMethods=" + ticks.Count + " nativeQueries=" + queryMethods + " flameScan=" + (scan != null) + " mvid=" +
+                Log.Message("[Meow.TurretCombatSleep] READY version=1.5.1 profiles=" + supported + " tickMethods=" + ticks.Count + " nativeQueries=" + queryMethods + " flameScan=" + (scan != null) + " mvid=" +
                     typeof(TurretCombatSleep).Assembly.ManifestModule.ModuleVersionId);
             }
             catch (Exception e)

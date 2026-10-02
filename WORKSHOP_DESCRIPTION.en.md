@@ -1,10 +1,10 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.142 (2026-09-30)
+## 3.0.147 (2026-10-03)
 
-Rebuilds and publishes all 22 production modules and matching source, including every existing experimental feature. Includes persistent host configuration, the settlement-trade hotfix, DesyncBatch 1.0.7, turret sleep, Raven industry and existing performance modules. Experimental settings retain their existing switches and defaults.
+Publishes all 22 production modules and matching source, retaining the existing experimental features. Adds local message IDs for Brothel visitor notices, isolates PitGate camera-shake randomness, and includes DesyncBatch 1.0.8 for Ariandel local music randomness.
 
-Validation: 22 projects compiled; 363 category-setting assertions and 60 DesyncBatch offline checks passed. The two settlement hotfix files match the previously tested source byte for byte; other core configuration code changed, so earlier targeted tests do not establish validation of this combined build. The final 3.0.142 combination has not completed a new two-peer, multi-map, cold-rejoin or 120,000-shared-tick soak. HugsLib configuration persistence remains runtime-unverified. Every player must install identical complete files and fully restart.
+Validation: all 22 projects compiled, and patch targets were checked against installed assemblies. The new patches have not completed representative two-peer, cold-rejoin, or long-soak testing. The upstream causes of Desync-376/377 remain unresolved. This runtime-unverified release was published at the user's request. All players must install identical complete files and restart fully.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 

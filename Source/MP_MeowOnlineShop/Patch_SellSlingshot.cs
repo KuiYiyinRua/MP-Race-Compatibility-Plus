@@ -174,6 +174,7 @@ namespace MP_MeowOnlineShop
                 CompatibilityPatchCategories.Apply("visual", () => Patch_ReGrowthAutumnLeavesMp.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("core", () => Patch_UniqueIdSimulationBoundary.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("gameplay", () => Patch_MutantAbilityCacheMp.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("gameplay", () => Patch_Desync325Boundaries.Apply(Harmony));
                 ApplyOptionalPatch("YaOpt/Kingfisher indexed removal", () => CompatibilityPatchCategories.Apply("performance", () => Patch_YaOptKingfisherRemove.Apply(Harmony)));
                 CompatibilityPatchCategories.Apply("races", () => Patch_InsectGirlPermanentWoundMp.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("races", () => Patch_InsectGirlTamingFactionDeterminism.Apply(Harmony));
@@ -228,6 +229,7 @@ namespace MP_MeowOnlineShop
                 CompatibilityPatchCategories.Apply("milira", () => Patch_AncotIntegrationWeaponMp.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("milira", () => Patch_AncotMechAutoFightMp.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("visual", () => Patch_PsychicRitualVfxRandIsolation.Apply(Harmony));
+                CompatibilityPatchCategories.Apply("visual", () => Patch_PitGateVisualRandom.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("multifaction", () => Patch_PsychicRitualSkipAbductionMultifaction.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("races", () => Patch_KiiroStoryEventsMp.Apply(Harmony));
                 CompatibilityPatchCategories.Apply("gameplay", () => Patch_SearchAndDestroyMp.Apply(Harmony));

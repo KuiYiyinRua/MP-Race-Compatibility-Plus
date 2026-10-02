@@ -1,19 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.142</modVersion>
+  <modVersion>3.0.147</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
   </supportedVersions>
   <author>尹怨怨</author>
-  <description><![CDATA[
+  <description>
+3.0.147：妓院访客通知改用本地消息 ID；隔离深坑之门镜头震动随机数与 Ariandel 本地音乐随机数。375、378–380 的轨迹支持这些定点补丁；376、377 上游原因未定。22 模块编译及静态核验通过，新补丁尚未完成双端场景运行验证。所有玩家需安装同一完整版本并重启。
+
+3.0.147: local IDs for Brothel visitor notices; isolate PitGate camera shake and Ariandel local music from shared Rand. The new patches are compiled and statically inspected, with representative two-peer runtime validation pending.
+
+3.0.146：修正联机等距拾取、同类卸货顺序，以及米莉安 Hediff 技能缓存初始化。双图三轮、10000 共享服务器 tick 专项通过；完整 320 模组回放加载存在空 LoadID 重复登记，代表长测未验证。已本地部署。
+
+3.0.146: stable Pick Up And Haul distance/unload ties; Milian hediff abilities initialize during simulation ticks independently of local tracker cache dirtiness. See BuildValidation/DesyncEvidence/Desync340-345_20261001/REPORT.md for exact runtime results and remaining representative validation limits.
+
+3.0.145：修正冶龍追踪弹共享随机数及米莉拉援军生成地图上下文。双图 150000 模拟 tick、三次冷重连通过；按用户授权正式部署，完整 320 模组代表存档验收未通过。
+3.0.145: deterministic smart-trace offset and Milian generation map context. Two-map 150000 simulation ticks and three cold rejoins passed; formally deployed by user authorization; full representative validation incomplete.
+
 MP-Race-Compatibility-Plus 是面向 RimWorld 1.6 Multiplayer 的联机兼容补丁合集，提供 RJW、多个种族与第三方模组的确定性、同步动作和多地图稳定性修复。
 
 MP-Race-Compatibility-Plus is a RimWorld 1.6 Multiplayer compatibility patch collection covering RJW, race mods, synchronized actions, deterministic randomness, and multi-map stability.
 本地修复模块 DesyncBatch 1.0.7：隔离落舱、雷枪与冷重连针对性回归通过；原始整合长测未完成。
 Local DesyncBatch 1.0.7: targeted wakeup, thunder and cold-rejoin regression passed; representative long soak incomplete.
-]]></description>
+</description>
   <modDependencies>
     <li>
       <packageId>rwmt.Multiplayer</packageId>

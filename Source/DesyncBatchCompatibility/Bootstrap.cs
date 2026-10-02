@@ -42,6 +42,8 @@ namespace Meow.DesyncBatchCompatibility
                 ok &= InstallGroup("expandable-projectile-rate", ExpandableProjectileRate.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual") && ModsConfig.IsActive("Chezhou.ChezhouLib.lib"))
                 ok &= InstallGroup("flight-fleck-random", LightningVisuals.ApplyFlight);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual") && ModsConfig.IsActive("Ariandel.AriandelLibrary"))
+                ok &= InstallGroup("ariandel-local-music-random", AriandelMusicRandom.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("lazy-caches", LazySimulationCaches.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("world-component-clock", WorldComponentClock.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual") &&

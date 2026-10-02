@@ -1,6 +1,16 @@
 # 联机炮台战斗休眠
 
-实验组件：`1.6/Assemblies/Meow.TurretCombatSleep.dll`，当前版本 1.5.0，默认关闭。所有玩家首次安装新 DLL 后须重启。Multiplayer 房间启用配置同步时，客户端加入前会验证并导入房主的开关；不支持热导入的配置仍需重启。
+实验组件：`1.6/Assemblies/Meow.TurretCombatSleep.dll`，部署版本 1.5.0；1.5.1 无线启停优化候选在 `BuildValidation/TurretWireless_20261001/Candidate`，默认关闭。所有玩家首次安装新 DLL 后须重启。Multiplayer 房间启用配置同步时，客户端加入前会验证并导入房主的开关；不支持热导入的配置仍需重启。
+
+## 1.5.1 涅瓦莲炮台无线启停候选
+
+仅在炮台优化已启用的多人游戏中，对 DraconicMilitary 的 `Turret_Cryo`（低温炮塔）、`Turret_CryoMortar`（低温迫击炮）、`Turret_NivarianWinter`（寒冬炮塔）增加恢复供电门槛。原无线适配器允许电量刚够一个 tick 就启动，下一 tick 不够便停机，反复执行通断电通知、声音和覆盖层更新。候选要求断电炮台的当前未分配无线电量足够支付 60 个模拟 tick 的耗电才恢复；已通电炮台仍只要求当前 tick 的电量，缺电、太阳耀斑、手动关闭、故障等原有停机条件不延迟。
+
+60 tick 是启动时的电量门槛，不是额外扣款或保证工作时长；所有消费者仍共享原电量池与原分配顺序。无线电量不足这个小缓冲时，炮台会保持断电并等待积累；供给长期不足仍会停机。直接读取当前状态，不添加计时器、存档字段或本地时间依赖。普通有线供电、其他建筑、一次性哨戒炮台和母舰能量场前置接管路径保留原实现。关闭实验开关后回到原逻辑。
+
+同时覆盖原生 `TickWireless` 的启动写入和 `CanPowerNow` 的恢复判断，防止原供电 setter 或电网从另一入口立即重启炮台。目标结构不匹配时撤回本集成补丁并记录 `NIVARIAN_WIRELESS_FALLBACK`；成功启动记录为 `NIVARIAN_WIRELESS_RESTART reserveTicks=60`。
+
+验证：编译、离线逻辑回归和对安装版 DLL 的 Harmony 包装编译；未运行游戏、联机压力测试或 TPS 测量。候选尚未覆盖正在运行的正式 DLL。回归源为 `Tests/TurretWirelessRestart.cs`，证据在 `BuildValidation/TurretWireless_20261001`。
 
 ## 1.5.0 入房配置保护
 

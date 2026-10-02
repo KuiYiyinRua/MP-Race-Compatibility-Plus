@@ -1,14 +1,75 @@
-# Release 3.0.147 (2026-10-03)
+"""Archive finished runs and produce the reviewable Desync325 candidate; no deployment."""
+import difflib
+import hashlib
+import json
+import shutil
+import zipfile
+from pathlib import Path
 
-375 的妓院通知消息 ID、378–380 的 PitGate 镜头震动随机数、以及此前 355/356/358 的 Ariandel 本地音乐随机数已加入定点兼容补丁。22 个生产模块编译通过；新补丁仍需双端场景验证，376/377 的上游原因未定。所有玩家须安装同一完整版本并完全重启。详见 [3.0.147 发布说明](Docs/releases/3.0.147.md)。
+repo = Path(__file__).resolve().parents[1]
+evidence = repo / "BuildValidation/DesyncEvidence/Desync325-328_20260930"
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest().upper()
+candidate = evidence / "Candidate03/MP_MeowOnlineShop.dll"
+assert sha(candidate) == "C46B8AA57970B8E36F3CA54027519205B5B6688CFC8F1189B32CBA6A684951FC"
+runs = {
+    "ConfigR4": Path("G:/RWDesync325ConfigR4"),
+    "ConfigOptOutR1": Path("G:/RWDesync325ConfigOptOutR1"),
+    "NativeR2": Path("G:/RWDesync325NativeR2"),
+    "RepresentativeR1": Path("G:/RWDesync325ReplayR1"),
+}
+for name, source in runs.items():
+    dest = evidence / "Runtime" / name
+    dest.mkdir(parents=True, exist_ok=True)
+    for f in source.iterdir():
+        if f.is_file() and (f.suffix in {".log", ".json", ".sha256", ".ready", ".complete", ".failed", ".cs", ".csproj", ".ps1"}):
+            shutil.copy2(f, dest / f.name)
+    for peer in ("Host", "Client", "User"):
+        folder = source / peer
+        if not folder.exists():
+            continue
+        for name2 in ("result.txt", "MPMeowHostConfigState.xml", "drone-roundtrip.xml"):
+            if (folder / name2).is_file():
+                (dest / peer).mkdir(exist_ok=True)
+                shutil.copy2(folder / name2, dest / peer / name2)
+        for sub in ("Config", "MPMeowHostConfigBackup"):
+            if (folder / sub).is_dir():
+                shutil.copytree(folder / sub, dest / peer / sub, dirs_exist_ok=True)
 
-# Local release 3.0.146 (2026-10-01)
+snapshot = evidence / "HarnessSnapshot"
+for name in ("HostConfigJoin", "Desync325", "Desync325Replay"):
+    dest = snapshot / name
+    dest.mkdir(parents=True, exist_ok=True)
+    for f in (repo / "Tests" / name).iterdir():
+        if f.is_file() and f.suffix in {".cs", ".csproj", ".ps1"}:
+            shutil.copy2(f, dest / f.name)
+    for f in (repo / "Tests" / name / "bin/Release/net48").glob("*Probe.dll"):
+        shutil.copy2(f, dest / f.name)
 
-Stable Pick Up And Haul equal-distance and unload ordering; deterministic Milian hediff ability initialization during simulation ticks. Targeted two-map native diagnostic smoke passed 10,000 shared server ticks. Full representative validation results and unresolved original causes are documented in [the investigation report](BuildValidation/DesyncEvidence/Desync340-345_20261001/REPORT.md). All players must restart and use the same build.
+diff = []
+for name in ("Patch_MpConfigHotSync.cs", "AssemblyInfo.cs", "MP_MeowOnlineShop.csproj"):
+    before = evidence / "Before" / name
+    after = repo / "Source/MP_MeowOnlineShop" / ("Properties/AssemblyInfo.cs" if name == "AssemblyInfo.cs" else name)
+    diff.extend(difflib.unified_diff(before.read_text(encoding="utf-8-sig").splitlines(True),
+                                   after.read_text(encoding="utf-8-sig").splitlines(True),
+                                   "before/" + name, "after/" + name))
+new = repo / "Source/MP_MeowOnlineShop/Patch_Desync325Boundaries.cs"
+diff.extend(difflib.unified_diff([], new.read_text(encoding="utf-8-sig").splitlines(True),
+                               "/dev/null", "after/" + new.name))
+(evidence / "source-changes.diff").write_text("".join(diff), encoding="utf-8")
 
-Previous investigation follows.
+rows = json.loads((evidence / "batch-analysis.json").read_text(encoding="utf-8-sig"))
+log = ["Desync325–328 首处分歧日志；首次采样分歧不等于已证明全部上游根因。", ""]
+for row in rows:
+    log += [row["bundle"], "last valid=" + row["info"]["Last Valid Tick - Local"]]
+    for peer, trace in row["traces"].items():
+        first = trace.get("first")
+        if first:
+            log += [f"{peer}: sample={first['index']} tick={first['tick']} hash={first['hash']}",
+                    "context=" + first["label"]] + first["stack"]
+    log.append("")
+(evidence / "desync-log.txt").write_text("\n".join(log), encoding="utf-8")
 
-# Desync325–328 调查与候选补丁（2026-09-30）
+report = """# Desync325–328 调查与候选补丁（2026-09-30）
 
 已完成源码修补和配置行为调整，冻结候选主模块 3.0.143。专项双端通过 10,000 共享 tick；完整整合存档在加载阶段失败。尚不能宣称四次不同步全部解决，也没有覆盖正式 3.0.142 DLL。
 
@@ -74,3 +135,33 @@ ReplayR1 首个当前输入异常：host.log:3980–3982，RK_InfernoGrenadeLaun
 - 当前安装源权威：Raven 1.0.6/zuoyao.ravenrace，SHA74AE9E1D…；原生 Assembly-CSharp SHA8FD7E750…；MP SHA28D2CDA4…；Milira SHA371891B8…。完整 SHA 和路径见 provenance.json。Raven 当前反编译签名与轨迹类型匹配；并未证明每位远端机器 DLL 都等于当前安装哈希。
 - source-changes.diff 保存配置、版本、工程、新边界的变更；启动注册在 Patch_SellSlingshot 加一行 Patch_Desync325Boundaries.Apply(harmony)，该文件冻结全文在 SourceSnapshot。测试源和精确 harness DLL 在 HarnessSnapshot；生产包不含 harness。
 - 候选增量包：Releases/MP-Race-Compatibility-Plus-3.0.143-Desync325-328-Candidate.zip，基于已安装完整 3.0.142，仅主 DLL/PDB、候选 About、说明和哈希。它不是独立完整模组。
+"""
+(evidence / "REPORT.md").write_text(report, encoding="utf-8")
+docs = repo / "Docs/Desync325-328-Analysis-20260930.md"
+docs.write_text(report, encoding="utf-8")
+
+package = evidence / "Package"
+(package / "1.6/Assemblies").mkdir(parents=True, exist_ok=True)
+(package / "About").mkdir(exist_ok=True)
+for f in (evidence / "Candidate03").iterdir():
+    shutil.copy2(f, package / "1.6/Assemblies" / f.name)
+about = (repo / "About/About.xml").read_text(encoding="utf-8-sig").replace("<modVersion>3.0.142</modVersion>", "<modVersion>3.0.143</modVersion>")
+about = about.replace("<description><![CDATA[", "<description><![CDATA[\n3.0.143 候选：Desync325–328 确定性边界、部分热同步和长期主机配置。专项双端通过，完整整合存档加载失败，长测/三次冷重连未通过。\n3.0.143 candidate: deterministic boundaries and persistent partial hot sync; targeted smoke passed, representative load/rejoin/soak incomplete.\n")
+(package / "About/About.xml").write_text(about, encoding="utf-8")
+(package / "README.md").write_text(report, encoding="utf-8")
+manifest = {str(p.relative_to(package)).replace("\\", "/"): sha(p) for p in package.rglob("*") if p.is_file()}
+(package / "SHA256.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+release = repo / "Releases/MP-Race-Compatibility-Plus-3.0.143-Desync325-328-Candidate.zip"
+with zipfile.ZipFile(release, "w", zipfile.ZIP_DEFLATED) as z:
+    for p in package.rglob("*"):
+        if p.is_file():
+            z.write(p, str(p.relative_to(package)))
+with zipfile.ZipFile(release) as z:
+    assert not any("Probe" in f or "Tests/" in f for f in z.namelist())
+    for name, expected in manifest.items():
+        assert hashlib.sha256(z.read(name)).hexdigest().upper() == expected
+summary = {"candidateSha256": sha(candidate), "packageSha256": sha(release), "deployed": False,
+           "representative": "FAILED_SETUP", "targetedSharedTicks": 10000, "configAssertions": 14,
+           "optOutAssertions": 1, "soak": "NOT_RUN", "coldRejoinMatrix": "NOT_RUN"}
+(evidence / "validation-summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+print(json.dumps(summary, indent=2))

@@ -22,7 +22,21 @@ namespace MP_MeowOnlineShop
         private static Type tradingWindowType;
         private static object trackedSession;
         private static readonly Dictionary<int, RouteOwner> routes = new Dictionary<int, RouteOwner>();
+        private static readonly Dictionary<int, bool> flights = new Dictionary<int, bool>();
         private static bool? arrivalOwnedLocally;
+
+        internal sealed class FlightState
+        {
+            internal Thing Shuttle;
+            internal bool HadPrevious;
+            internal bool Previous;
+        }
+
+        internal sealed class FlightArrivalState
+        {
+            internal bool? Previous;
+            internal readonly List<int> ShuttleIds = new List<int>();
+        }
 
         internal sealed class RouteOwner
         {
@@ -66,7 +80,20 @@ namespace MP_MeowOnlineShop
                 harmony.Patch(AccessTools.Method(typeof(CaravanArrivalAction_Trade), "Arrived", new[] { typeof(Caravan) }),
                     prefix: Patch(nameof(BeforeArrival)), finalizer: Patch(nameof(AfterArrival)),
                     transpiler: Patch(nameof(ArrivalCameraTranspiler)));
+                harmony.Patch(AccessTools.Method(typeof(CompLaunchable), nameof(CompLaunchable.TryLaunch),
+                        new[] { typeof(PlanetTile), typeof(TransportersArrivalAction) }),
+                    prefix: Patch(nameof(BeforeMapLaunch)), finalizer: Patch(nameof(AfterLaunch)));
+                harmony.Patch(AccessTools.Method(typeof(CaravanShuttleUtility), nameof(CaravanShuttleUtility.LaunchShuttle),
+                        new[] { typeof(Caravan), typeof(PlanetTile), typeof(TransportersArrivalAction) }),
+                    prefix: Patch(nameof(BeforeWorldLaunch)), finalizer: Patch(nameof(AfterLaunch)),
+                    transpiler: Patch(nameof(LaunchCameraTranspiler)));
+                harmony.Patch(AccessTools.Method(typeof(TravellingTransporters), "Arrived"),
+                    prefix: Patch(nameof(BeforeFlightArrival)), finalizer: Patch(nameof(AfterFlightArrival)));
+                harmony.Patch(AccessTools.Method(typeof(TransportersArrivalAction_Trade), "Arrived",
+                        new[] { typeof(List<ActiveTransporterInfo>), typeof(PlanetTile) }),
+                    transpiler: Patch(nameof(ArrivalCameraTranspiler)));
                 Log.Message("[MP-MeowOnlineShop] Trade auto-open routing ready: settlement, arrival and caravan encounter; manual viewing unchanged.");
+                Log.Message("[MP-MeowOnlineShop] Shuttle camera routing ready: map/world launch ownership and delayed trade arrival.");
             }
             catch (Exception e)
             {
@@ -106,6 +133,17 @@ namespace MP_MeowOnlineShop
                     new[] { typeof(GlobalTargetInfo), typeof(CameraJumper.MovementMode) }),
                 nameof(JumpForArrival), 1);
 
+        internal static IEnumerable<CodeInstruction> LaunchCameraTranspiler(IEnumerable<CodeInstruction> instructions) =>
+            ReplaceCalls(instructions, AccessTools.Method(typeof(CameraJumper), nameof(CameraJumper.TryJump),
+                    new[] { typeof(GlobalTargetInfo), typeof(CameraJumper.MovementMode) }),
+                nameof(JumpForLaunch), 1);
+
+        private static void JumpForLaunch(GlobalTargetInfo target, CameraJumper.MovementMode mode)
+        {
+            if (!Enabled || OwnsAutomaticOpen)
+                CameraJumper.TryJump(target, mode);
+        }
+
         private static bool OwnsAutomaticOpen => arrivalOwnedLocally ??
             (MP.IsExecutingSyncCommand && MP.IsExecutingSyncCommandIssuedBySelf);
 
@@ -136,6 +174,61 @@ namespace MP_MeowOnlineShop
             if (ReferenceEquals(session, trackedSession)) return;
             trackedSession = session;
             routes.Clear();
+            flights.Clear();
+        }
+
+        private static FlightState RememberLaunch(Thing shuttle)
+        {
+            if (!MP.IsInMultiplayer || !MP.IsExecutingSyncCommand ||
+                Scribe.mode != LoadSaveMode.Inactive || shuttle == null) return null;
+            ResetForSession();
+            var state = new FlightState { Shuttle = shuttle };
+            state.HadPrevious = flights.TryGetValue(shuttle.thingIDNumber, out state.Previous);
+            // Stable shuttle IDs survive skyfaller creation, world flight and save reload.
+            // This is local UI ownership, never serialized into simulation state.
+            flights[shuttle.thingIDNumber] = MP.IsExecutingSyncCommandIssuedBySelf;
+            return state;
+        }
+
+        private static void BeforeMapLaunch(CompLaunchable __instance, out FlightState __state) =>
+            __state = RememberLaunch(__instance.parent.HasComp<CompShuttle>() ? __instance.parent : null);
+
+        private static void BeforeWorldLaunch(Caravan caravan, out FlightState __state) =>
+            __state = RememberLaunch(caravan.Shuttle);
+
+        private static Exception AfterLaunch(Exception __exception, FlightState __state)
+        {
+            // Failed/rejected launches must not replace the previous local owner.
+            if (__state != null && (__exception != null || __state.Shuttle.Spawned || __state.Shuttle.IsInCaravan()))
+            {
+                if (__state.HadPrevious) flights[__state.Shuttle.thingIDNumber] = __state.Previous;
+                else flights.Remove(__state.Shuttle.thingIDNumber);
+            }
+            return __exception;
+        }
+
+        private static void BeforeFlightArrival(List<ActiveTransporterInfo> ___transporters, out FlightArrivalState __state)
+        {
+            __state = new FlightArrivalState { Previous = arrivalOwnedLocally };
+            if (!MP.IsInMultiplayer) return;
+            ResetForSession();
+            bool mine = true;
+            foreach (var transporter in ___transporters)
+            {
+                var shuttle = transporter.GetShuttle();
+                if (shuttle == null) continue;
+                __state.ShuttleIds.Add(shuttle.thingIDNumber);
+                mine &= flights.TryGetValue(shuttle.thingIDNumber, out bool owner) && owner;
+            }
+            // Unknown ownership (e.g. cold rejoin) must not move everybody's camera.
+            arrivalOwnedLocally = __state.ShuttleIds.Count > 0 && mine;
+        }
+
+        private static Exception AfterFlightArrival(Exception __exception, FlightArrivalState __state)
+        {
+            foreach (int id in __state.ShuttleIds) flights.Remove(id);
+            arrivalOwnedLocally = __state.Previous;
+            return __exception;
         }
 
         private static void BeforeStartPath(Caravan ___caravan, CaravanArrivalAction arrivalAction, out PathState __state)

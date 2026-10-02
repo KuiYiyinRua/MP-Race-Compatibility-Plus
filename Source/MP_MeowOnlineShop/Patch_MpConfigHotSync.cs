@@ -15,11 +15,8 @@ namespace MP_MeowOnlineShop
 {
     /// <summary>
     /// Classifies host config mismatches before touching any local state.
-    /// Configs that can be proven in memory and on disk are hot-applied with a
-    /// rollback guard; startup-bound and unverifiable configs are left for the
-    /// native Fix and Restart flow. Automatic continuation is only allowed when
-    /// every changed config was verified hot, so a partial or stale runtime is
-    /// never silently joined.
+    /// Hot reloads independently verified configs and durably stages startup
+    /// items without replacing Multiplayer's manual admission controls.
     /// </summary>
     internal static class Patch_MpConfigHotSync
     {
@@ -50,17 +47,15 @@ namespace MP_MeowOnlineShop
                 "smashphil.vehicleframework",
                 "ferny.perspectiveshift"
             };
-        // XML Extensions used to be classified as startup-bound because its
-        // XmlMod settings feed def-time patch operations.  XmlModBaseSettings
-        // is a normal Verse.ModSettings and XmlMod inherits the standard
-        // WriteSettings path, so the generic hot-sync reload below can apply
-        // and verify it in place.  Only add a package when it genuinely
-        // cannot reload its settings without a restart.
+        // Reloading XML Extensions' ModSettings does not rerun its Def-time
+        // patch operations. A changed settings object alone is not proof of
+        // changed simulation definitions; retain this genuine startup boundary.
         private static readonly HashSet<string> StartupBoundConfigModIds =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 // Installed TickList patches cannot be changed by config hot reload.
-                "local.mp.meowonlineshop.sellslingshot"
+                "local.mp.meowonlineshop.sellslingshot",
+                "imranfish.xmlextensions"
             };
 
         private static readonly HashSet<string> WrittenThisProcess =
@@ -71,6 +66,10 @@ namespace MP_MeowOnlineShop
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private static string mainStartupSignature;
+        private static readonly Dictionary<string, byte[]> StartupConfigBytes =
+            new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, string> PendingRuntimeConfigs =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static bool _applied;
         private static bool _disabledLogged;
         private static MethodInfo _joinDataWindowCloseMethod;
@@ -99,16 +98,13 @@ namespace MP_MeowOnlineShop
                     Log.Message(
                         "[MP-MeowOnlineShop] MP config hot sync disabled by " +
                         $"{EnableArg}=false; config mismatches stay on the native " +
-                        "Multiplayer temp-config + restart flow.");
+                        "Multiplayer manual flow; restart configs still persist permanently.");
                 }
             }
 
             // Admission safety is independent of the optional hot-import feature.
-            if (IsEnabled())
-            {
-                ApplyIgnoredConfigFilters();
-                InstallPersistentConfigPaths(harmony);
-            }
+            if (IsEnabled()) ApplyIgnoredConfigFilters();
+            InstallPersistentConfigPaths(harmony);
 
             if (IsDiagnosticEnabled())
             {
@@ -149,10 +145,8 @@ namespace MP_MeowOnlineShop
 
                 harmony.Patch(postOpen, postfix: new HarmonyMethod(postfix) { priority = Priority.Last });
                 Log.Message(
-                    "[MP-MeowOnlineShop] MP host-config hot sync active: verifiable " +
-                    "config-only mismatches are imported, reloaded and verified before " +
-                    "world download; unverifiable items fall back to restart and block " +
-                    "automatic continuation.");
+                    "[MP-MeowOnlineShop] MP host-config hot sync active: independent hot reloads, " +
+                    "durable startup configs; native manual admission remains available.");
             }
             catch (Exception e)
             {
@@ -174,12 +168,65 @@ namespace MP_MeowOnlineShop
                 harmony.Patch(AccessTools.Method(typeof(LoadedModManager), "GetSettingsFilename"),
                     postfix: new HarmonyMethod(typeof(Patch_MpConfigHotSync), nameof(PersistRestartSettingsPath))
                     { priority = Priority.Last, after = new[] { "multiplayer" } });
+                var saveConfigs = AccessTools.Method(
+                    AccessTools.TypeByName("Multiplayer.Client.Util.SyncConfigs"), "SaveConfigs");
+                if (saveConfigs != null)
+                    harmony.Patch(saveConfigs, postfix: new HarmonyMethod(
+                        typeof(Patch_MpConfigHotSync), nameof(PersistSavedHostConfigs)));
                 LongEventHandler.ExecuteWhenFinished(MigrateRestartSettings);
             }
             catch (Exception e)
             {
                 Log.Error("[MP-MeowOnlineShop] Persistent host-config setup failed: " + e.Message);
             }
+        }
+
+        private static void PersistSavedHostConfigs(object __0)
+        {
+            // Native Fix and Restart has already written the complete host
+            // snapshot, including absence/default resets, into its temp folder.
+            // Persist before restart as well as in the child so a later normal
+            // launch retains these settings. Never infer absence from old temp data.
+            if (!(__0 is IEnumerable configs)) return;
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (object config in configs)
+            {
+                string id = GetFieldOrProperty<string>(config, "ModId");
+                string handle = GetFieldOrProperty<string>(config, "FileName");
+                if (id == null || !IsSafeSettingsFileName(handle)) continue;
+                keys.Add(id + "/" + handle);
+                PersistSavedHostConfig(id, handle);
+            }
+            foreach (object instance in GetRunningModInstances() ?? Enumerable.Empty<object>())
+            {
+                if (instance == null || GetModSettingsObject(instance) == null) continue;
+                foreach (ModContentPack pack in LoadedModManager.RunningMods)
+                {
+                    if (!pack.assemblies.loadedAssemblies.Contains(instance.GetType().Assembly)) continue;
+                    string id = pack.PackageIdPlayerFacing;
+                    var ignored = GetStaticFieldOrProperty<string[]>(
+                        AccessTools.TypeByName("Multiplayer.Client.Util.SyncConfigs"), "ignoredConfigsModIds");
+                    if (ignored?.Any(x => x.Equals(id, StringComparison.OrdinalIgnoreCase)) == true) continue;
+                    string handle = instance.GetType().Name;
+                    if (!keys.Contains(id + "/" + handle)) PersistSavedHostConfig(id, handle);
+                }
+            }
+            if (ModsConfig.IsActive(HugsLibId) && !keys.Contains(HugsLibId + "/" + HugsLibSettingsFile))
+                PersistSavedHostConfig(HugsLibId, HugsLibSettingsFile);
+        }
+
+        private static void PersistSavedHostConfig(string id, string handle)
+        {
+            var pack = FindRunningModContentPack(id);
+            if (pack == null || !IsSafeSettingsFileName(handle)) return;
+            string permanent = string.Equals(id, HugsLibId, StringComparison.OrdinalIgnoreCase)
+                ? Path.Combine(GenFilePaths.SaveDataFolderPath, "HugsLib", "ModSettings.xml")
+                : Path.Combine(GenFilePaths.ConfigFolderPath,
+                    GenText.SanitizeFilename("Mod_" + pack.FolderName + "_" + handle + ".xml"));
+            string temporary = Path.Combine(GenFilePaths.SaveDataFolderPath, "MultiplayerTempConfigs",
+                GenText.SanitizeFilename("Mod_" + id.ToLowerInvariant() + "_" + handle + ".xml"));
+            PersistedRestartPaths.Remove(Normalize(permanent));
+            TryPersistRestartFile(temporary, permanent);
         }
 
         private static bool IsTemporaryConfigPath(string path)
@@ -284,6 +331,9 @@ namespace MP_MeowOnlineShop
                 if (IsRestartChild())
                     Log.Message("[MP-MeowOnlineShop] Host configs retained for future launches: " +
                         PersistedRestartPaths.Count + " files; original backups in MPMeowHostConfigBackup.");
+                // This process loaded its startup settings afresh. Do not leave
+                // the previous process's pending marker looking unresolved.
+                SavePendingConfigState();
             }
             catch (Exception e)
             {
@@ -341,19 +391,6 @@ namespace MP_MeowOnlineShop
             if (__instance == null)
                 return;
 
-            // Desync-295..297: automatic import correctly required a restart,
-            // but the native "connect anyway" button still downloaded the world.
-            // Startup-installed simulation patches cannot be repaired by rejoin.
-            // Run before both opt-out and restart-child shortcuts: a remaining
-            // mismatch is unsafe even in a process using MP's temporary configs.
-            if (!IsEnabled() && BlockStartupConfigMismatch(__instance))
-            {
-                Log.Warning("[MP-MeowOnlineShop] Join blocked: startup-bound compatibility " +
-                    "settings differ. Use Multiplayer Fix and Restart; reconnecting " +
-                    "without restarting cannot replace the loaded simulation patches.");
-                return;
-            }
-
             if (!IsEnabled())
                 return;
 
@@ -367,7 +404,6 @@ namespace MP_MeowOnlineShop
             {
                 if (!TryResolveAutoHotSyncContext(__instance, out var remote, out var connectAnyway))
                 {
-                    BlockStartupConfigMismatch(__instance);
                     return;
                 }
 
@@ -382,12 +418,10 @@ namespace MP_MeowOnlineShop
 
                 if (!result.SafeToAutoConnect)
                 {
-                    BlockStartupConfigMismatch(__instance);
                     Log.Warning(
-                        "[MP-MeowOnlineShop] MP config hot sync cannot safely continue: " +
-                        "automatic join is suppressed and already-applied changes were " +
-                        "rolled back; use the native Fix and Restart flow or review the " +
-                        "config tab manually. " + result.Summary);
+                        "[MP-MeowOnlineShop] MP config hot sync partial: verified hot items are retained; " +
+                        "startup items are saved permanently for next launch. Native manual " +
+                        "join and Fix and Restart remain available. " + result.Summary);
                     return;
                 }
 
@@ -412,7 +446,6 @@ namespace MP_MeowOnlineShop
             }
             catch (Exception e)
             {
-                BlockStartupConfigMismatch(__instance);
                 Log.Warning("[MP-MeowOnlineShop] MP config hot sync runtime error: " + e);
             }
         }
@@ -450,46 +483,20 @@ namespace MP_MeowOnlineShop
             }
             // Other independent modules have not advertised a hot-reload contract.
             var path = ResolveSettingsPath(modId, fileName);
-            var bytes = string.IsNullOrEmpty(path) ? null : ReadFileBytesOrNull(path);
+            string key = modId + "/" + fileName;
+            if (!StartupConfigBytes.TryGetValue(key, out byte[] bytes))
+            {
+                bytes = string.IsNullOrEmpty(path) ? null : ReadFileBytesOrNull(path);
+                StartupConfigBytes[key] = bytes;
+            }
             return bytes == null || !XmlSemanticallyEqual(Encoding.UTF8.GetString(bytes), contents);
         }
 
         internal static bool BlockStartupConfigMismatch(object joinDataWindow)
         {
-            var remote = GetFieldOrProperty<object>(joinDataWindow, "remote");
-            if (!GetFieldOrProperty<bool>(remote, "hasConfigs"))
-                return false;
-
-            var root = GetFieldOrProperty<object>(joinDataWindow, "configsRoot");
-            var paths = GetFieldOrProperty<IEnumerable>(root, "paths");
-            if (paths == null)
-                return false;
-
-            var mismatches = new List<string>();
-            foreach (object value in paths)
-            {
-                var path = value as string;
-                int slash = path?.IndexOf('/') ?? -1;
-                if (slash <= 0 || !StartupBoundConfigModIds.Contains(path.Substring(0, slash)))
-                    continue;
-                mismatches.Add(path);
-            }
-            if (mismatches.Count == 0)
-                return false;
-
-            mismatches.Sort(StringComparer.Ordinal);
-            // Preserve an existing protocol/definition failure explanation.
-            if (!IsConnectAnywayDisabled(joinDataWindow))
-                SetFieldOrProperty(joinDataWindow, "connectAnywayDisabled",
-                    "联机模拟补丁配置不同，请点击“修复并重启”。仅重新连接无法生效。\n" +
-                    "Startup patch settings differ. Use Fix and Restart.\n" +
-                    string.Join("\n", mismatches));
-
-            // Also protect callers invoking the delegate directly; leave native
-            // FixAndRestartWindow and Quit available. This window stays blocked
-            // until a fresh connection compares the restarted process's configs.
-            SetFieldOrProperty(joinDataWindow, "connectAnywayCallback", (Action)(() => { }));
-            return true;
+            // Kept for external callers compiled against the old method.
+            // This patch no longer changes native admission controls/delegates.
+            return false;
         }
 
         private static bool ValidateJoinDataWindowShape(Type joinDataWindowType)
@@ -614,11 +621,29 @@ namespace MP_MeowOnlineShop
                 records.Add(new RemoteConfigRecord(key, modId, fileName, contents ?? string.Empty));
             }
 
+            foreach (string localOnly in localOnlyConfigs ?? Enumerable.Empty<string>())
+            {
+                int slash = localOnly?.IndexOf('/') ?? -1;
+                if (slash <= 0 || slash == localOnly.Length - 1 || !seen.Add(localOnly))
+                {
+                    result.AddItem("(unknown)", localOnly ?? "", ItemOutcome.Rejected, "invalid reset key");
+                    result.Finish();
+                    return result;
+                }
+                string id = localOnly.Substring(0, slash);
+                // HugsLib uses a different schema and its handles may not have
+                // a reset callback. Leave that absence to native restart.
+                string reset = id.Equals(HugsLibId, StringComparison.OrdinalIgnoreCase)
+                    ? "<settings/>" : "<SettingsBlock><ModSettings/></SettingsBlock>";
+                records.Add(new RemoteConfigRecord(localOnly, id, localOnly.Substring(slash + 1), reset)
+                    { ResetToDefaults = true });
+            }
+
             // Do not import one config and then leave it live when a later
             // item requires the native restart path.  In particular, a
             // startup-bound XML Extensions setting must be discovered before
             // any ModSettings instance or settings file is touched.
-            if (!PreflightRemoteConfigs(result, records, localOnlyConfigs))
+            if (!PreflightRemoteConfigs(result, records, null))
             {
                 result.Finish();
                 return result;
@@ -635,15 +660,12 @@ namespace MP_MeowOnlineShop
                         record.Key,
                         record.ModId,
                         record.FileName,
-                        record.HostContents);
+                        record.HostContents, record.ResetToDefaults);
                 }
 
                 result.Finish();
-                if (!result.SafeToAutoConnect)
-                {
-                    transaction.Rollback();
-                    result.MarkRolledBack(transaction.RollbackCount);
-                }
+                // Each rejected reload restores its own runtime/file snapshot.
+                // A restart-only neighbour must not undo successful hot items.
             }
             catch
             {
@@ -688,27 +710,11 @@ namespace MP_MeowOnlineShop
                     continue;
                 }
 
-                if (RequiresRestart(record.ModId, record.FileName, record.HostContents))
+                try { XDocument.Parse(record.HostContents); }
+                catch
                 {
-                    result.AddItem(
-                        record.ModId,
-                        record.FileName,
-                        ItemOutcome.RestartRequired,
-                        "startup-bound config requires Multiplayer native Fix and Restart");
+                    result.AddItem(record.ModId, record.FileName, ItemOutcome.Rejected, "invalid config XML");
                     safe = false;
-                }
-
-                byte[] localBytes = ReadFileBytesOrNull(path);
-                bool alreadyStaged = WrittenThisProcess.Contains(record.Key);
-                bool hostMatchesLocal = localBytes != null &&
-                    ByteArrayEquals(localBytes, Encoding.UTF8.GetBytes(record.HostContents));
-                if (alreadyStaged && hostMatchesLocal)
-                {
-                    result.AddItem(
-                        record.ModId,
-                        record.FileName,
-                        ItemOutcome.Unchanged,
-                        "config was already staged and verified in this process");
                 }
             }
 
@@ -742,7 +748,7 @@ namespace MP_MeowOnlineShop
             string key,
             string modId,
             string fileName,
-            string hostContents)
+            string hostContents, bool resetToDefaults = false)
         {
             if (Encoding.UTF8.GetByteCount(hostContents) > 8 * 1024 * 1024)
             {
@@ -767,16 +773,16 @@ namespace MP_MeowOnlineShop
 
             var record = new RemoteConfigRecord(key, modId, fileName, hostContents);
             string runtimeBefore = GetRuntimeSettingsFingerprint(modId, fileName);
+            BackupOriginalConfig(path);
 
             if (RequiresRestart(modId, fileName, hostContents))
             {
-                // Preflight is expected to reject this whole batch before any
-                // state changes.  Keep a fail-closed guard in the executor.
+                bool persisted = PersistDeferredConfig(key, path, hostContents, resetToDefaults, out string persistMessage);
                 result.AddItem(
                     modId,
                     fileName,
-                    ItemOutcome.RestartRequired,
-                    "startup-bound config requires Multiplayer native Fix and Restart");
+                    persisted ? ItemOutcome.RestartRequired : ItemOutcome.Failed,
+                    persisted ? "startup-bound config saved permanently; effective next launch" : persistMessage);
                 return;
             }
 
@@ -787,13 +793,13 @@ namespace MP_MeowOnlineShop
                                       hostContents,
                                       StringComparison.Ordinal);
 
-            if (contentMatches && !WrittenThisProcess.Contains(key))
+            if (contentMatches && !PendingRuntimeConfigs.ContainsKey(key) && !resetToDefaults && !WrittenThisProcess.Contains(key))
             {
                 result.AddItem(modId, fileName, ItemOutcome.Unchanged, "local file already matches host");
                 return;
             }
 
-            if (contentMatches && WrittenThisProcess.Contains(key))
+            if (contentMatches && !PendingRuntimeConfigs.ContainsKey(key) && !resetToDefaults && WrittenThisProcess.Contains(key))
             {
                 result.AddItem(
                     modId,
@@ -804,6 +810,7 @@ namespace MP_MeowOnlineShop
             }
 
             if (originalBytes != null &&
+                !PendingRuntimeConfigs.ContainsKey(key) && !resetToDefaults &&
                 !contentMatches &&
                 XmlSemanticallyEqual(
                     Encoding.UTF8.GetString(originalBytes),
@@ -879,21 +886,23 @@ namespace MP_MeowOnlineShop
             }
 
             bool requireDiff = !contentMatches;
-            bool hot = applied && (!requireDiff || verifiedDiff);
+            // A host XML can differ from disk while runtime already has the
+            // requested values (defaults/previous callback). Require a full
+            // settings round-trip in that case instead of forcing restart.
+            bool hot = applied && (!requireDiff || verifiedDiff ||
+                (!isHugsLib && SettingsRoundTripMatches(path, hostContents)));
             if (!hot)
             {
                 snapshot.Rollback();
                 TryRestoreFileBytesAtomic(path, originalBytes);
                 TryDeleteFile(stagingPath);
-
+                bool persisted = PersistDeferredConfig(key, path, hostContents, resetToDefaults, out string persistMessage);
                 result.AddItem(
                     modId,
                     fileName,
-                    ItemOutcome.RestartRequired,
-                    applied
-                        ? "runtime loaded but field verification was inconclusive (" +
-                          reloadMessage + "); native restart required"
-                        : "runtime reload rejected: " + reloadMessage);
+                    persisted ? ItemOutcome.RestartRequired : ItemOutcome.Failed,
+                    persisted ? "runtime unchanged; host config saved for next launch: " + reloadMessage
+                        : "persistent write failed: " + persistMessage);
                 return;
             }
 
@@ -912,6 +921,8 @@ namespace MP_MeowOnlineShop
 
             bool wasWrittenThisProcess = WrittenThisProcess.Contains(key);
             WrittenThisProcess.Add(key);
+            PendingRuntimeConfigs.Remove(key);
+            SavePendingConfigState();
             TryDeleteFile(stagingPath);
             transaction.TrackRuntime(
                 snapshot,
@@ -919,6 +930,11 @@ namespace MP_MeowOnlineShop
                 originalBytes,
                 key,
                 wasWrittenThisProcess);
+            if (resetToDefaults)
+            {
+                TryDeleteFile(path);
+                if (File.Exists(path)) throw new IOException("Could not remove reset config: " + path);
+            }
             LogGameplayConfigDiagnostic(
                 "hot-applied",
                 record,
@@ -930,6 +946,44 @@ namespace MP_MeowOnlineShop
                 fileName,
                 ItemOutcome.HotApplied,
                 "reloaded and verified (" + reloadMessage + ")");
+        }
+
+        private static bool SettingsRoundTripMatches(string path, string hostContents)
+        {
+            byte[] bytes = ReadFileBytesOrNull(path);
+            return bytes != null && XmlSemanticallyEqual(Encoding.UTF8.GetString(bytes), hostContents);
+        }
+
+        private static void BackupOriginalConfig(string path)
+        {
+            if (!File.Exists(path)) return;
+            string backup = Path.Combine(GenFilePaths.SaveDataFolderPath,
+                "MPMeowHostConfigBackup", Path.GetFileName(path) + ".original");
+            Directory.CreateDirectory(Path.GetDirectoryName(backup));
+            if (!File.Exists(backup)) File.Copy(path, backup);
+        }
+
+        private static bool PersistDeferredConfig(string key, string path, string contents, bool reset, out string message)
+        {
+            if (reset)
+            {
+                TryDeleteFile(path);
+                message = "host defaults saved for next launch";
+                if (File.Exists(path)) return false;
+            }
+            else if (!TryWriteFileAtomic(path, contents, out message)) return false;
+            PendingRuntimeConfigs[key] = reset ? "defaults" : Sha256Hex(Encoding.UTF8.GetBytes(contents));
+            SavePendingConfigState();
+            return true;
+        }
+
+        private static void SavePendingConfigState()
+        {
+            var document = new XDocument(new XElement("PendingUntilNextLaunch",
+                PendingRuntimeConfigs.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x =>
+                    new XElement("config", new XAttribute("key", x.Key), new XAttribute("hostHash", x.Value)))));
+            TryWriteFileAtomic(Path.Combine(GenFilePaths.SaveDataFolderPath, "MPMeowHostConfigState.xml"),
+                document.ToString(), out _);
         }
 
         // Diagnostics are intentionally limited to the three settings whose
@@ -1967,6 +2021,7 @@ namespace MP_MeowOnlineShop
             public string ModId { get; }
             public string FileName { get; }
             public string HostContents { get; }
+            public bool ResetToDefaults { get; set; }
         }
 
         private sealed class HotSyncTransaction
@@ -2083,7 +2138,7 @@ namespace MP_MeowOnlineShop
                     _restart == 0 &&
                     _failed == 0 &&
                     _rejected == 0 &&
-                    _hot > 0;
+                    (_hot > 0 || _unchanged > 0);
 
                 Summary =
                     $"hot={_hot}, unchanged={_unchanged}, restartRequired={_restart}, " +

@@ -24,6 +24,10 @@ namespace MP_MeowOnlineShop
 
         private static readonly MethodInfo StablePawnRandomElementMethod =
             AccessTools.Method(typeof(Patch_RjwBrothelDeterminism), nameof(StablePawnRandomElement));
+        private static readonly MethodInfo MessageMethod = AccessTools.Method(typeof(Messages),
+            nameof(Messages.Message), new[] { typeof(string), typeof(LookTargets), typeof(MessageTypeDef), typeof(bool) });
+        private static readonly MethodInfo VisitorMessageMethod = AccessTools.Method(
+            typeof(Patch_RjwBrothelDeterminism), nameof(VisitorMessage));
         private static int _replacementCount;
         private static Func<Room, Building_Bed, float> CalculateRoomBedFactors;
         private static bool priceQueryPatched;
@@ -36,6 +40,7 @@ namespace MP_MeowOnlineShop
                 return;
 
             ApplyPriceQuery(harmony);
+            ApplyVisitorMessages(harmony);
 
             Type anchor = AccessTools.TypeByName(AnchorTypeName);
             Assembly assembly = anchor?.Assembly;
@@ -99,6 +104,53 @@ namespace MP_MeowOnlineShop
             {
                 Log.Error("[MP-MeowOnlineShop][RJW-Brothel] REQUIRED_TARGET_FAILURE price query: " + e);
             }
+        }
+
+        private static void ApplyVisitorMessages(Harmony harmony)
+        {
+            try
+            {
+                Type driver = AccessTools.TypeByName("BrothelColony.JobDriver_WhoreInvitingVisitors");
+                MethodInfo response = AccessTools.DeclaredMethod(driver, "<MakeNewToils>b__12_2");
+                if (response == null || MessageMethod == null || VisitorMessageMethod == null)
+                    throw new MissingMethodException("BrothelColony visitor response/message API");
+                harmony.Patch(response, transpiler: new HarmonyMethod(
+                    typeof(Patch_RjwBrothelDeterminism), nameof(VisitorMessagesTranspiler)));
+                Log.Message("[MP-MeowOnlineShop][RJW-Brothel] visitor notifications use local message IDs in MP.");
+            }
+            catch (Exception e)
+            {
+                Log.Error("[MP-MeowOnlineShop][RJW-Brothel] REQUIRED_TARGET_FAILURE visitor messages: " + e);
+            }
+        }
+
+        // Desync-375: both peers consume the same Rand draws through the
+        // acceptance check and create the target's next job, but only the
+        // client allocates a historical message ID. The notification is UI;
+        // keeping it out of the synchronized message archive avoids moving
+        // game-wide unique IDs when only one peer displays it.
+        private static IEnumerable<CodeInstruction> VisitorMessagesTranspiler(
+            IEnumerable<CodeInstruction> instructions)
+        {
+            var result = instructions.ToList();
+            int replacements = 0;
+            foreach (CodeInstruction instruction in result)
+            {
+                if ((instruction.opcode != OpCodes.Call && instruction.opcode != OpCodes.Callvirt) ||
+                    !Equals(instruction.operand, MessageMethod))
+                    continue;
+                instruction.opcode = OpCodes.Call;
+                instruction.operand = VisitorMessageMethod;
+                replacements++;
+            }
+            if (replacements != 2)
+                throw new InvalidOperationException("Expected two visitor notifications, found " + replacements);
+            return result;
+        }
+
+        private static void VisitorMessage(string text, LookTargets targets, MessageTypeDef type, bool historical)
+        {
+            Messages.Message(text, targets, type, MP.IsInMultiplayer ? false : historical);
         }
 
         // Desync-18 (drafting) and -19 (STD cleanliness query) both trigger a

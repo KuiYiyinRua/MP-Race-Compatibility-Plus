@@ -369,9 +369,9 @@ namespace MP_MeowOnlineShop
             listing.Begin(viewRect);
             CompatibilityPatchCategories.DrawSettings(listing, _settings);
             listing.CheckboxLabeled(
-                "交易界面仅向发起玩家自动弹出（联机）",
+                "交易界面和穿梭机世界跳转仅向发起玩家显示（联机）",
                 ref _settings.tradeWindowOnlyForInitiator,
-                "默认开启，仅影响本机界面，切换立即生效。其他玩家发起据点或世界远行队交易时，不自动弹出或切换交易页；仍可主动打开交易入口查看。关闭后恢复 Multiplayer 的自动弹窗行为。断线重连后，途中旧交易指令若无法确认发起者，需主动打开查看。原有交易操作权限不变。");
+                "默认开启，仅影响本机界面，切换立即生效。其他玩家发起据点或世界远行队交易时，不自动弹出或切换交易页；穿梭机从远行队起飞、抵达据点交易时，也不会自动把本机切到世界界面。仍可主动打开世界界面和交易入口。关闭后恢复原有自动弹窗和镜头跳转行为。断线重连后，途中旧指令若无法确认发起者，需主动打开查看。原有交易操作权限不变。");
             listing.Gap(8f);
             listing.CheckboxLabeled(
                 "启用多派系任务与事件隔离及跨派系接取保护（实验性）",

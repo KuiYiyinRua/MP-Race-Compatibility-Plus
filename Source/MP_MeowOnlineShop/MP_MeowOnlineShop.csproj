@@ -222,6 +222,8 @@
     <Compile Include="Patch_AxolotlCrossbowVerbDeterminism.cs" />
     <Compile Include="Patch_MedicalSurgeryCompat.cs" />
     <Compile Include="Patch_MutantAbilityCacheMp.cs" />
+    <Compile Include="Patch_Desync325Boundaries.cs" />
+    <Compile Include="Patch_Desync344345Boundaries.cs" />
     <Compile Include="Patch_YaOptKingfisherRemove.cs" />
     <Compile Include="Patch_InsectGirlPermanentWoundMp.cs" />
     <Compile Include="Patch_DeterministicTickList.cs" />
@@ -277,6 +279,7 @@
     <Compile Include="Patch_AncotIntegrationWeaponMp.cs" />
     <Compile Include="Patch_AncotMechAutoFightMp.cs" />
     <Compile Include="Patch_PsychicRitualVfxRandIsolation.cs" />
+    <Compile Include="Patch_PitGateVisualRandom.cs" />
     <Compile Include="Patch_PsychicRitualSkipAbductionMultifaction.cs" />
     <Compile Include="Patch_EliteRaidDeterminism.cs" />
     <Compile Include="Patch_IncidentRaidFactionContext.cs" />
