@@ -21,6 +21,7 @@ namespace Meow.RaceTrioCompatibility
         static MethodInfo ejectNative;
         static ISyncMethod eject;
         static FieldInfo storedCorpse, baptismPawn;
+        static MethodInfo baptismBaseSelect;
 
         internal static void Apply(Harmony harmony)
         {
@@ -44,6 +45,9 @@ namespace Meow.RaceTrioCompatibility
             phoneActiveTick = RequiredField(phone, "activeTick");
             storedCorpse = RequiredField(RequiredType("ASEL.CompCorpseStorage"), "StoredCorpse");
             baptismPawn = RequiredField(RequiredType("ASEL.Building_BaptismalFont"), "selectedPawn");
+            baptismBaseSelect = RequiredMethod(RequiredType("ASEL.Building_BaptismalFont"), "<>n__0", typeof(Pawn));
+            harmony.Patch(RequiredMethod(RequiredType("ASEL.Building_BaptismalFont"), "SelectPawn", typeof(Pawn)),
+                prefix: new HarmonyMethod(typeof(MonolynActions), nameof(BaptismSelectPrefix)));
 
             Register("ASEL.CompComputationPit", "<CompGetGizmosExtra>b__9_0");
             Register("ASEL.CompComputationPit", "<CompGetGizmosExtra>b__9_1");
@@ -56,9 +60,10 @@ namespace Meow.RaceTrioCompatibility
             harmony.Patch(RequiredMethod(RequiredType("ASEL.Building_BaptismalFont"), "<GetGizmos>b__66_2"),
                 prefix: new HarmonyMethod(typeof(MonolynActions), nameof(BaptismCancelPrefix)));
 
-            // Native SelectPawn (including its forced confirmation) ultimately
-            // reaches MP's registered Building_Enterable.SelectPawn. Do not
-            // register the override or its confirmation a second time.
+            // MP registers the base SelectPawn, but its indirect invoker dispatches
+            // virtually to this override. Confirmation has already happened in
+            // local UI; replay must call the native base bridge without opening
+            // another process-local dialog. Keep the existing MP command/context.
             eject = MP.RegisterSyncMethod(typeof(MonolynActions), nameof(EjectWeapon));
             MP.RegisterSyncField(customLabel);
             harmony.Patch(ejectNative, prefix: new HarmonyMethod(typeof(MonolynActions), nameof(EjectPrefix)));
@@ -69,7 +74,7 @@ namespace Meow.RaceTrioCompatibility
                 prefix: new HarmonyMethod(typeof(MonolynActions), nameof(ConduitSavePrefix)));
             harmony.Patch(RequiredMethod(phone, "PostExposeData"),
                 postfix: new HarmonyMethod(typeof(MonolynActions), nameof(PhoneSavePostfix)));
-            Log.Message("[MonolynActions] resolved=5 callbacks, weapon ejection, rename, conduit save, phone save; missing=0");
+            Log.Message("[MonolynActions] resolved=5 callbacks, baptism confirmed base replay, weapon ejection, rename, conduit save, phone save; missing=0");
         }
 
         static void Register(string typeName, string methodName)
@@ -106,6 +111,19 @@ namespace Meow.RaceTrioCompatibility
             if (maps != 1 || positions != 1) throw new InvalidOperationException("Native corpse placement shape changed: " + maps + "/" + positions);
         }
         static bool BaptismCancelPrefix(object __instance) => !MP.IsInMultiplayer || baptismPawn.GetValue(__instance) != null;
+
+        static bool BaptismSelectPrefix(object __instance, Pawn pawn)
+        {
+            if (!MP.IsInMultiplayer || !MP.IsExecutingSyncCommand || MP.InInterface) return true;
+            // <>n__0 is verified to emit `call Building_Enterable.SelectPawn`,
+            // rather than virtual dispatch back to the override. The base MP
+            // prefix allows execution here because this is already a command.
+            var building = (RimWorld.Building_Enterable)__instance;
+            if (pawn != null && !pawn.Destroyed && building.Spawned && !building.Destroyed
+                && pawn.MapHeld == building.Map && building.CanAcceptPawn(pawn).Accepted)
+                baptismBaseSelect.Invoke(__instance, new object[] { pawn });
+            return false;
+        }
 
         static bool EjectPrefix(object __instance)
         {

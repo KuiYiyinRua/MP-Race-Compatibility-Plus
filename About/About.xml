@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.152</modVersion>
+  <modVersion>3.0.153</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
   </supportedVersions>
   <author>尹怨怨</author>
-  <description>2026-10-11 全量发布：全部 22 个生产模块及现有实验功能；包版本 3.0.152，核心 3.0.151，Monolyn 补充 1.1.9，TaleNivarian 1.1.7。GitHub 提供完整源码、测试、工具与文档。实验开关保留现有默认值；最新完整组合未新增双端长测。所有玩家须安装相同文件并完全重启。
+  <description>2026-10-11 本地补丁 3.0.153：修复 Monolyn 强制洗礼确认后联机命令重放再次弹框、人物无法进入的问题；修复 Desync-452 中 Replace Stuff 消雾使用本地镜头地图的分叉。RaceTrio 1.1.10、DesyncBatch 1.0.10，核心保持 3.0.151。专项双端简测通过，用户要求不扩展长测与冷重连；完整 247 模组双端因内存不足中止。所有玩家须更新相同文件并完全重启。
+
+2026-10-11 全量发布：全部 22 个生产模块及现有实验功能；包版本 3.0.152，核心 3.0.151，Monolyn 补充 1.1.9，TaleNivarian 1.1.7。GitHub 提供完整源码、测试、工具与文档。实验开关保留现有默认值；最新完整组合未新增双端长测。所有玩家须安装相同文件并完全重启。
 
 2026-10-11 全量发布：全部 22 个生产模块及现有实验功能；核心 3.0.151，Monolyn 补充 1.1.8，TaleNivarian 1.1.6。GitHub 提供完整源码、测试、工具与文档。实验开关保留现有默认值；最新完整组合未新增双端长测。所有玩家须安装相同文件并完全重启。
 

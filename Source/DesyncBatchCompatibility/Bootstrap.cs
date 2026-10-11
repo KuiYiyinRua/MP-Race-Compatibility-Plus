@@ -18,6 +18,8 @@ namespace Meow.DesyncBatchCompatibility
         static void Install()
         {
             bool ok = true;
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core") && ModsConfig.IsActive("Memegoddess.ReplaceStuff"))
+                ok &= InstallGroup("replace-stuff-unfog-owner-map", ReplaceStuffUnfogMap.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") &&
                 !ModsConfig.IsActive("usamiseika.fixmod.miliramultiplayer"))
             {

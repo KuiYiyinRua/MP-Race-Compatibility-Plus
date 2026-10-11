@@ -1,10 +1,10 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.152 full update (2026-10-11)
+## 3.0.153 baptism and unfog fixes (2026-10-11)
 
-Adds patches for the Weapon Codex faults exposed by Desync-449/450: recognizes Nivarian Commander 0.9.7 native random owners and initializes Monolyn independently. Codex menus created inside synced commands are deferred to the issuing player's interface, avoiding Multiplayer debug-mode label-hash forwarding. Publishes all 22 modules and existing experiments, with complete source, tests, tools and documentation on GitHub. Thanks to AzzyH for the design reference.
+Fixes Monolyn Race forced baptism reopening confirmation during multiplayer command replay and failing to assign an entry job. Native local confirmation is retained; replay uses the verified nonvirtual base entry point. Fixes the Replace Stuff unfog branch found in Desync-452 by checking fog on the callback's map rather than the local camera map.
 
-Validation: all 22 projects compile and 506 target structure checks pass. Ten additional menu boundary static checks pass. Runtime testing was stopped at the user's explicit request. This new candidate has not completed two-peer runtime verification; no smoke or soak pass is claimed. Existing experimental defaults are retained. All players must update identical files and restart completely.
+RaceTrio 1.1.10 and DesyncBatch 1.0.10; the other 20 production assemblies and existing experimental defaults are unchanged. Both changed projects compile and 521 static checks pass. Three native baptisms on one map and three per map in a two-map async test completed naturally; final state and RNG matched after 10000 shared ticks. Unfog results matched while peers viewed different maps. The full 247-mod replay pair stopped for insufficient memory. Testing was limited to simple functional checks at the user's request; no full-loadout soak or cold-rejoin pass is claimed. All players must install identical files and restart completely.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
