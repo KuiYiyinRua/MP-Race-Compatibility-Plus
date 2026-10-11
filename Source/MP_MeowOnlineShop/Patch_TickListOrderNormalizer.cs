@@ -541,7 +541,10 @@ namespace MP_MeowOnlineShop
                     state.Sorted[index] = true;
                 }
 
-                RemoveOccurrences(bucket, thing);
+                // Keep vanilla's registration multiplicity. Despawn + respawn in
+                // one tick queues both registration and deregistration: the native
+                // Tick removes the old occurrence after we insert the new one.
+                // Deduplicating here would remove the last ticker on teleport.
                 InsertSorted(bucket, thing);
             }
 

@@ -23,7 +23,32 @@ namespace Meow.RaceTrioCompatibility
         {
             var type=AccessTools.TypeByName(name)??throw new TypeLoadException(name);
             var target=AccessTools.DeclaredMethod(type,method)??throw new MissingMethodException(name,method);
+            if (CommanderOwns(target, method)) return;
             harmony.Patch(target,transpiler:new HarmonyMethod(typeof(NivarianSimulationRandom),nameof(Replace)));
+        }
+        // Reviewed installed NMC 0.9.6 owns these draws and their save state. Do not
+        // replace its input with a new Meow helper (NMC pins the older helper MVID).
+        static bool CommanderOwns(MethodInfo target, string method)
+        {
+            string owner = method == "OrbitTarget" ? "local.nivarian.commander.native-orbit-random" :
+                method == "CompTick" ? "local.nivarian.commander.native-turret-idle-random" : null;
+            if (owner == null) return false;
+            var patches = Harmony.GetPatchInfo(target);
+            if (patches == null) return false;
+            foreach (var patch in patches.Transpilers)
+            {
+                var p = patch.PatchMethod;
+                string expectedType = "NivarianCommander.MultiplayerAdapter." +
+                    (method == "OrbitTarget" ? "NativeDroneOrbitRandom" : "NativeTurretIdleRandom");
+                if (patch.owner != owner || p.Name != "Transpiler" || p.DeclaringType?.FullName != expectedType ||
+                    p.Module.Assembly.GetName().Name != "NivarianCommander.Multiplayer") continue;
+                if (p.Module.ModuleVersionId == new Guid("3e83802b-86f4-43c8-b39d-7557dbbc6406"))
+                    {
+                        Log.Message("[NivarianMP] reviewed NMC random owner retained: " + target);
+                        return true;
+                    }
+            }
+            return false;
         }
         static IEnumerable<CodeInstruction> Replace(IEnumerable<CodeInstruction> instructions,MethodBase __originalMethod)
         {

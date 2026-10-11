@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using MP_MeowOnlineShop.MiliraAddonCompat;
 using HarmonyLib;
 using Multiplayer.API;
@@ -55,6 +57,7 @@ public static class FunnelBit_RandIsolation
 		num += PatchDetRand(harmony, "FunnelBit.Projectile_FunnelBit", "Tick_Returning", DetRandType.Thing);
 		num += PatchDetRand(harmony, "FunnelBit.Projectile_FunnelBit", "Tick_SpecialAction", DetRandType.Thing);
 		num += PatchCompTick(harmony);
+		num += PatchChargingIteration(harmony);
 		num += PatchDetRand(harmony, "FunnelBit.GameComponent_FunnelBit", "GameComponentTick", DetRandType.Tick);
 		num += PatchDetRand(harmony, "FunnelBit.FunnelBitMoveWorker_DragoonEx", "Tick", DetRandType.Tick);
 		num += PatchDetRand(harmony, "FunnelBit.FunnelBitMoveWorker_MeleeChargeEx", "Tick", DetRandType.Tick);
@@ -72,6 +75,56 @@ public static class FunnelBit_RandIsolation
 	public static void PushThing(Thing __instance) => CompatUtility.PushDetRand_Thing(__instance);
 
 	public static void PushComp(ThingComp __instance) => CompatUtility.PushDetRand_ThingComp(__instance);
+
+	// LaunchSlotForAbility can add a slot to the list currently being ticked.
+	// Keep the original order and visit each slot present at the start of this tick once.
+	public static List<T>.Enumerator ChargingSlots<T>(List<T> slots)
+	{
+		return MP.IsInMultiplayer ? new List<T>(slots).GetEnumerator() : slots.GetEnumerator();
+	}
+
+	public static IEnumerable<CodeInstruction> SnapshotChargingSlots(IEnumerable<CodeInstruction> instructions)
+	{
+		int replaced = 0;
+		foreach (CodeInstruction instruction in instructions)
+		{
+			if (instruction.operand is MethodInfo method && method.Name == "GetEnumerator" &&
+				method.DeclaringType != null && method.DeclaringType.IsGenericType &&
+				method.DeclaringType.GetGenericTypeDefinition() == typeof(List<>) &&
+				method.DeclaringType.GetGenericArguments()[0].FullName == "FunnelBit.FunnelBitSlot")
+			{
+				instruction.opcode = OpCodes.Call;
+				instruction.operand = typeof(FunnelBit_RandIsolation)
+					.GetMethod(nameof(ChargingSlots)).MakeGenericMethod(method.DeclaringType.GetGenericArguments());
+				replaced++;
+			}
+			yield return instruction;
+		}
+		if (replaced != 2)
+			throw new InvalidOperationException("FunnelBit.TickCharging expected two slot-list enumerators, found " + replaced);
+	}
+
+	private static int PatchChargingIteration(Harmony harmony)
+	{
+		Type type = ResolveType("FunnelBit.FunnelBitManager");
+		MethodInfo method = type == null ? null : AccessTools.DeclaredMethod(type, "TickCharging", new[] { typeof(int) });
+		if (method == null)
+		{
+			Log.Error("[FunnelBit_RandIsolation] REQUIRED_TARGET_FAILED TickCharging(int)");
+			return 0;
+		}
+		try
+		{
+			harmony.Patch(method, transpiler: new HarmonyMethod(typeof(FunnelBit_RandIsolation), nameof(SnapshotChargingSlots)));
+			Log.Message("[FunnelBit_RandIsolation] REQUIRED_TARGETS_OK TickCharging slot snapshots");
+			return 1;
+		}
+		catch (Exception error)
+		{
+			Log.Error("[FunnelBit_RandIsolation] REQUIRED_TARGET_FAILED TickCharging slot snapshots: " + error);
+			return 0;
+		}
+	}
 
 	private static int PatchCompTick(Harmony harmony)
 	{
@@ -131,7 +184,7 @@ public static class FunnelBit_RandIsolation
 			}
 			else
 			{
-				harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(typeof(global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility), "PushDetRand_Tick", (Type[])null), new HarmonyMethod(typeof(global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility), "PopDetRand", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null);
+				harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(typeof(global::MP_MeowOnlineShop.MiliraAddonCompat.CompatUtility), "PushDetRand_Tick", (Type[])null), null, null, new HarmonyMethod(typeof(CompatUtility), nameof(CompatUtility.PopDetRandFinalizer)));
 			}
 			return 1;
 		}

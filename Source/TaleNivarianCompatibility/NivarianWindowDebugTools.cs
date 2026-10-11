@@ -16,21 +16,21 @@ namespace Meow.TaleNivarianCompatibility
         {
             var owner = AccessTools.TypeByName("TestIconWindow")
                 ?? throw new TypeLoadException("TestIconWindow");
-            Register(owner, "<>c", "<DoWindowContents>b__18_2", Array.Empty<string>());
-            Register(owner, "<>c", "<SpawnContinuumAssaultCraft01Tool>b__25_0", Array.Empty<string>());
+            Register(owner, "<>c", "<DoWindowContents>b__20_2", Array.Empty<string>());
+            Register(owner, "<>c", "<SpawnContinuumAssaultCraft01Tool>b__27_0", Array.Empty<string>());
             RegisterSpawn(harmony, owner);
             var defType = AccessTools.TypeByName("Nivarian_Race.Code.Defs.NivarianBombardmentDef")
                 ?? throw new TypeLoadException("NivarianBombardmentDef");
             findBombardment = AccessTools.Method(typeof(DefDatabase<>).MakeGenericType(defType), "GetNamedSilentFail", new[] { typeof(string) })
                 ?? throw new MissingMethodException("Bombardment DefDatabase.GetNamedSilentFail");
-            harmony.Patch(AccessTools.DeclaredMethod(AccessTools.Inner(owner, "<>c"), "<DoWindowContents>b__18_2", Type.EmptyTypes),
+            harmony.Patch(AccessTools.DeclaredMethod(AccessTools.Inner(owner, "<>c"), "<DoWindowContents>b__20_2", Type.EmptyTypes),
                 prefix: new HarmonyMethod(typeof(NivarianWindowDebugTools), nameof(ValidBombardment)));
             Log.Message("[TaleNivarianCompat] custom debug-window tools synchronized=3; map/mouse context and developer permission required.");
         }
 
         static void RegisterSpawn(Harmony harmony, Type owner)
         {
-            var closure = AccessTools.Inner(owner, "<>c__DisplayClass26_0")
+            var closure = AccessTools.Inner(owner, "<>c__DisplayClass28_0")
                 ?? throw new TypeLoadException("TestIconWindow spawn closure");
             spawnDef = AccessTools.Field(closure, "def") ?? throw new MissingFieldException(closure.FullName, "def");
             if (spawnDef.FieldType != typeof(ThingDef) || AccessTools.GetDeclaredFields(closure).Count(f => !f.IsStatic) != 1)
@@ -86,3 +86,4 @@ namespace Meow.TaleNivarianCompatibility
         }
     }
 }
+

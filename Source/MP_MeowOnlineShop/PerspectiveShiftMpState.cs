@@ -18,6 +18,7 @@ namespace MP_MeowOnlineShop
     public sealed class PerspectiveShiftControlledAvatar : IExposable
     {
         public string owner;
+        public int ownerPlayerId = -1;
         public Pawn pawn;
         public int epoch;
         public bool retainOnDowned;
@@ -51,6 +52,7 @@ namespace MP_MeowOnlineShop
                 Patch_PerspectiveShiftMp.CaptureRuntimeState(this);
 
             Scribe_Values.Look(ref owner, "owner");
+            Scribe_Values.Look(ref ownerPlayerId, "ownerPlayerId", -1);
             Scribe_References.Look(ref pawn, "pawn", true);
             Scribe_Values.Look(ref epoch, "epoch");
             Scribe_Values.Look(ref retainOnDowned, "retainOnDowned");
@@ -81,6 +83,7 @@ namespace MP_MeowOnlineShop
         private List<PerspectiveShiftControlledAvatar> controlled = new List<PerspectiveShiftControlledAvatar>();
         private int lastOwnershipEpoch;
         [Unsaved] internal bool hadOwnershipRecordsAtLoad;
+        [Unsaved] private List<PerspectiveShiftControlledAvatar> orderedCache;
         public HashSet<int> seekAtWillPawnIds = new HashSet<int>();
 
         public PerspectiveShiftMpComponent(Game game)
@@ -88,13 +91,12 @@ namespace MP_MeowOnlineShop
         }
 
         public IEnumerable<PerspectiveShiftControlledAvatar> OrderedStates =>
-            controlled
+            orderedCache ?? (orderedCache = controlled
                 .Where(s => s != null && s.pawn != null && !string.IsNullOrEmpty(s.owner))
                 .OrderBy(s => s.pawn.thingIDNumber)
-                .ThenBy(s => s.owner, StringComparer.Ordinal);
+                .ThenBy(s => s.owner, StringComparer.Ordinal).ToList());
 
         public bool HasControlledAvatars => controlled.Count > 0;
-        public bool CanMigrateSinglePlayerAvatar => lastOwnershipEpoch == 0 && !hadOwnershipRecordsAtLoad;
 
         public bool IsSeekAtWill(Pawn pawn)
         {
@@ -120,14 +122,26 @@ namespace MP_MeowOnlineShop
 
         public PerspectiveShiftControlledAvatar ForOwner(string owner)
         {
-            return string.IsNullOrEmpty(owner)
-                ? null
-                : controlled.FirstOrDefault(s => s != null && string.Equals(s.owner, owner, StringComparison.Ordinal));
+            if (!string.IsNullOrEmpty(owner))
+                for (int i = 0; i < controlled.Count; i++)
+                {
+                    PerspectiveShiftControlledAvatar state = controlled[i];
+                    if (state != null && string.Equals(state.owner, owner, StringComparison.Ordinal))
+                        return state;
+                }
+            return null;
         }
 
         public PerspectiveShiftControlledAvatar ForPawn(Pawn pawn)
         {
-            return pawn == null ? null : controlled.FirstOrDefault(s => s != null && s.pawn == pawn);
+            if (pawn != null)
+                for (int i = 0; i < controlled.Count; i++)
+                {
+                    PerspectiveShiftControlledAvatar state = controlled[i];
+                    if (state != null && state.pawn == pawn)
+                        return state;
+                }
+            return null;
         }
 
         public bool IsControlled(Pawn pawn)
@@ -135,21 +149,24 @@ namespace MP_MeowOnlineShop
             return ForPawn(pawn) != null;
         }
 
-        public void Claim(string owner, Pawn pawn)
+        public void Claim(string owner, Pawn pawn, int ownerPlayerId = -1)
         {
-            if (string.IsNullOrEmpty(owner) || pawn == null || pawn.Destroyed)
+            if (string.IsNullOrEmpty(owner) || pawn == null || pawn.Destroyed ||
+                pawn.Dead || pawn.Downed || pawn.InMentalState)
                 return;
 
             PerspectiveShiftControlledAvatar occupied = ForPawn(pawn);
             if (occupied != null && !string.Equals(occupied.owner, owner, StringComparison.Ordinal))
             {
-                if (MP.PlayerName == owner)
-                    Messages.Message("该角色已由其他玩家控制。", pawn, MessageTypeDefOf.RejectInput, false);
+                // Messages allocate IDs. Defer local-only rejection feedback
+                // to interface time rather than allocating on only one peer
+                // while this synchronized command executes.
+                Patch_PerspectiveShiftMp.NotifyClaimRejected(owner, pawn);
                 return;
             }
 
             PerspectiveShiftControlledAvatar previous = ForOwner(owner);
-            if (previous != null && previous.pawn == pawn)
+            if (previous != null && previous.pawn == pawn && previous.ownerPlayerId == ownerPlayerId)
             {
                 Patch_PerspectiveShiftMp.EnsureRuntimeAvatar(previous);
                 Patch_PerspectiveShiftMp.SetLocalAvatarIfOwned(previous);
@@ -166,11 +183,13 @@ namespace MP_MeowOnlineShop
             var state = new PerspectiveShiftControlledAvatar
             {
                 owner = owner,
+                ownerPlayerId = ownerPlayerId,
                 pawn = pawn,
                 epoch = nextEpoch,
                 lastInputTick = Find.TickManager?.TicksGame ?? 0
             };
             controlled.Add(state);
+            RegistryChanged();
 
             PreparePawnForControl(state);
             Patch_PerspectiveShiftMp.EnsureRuntimeAvatar(state);
@@ -276,14 +295,21 @@ namespace MP_MeowOnlineShop
                 return;
             // Dead pawns in corpses no longer belong to a ticking map. Remove
             // only ownership metadata here; living travelling pawns retain it.
-            foreach (PerspectiveShiftControlledAvatar state in controlled.ToList())
+            for (int i = controlled.Count - 1; i >= 0; i--)
+            {
+                PerspectiveShiftControlledAvatar state = controlled[i];
                 if (state == null)
-                    controlled.Remove(state);
+                {
+                    controlled.RemoveAt(i);
+                    RegistryChanged();
+                }
                 else if (state.pawn == null || state.pawn.Destroyed || state.pawn.Dead)
                 {
-                    controlled.Remove(state);
+                    controlled.RemoveAt(i);
+                    RegistryChanged();
                     Patch_PerspectiveShiftMp.ClearLocalAvatarIfOwned(state.owner);
                 }
+            }
         }
 
         public void TickForMap(Map map)
@@ -291,14 +317,16 @@ namespace MP_MeowOnlineShop
             if (map == null || !MP.IsInMultiplayer || !Patch_PerspectiveShiftMp.Active)
                 return;
 
-            TickStates(OrderedStates.Where(state => state.pawn?.Map == map).ToList());
+            TickStates(OrderedStates, map);
         }
 
-        private void TickStates(IEnumerable<PerspectiveShiftControlledAvatar> states)
+        private void TickStates(IEnumerable<PerspectiveShiftControlledAvatar> states, Map map)
         {
             foreach (PerspectiveShiftControlledAvatar state in states)
             {
                 Pawn pawn = state.pawn;
+                if (pawn != null && pawn.Map != map)
+                    continue;
                 if (pawn == null || pawn.Destroyed || pawn.Dead)
                 {
                     ReleaseState(state, restoreLord: false);
@@ -348,6 +376,11 @@ namespace MP_MeowOnlineShop
             if (!MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("gameplay")) return;
             base.FinalizeInit();
             NormalizeLoadedRegistry();
+            // Loading a former MP save as single-player must not keep pawns
+            // reserved for a player from the previous room. Live MP snapshots
+            // keep their registry; hosting resets it before the first snapshot.
+            if (Patch_PerspectiveShiftMp.Active && !MP.IsInMultiplayer && hadOwnershipRecordsAtLoad)
+                ResetOwnershipForNewSession();
             Patch_PerspectiveShiftMp.SyncStaticSeekAtWillFromComponent();
             foreach (PerspectiveShiftControlledAvatar state in OrderedStates)
                 Patch_PerspectiveShiftMp.EnsureRuntimeAvatar(state);
@@ -364,7 +397,7 @@ namespace MP_MeowOnlineShop
             var valid = controlled
                 .Where(state =>
                     state != null && state.pawn != null &&
-                    !state.pawn.Destroyed &&
+                    !state.pawn.Destroyed && !state.pawn.Dead &&
                     !string.IsNullOrEmpty(state.owner))
                 .ToList();
             var duplicateOwners = new HashSet<string>(
@@ -379,7 +412,7 @@ namespace MP_MeowOnlineShop
 
             List<PerspectiveShiftControlledAvatar> rejected = controlled
                 .Where(state => state != null &&
-                    (state.pawn == null || state.pawn.Destroyed ||
+                    (state.pawn == null || state.pawn.Destroyed || state.pawn.Dead ||
                      string.IsNullOrEmpty(state.owner) ||
                      duplicateOwners.Contains(state.owner) ||
                      duplicatePawns.Contains(state.pawn)))
@@ -389,12 +422,7 @@ namespace MP_MeowOnlineShop
                 .ToList();
             foreach (PerspectiveShiftControlledAvatar state in rejected)
             {
-                state.moveX = 0;
-                state.moveZ = 0;
-                state.sprint = false;
-                state.walk = false;
-                if (state.pawn != null && !state.pawn.Destroyed)
-                    StopMovementJob(state);
+                ReleaseState(state, restoreLord: true);
             }
 
             // Ambiguous ownership is never guessed. Dropping every side of a
@@ -407,6 +435,7 @@ namespace MP_MeowOnlineShop
                 .OrderBy(state => state.pawn.thingIDNumber)
                 .ThenBy(state => state.owner, StringComparer.Ordinal)
                 .ToList();
+            RegistryChanged();
 
             if (rejected.Count > 0)
             {
@@ -424,6 +453,8 @@ namespace MP_MeowOnlineShop
             Scribe_Collections.Look(ref controlled, "mp_perspective_shift_controlled", LookMode.Deep);
             if (controlled == null)
                 controlled = new List<PerspectiveShiftControlledAvatar>();
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+                RegistryChanged();
             Scribe_Collections.Look(ref seekAtWillPawnIds, "seekAtWillPawnIds", LookMode.Value);
             if (seekAtWillPawnIds == null)
                 seekAtWillPawnIds = new HashSet<int>();
@@ -450,22 +481,53 @@ namespace MP_MeowOnlineShop
             }
         }
 
+        public void ResetOwnershipForNewSession()
+        {
+            // Retain the epoch high-water mark: delayed commands may never
+            // match a new claim, even when the same player chooses the same pawn.
+            foreach (PerspectiveShiftControlledAvatar state in OrderedStates.ToList())
+                ReleaseState(state, restoreLord: true);
+            controlled.Clear();
+            RegistryChanged();
+            Patch_PerspectiveShiftMp.ResetLocalStateForNewSession();
+        }
+
+        private void RegistryChanged()
+        {
+            orderedCache = null;
+            Patch_PerspectiveShiftMp.InvalidateOwnershipCaches();
+        }
+
         private void ReleaseState(PerspectiveShiftControlledAvatar state, bool restoreLord)
         {
+            // Undrafting and ending jobs invoke patched callbacks. Remove the
+            // lease first so those callbacks cannot recursively release it or
+            // put the pawn back into its lord twice.
+            if (state == null || !controlled.Remove(state))
+                return;
+            RegistryChanged();
+            Patch_PerspectiveShiftMp.CaptureRuntimeState(state);
+            state.moveX = state.moveZ = 0;
+            state.sprint = state.walk = state.pendingFire = false;
+            state.pendingFireTarget = LocalTargetInfo.Invalid;
+            Patch_PerspectiveShiftMp.CopyIntentToRuntime(state);
             StopMovementJob(state);
 
             Pawn pawn = state.pawn;
-            if (pawn?.drafter != null && pawn.Drafted)
+            if (pawn != null && !pawn.Destroyed && !pawn.Dead && pawn.drafter != null && pawn.Drafted)
                 pawn.drafter.Drafted = false;
 
-            if (restoreLord && pawn != null && state.savedLord?.lordManager != null &&
+            if (restoreLord && pawn != null && !pawn.Destroyed && !pawn.Dead &&
+                pawn.GetLord() == null && state.savedLord?.lordManager != null &&
+                pawn.Map == state.savedLord.Map &&
                 state.savedLord.lordManager.lords.Contains(state.savedLord))
             {
                 state.savedLord.AddPawn(pawn);
                 state.savedLord.CurLordToil?.UpdateAllDuties();
             }
 
-            controlled.Remove(state);
+            state.savedLord = null;
+            state.runtimeAvatar = null;
             Patch_PerspectiveShiftMp.ClearLocalAvatarIfOwned(state.owner);
         }
 
@@ -477,7 +539,7 @@ namespace MP_MeowOnlineShop
 
         private static void StopMovementJob(PerspectiveShiftControlledAvatar state)
         {
-            if (IsMovementJob(state))
+            if (IsMovementJob(state) && state.pawn.Spawned && !state.pawn.Destroyed && !state.pawn.Dead)
             {
                 Job wait = JobMaker.MakeJob(JobDefOf.Wait);
                 wait.expiryInterval = 60;

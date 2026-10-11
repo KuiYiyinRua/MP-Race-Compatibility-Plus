@@ -1,10 +1,10 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.147 (2026-10-03)
+## 3.0.151 full update (2026-10-11)
 
-Publishes all 22 production modules and matching source, retaining the existing experimental features. Adds local message IDs for Brothel visitor notices, isolates PitGate camera-shake randomness, and includes DesyncBatch 1.0.8 for Ariandel local music randomness.
+Publishes all 22 current production modules and existing experimental features, with complete source, test source, tools and documentation on GitHub. Includes the 3.0.148–3.0.151 ownership, deterministic randomness, persisted-state and Milira shuttle-return updates, the Nivarian Race update compatibility, and Monolyn auxiliary module 1.1.8. Weapon Codex storage, retrieval, divine weapon selection, ground ejection and mech weapon selection retain native equipment and job behavior. Thanks to AzzyH for the design reference.
 
-Validation: all 22 projects compiled, and patch targets were checked against installed assemblies. The new patches have not completed representative two-peer, cold-rejoin, or long-soak testing. The upstream causes of Desync-376/377 remain unresolved. This runtime-unverified release was published at the user's request. All players must install identical complete files and restart fully.
+Validation: all 22 projects compiled; the package retains archived runtime DLLs. Monolyn targeted two-map/cold-join and seven paired Codex actions passed. Nivarian's earlier normal/async cold-join and soak tests used their own exact candidates, rather than this complete combined package. No new full-loadout two-peer long soak is claimed. Experimental switches and defaults are retained. Every player must install identical files and restart completely.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 

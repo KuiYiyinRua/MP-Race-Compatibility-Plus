@@ -11,7 +11,7 @@ using Verse;
 
 namespace Meow.RaceTrioCompatibility
 {
-    // Targets verified against Nivarian_Race.dll SHA256 1F0100B0E8FFCA1A... (20260823162750).
+    // Installed target 20260922151508, SHA256 A58F00EBC704AB03163BFF94181B3C6901D2B86F9F500FB0C4D470D7A10CBFF3.
     internal static class NivarianAidEvents
     {
         const string Ns = "Nivarian_Race.Code.Incidents.";
@@ -35,7 +35,7 @@ namespace Meow.RaceTrioCompatibility
             incident = Field(letterType, "incidentDef");
             cooldowns = Field(componentType, "nextTriggerTick");
             accept = Method(letterType, "ExecuteAccept");
-            reject = Method(letterType, "<get_RejectOption>b__12_0");
+            reject = AccessTools.DeclaredMethod(letterType, "RejectAndRemove", new[] { typeof(bool) }) ?? throw new MissingMethodException(letterType.FullName, "RejectAndRemove(bool)");
             setCooldown = Method(componentType, "SetToCD");
             decide = MP.RegisterSyncMethod(typeof(NivarianAidEvents), nameof(Decide));
             debugAction = MP.RegisterSyncMethod(typeof(NivarianAidEvents), nameof(DebugAction)).SetDebugOnly();
@@ -80,7 +80,7 @@ namespace Meow.RaceTrioCompatibility
             if (map == null || !Find.Maps.Contains(map) || !IsPending(letter)
                 || !ReferenceEquals(targetMap.GetValue(letter), map)
                 || map.ParentFaction != Faction.OfPlayer) return;
-            (accepted ? accept : reject).Invoke(letter, null);
+            if (accepted) accept.Invoke(letter, null); else reject.Invoke(letter, new object[] { Method(letterType, "GrantsGoodwillOnReject").Invoke(letter, null) });
             // Failed acceptance also removes the letter; make that terminal state visible to every peer.
             if (IsPending(letter)) status.SetValue(letter, Enum.ToObject(status.FieldType, 2));
         }
@@ -194,3 +194,4 @@ namespace Meow.RaceTrioCompatibility
         }
     }
 }
+

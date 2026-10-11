@@ -1,13 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.147</modVersion>
+  <modVersion>3.0.151</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
   </supportedVersions>
   <author>尹怨怨</author>
-  <description>
+  <description>2026-10-11 全量发布：全部 22 个生产模块及现有实验功能；核心 3.0.151，Monolyn 补充 1.1.8，TaleNivarian 1.1.6。GitHub 提供完整源码、测试、工具与文档。实验开关保留现有默认值；最新完整组合未新增双端长测。所有玩家须安装相同文件并完全重启。
+
+2026-10-11：Monolyn 必要功能兼容补充程序集 1.1.8。补齐武器法典菜单状态同步，保留存入、取出、神圣武器和机械体切换、落地取出的原版完整回调；感谢 AzzyH 的 Multiplayer Monolyn Patch 设计参考。两图基础操作/一次冷重新加入通过，法典七项客户端原生操作双端断言及最终冻结状态通过。按用户要求不扩展边界或长时压力测试。所有玩家需安装相同文件并完全重启游戏。
+
+3.0.151：修复米莉拉穿梭机返航后连船带人丢失。联机乘员检查跳过未加载的子地图，避免任务穿梭机阻塞整个运输管理器；已落地的玩家穿梭机不再重放旧的已开始抵达任务，防止降落容器因所有权冲突销毁船体。单端主持测试：两地图、两种穿梭机 12 次带人往返及 10,000 tick 专项通过；最新 320 模组存档副本中地图 2 原 Wyvern/Harrier 均带人往返成功，旧队列清空，另推进 1,000 tick 并成功保存联机快照。完整存档测试仅把读取阶段改为主线程，以绕过后台贴图加载崩溃。原存档未改动。所有玩家需更新相同文件并完全重启游戏。
+
+3.0.150：玻璃桔梗状态查询不再在本地 UI 修改存档或发来信；状态转换统一在模拟 tick 执行，情侣候选按 ThingID 排序，四个 DEV 修改动作同步。增加 TickTimer 起始 tick 保存、乌鸦货运待处理队列保存及 Nivarian 活跃制造任务缓存确定性查询。综合分析 11 个 Desync 包；未确认它们全部由这些缺陷导致。按用户要求停止后续测试并本地部署；完整 320 模组代表存档联机回归未完成。所有玩家需使用相同文件并完全重启游戏。
+
+
+3.0.149：修复 Nivarian Draconiture 工程无人机飘字受本地开关、限流状态影响而污染共享随机数的问题，对应 Desync-410/412 的直接分歧。保留 3.0.148 的主角重新认定机制。按用户要求停止后续测试并本地部署；完整联机回归未完成。所有玩家需使用相同文件并完全重启游戏。
+
+3.0.148：Perspective Shift 新开联机房间时释放存档内的旧主角认定；同名玩家重连后需重新认定，其他在线玩家的认定保留。改善认定释放、旧输入失效保护和角色列表缓存。所有玩家需使用相同版本并重启游戏。
+
 3.0.147：妓院访客通知改用本地消息 ID；隔离深坑之门镜头震动随机数与 Ariandel 本地音乐随机数。375、378–380 的轨迹支持这些定点补丁；376、377 上游原因未定。22 模块编译及静态核验通过，新补丁尚未完成双端场景运行验证。所有玩家需安装同一完整版本并重启。
 
 3.0.147: local IDs for Brothel visitor notices; isolate PitGate camera shake and Ariandel local music from shared Rand. The new patches are compiled and statically inspected, with representative two-peer runtime validation pending.

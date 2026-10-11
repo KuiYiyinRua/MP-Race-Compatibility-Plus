@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
-    <AssemblyName>Meow.RatkinCompatibility</AssemblyName><Version>1.0.0</Version>
+    <AssemblyName>Meow.RatkinCompatibility</AssemblyName><Version>1.0.1</Version>
     <GameRoot Condition="'$(GameRoot)' == ''">G:/Steam/steamapps/common/RimWorld</GameRoot>
     <ModsRoot Condition="'$(ModsRoot)' == ''">../../..</ModsRoot>
   </PropertyGroup>

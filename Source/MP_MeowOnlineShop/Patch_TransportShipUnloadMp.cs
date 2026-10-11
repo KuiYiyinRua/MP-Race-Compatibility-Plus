@@ -116,7 +116,10 @@ namespace MP_MeowOnlineShop
                     nameof(ShipJob_Unload.UnloadThingFromShuttle),
                     new[] { typeof(TransportShip), typeof(Thing), typeof(List<Thing>), typeof(bool) });
                 MethodInfo preTick = AccessTools.Method(typeof(Map), nameof(Map.MapPreTick));
-                if (unload == null || preTick == null || PushFactionMethod == null || PopFactionMethod == null || AsyncTimeMethod == null || MapPausedProperty == null || TickingMapField == null)
+                MethodInfo requirements = AccessTools.PropertyGetter(typeof(CompShuttle), nameof(CompShuttle.AllRequiredThingsLoaded));
+                MethodInfo childMaps = AccessTools.PropertyGetter(typeof(Map), nameof(Map.ChildPocketMaps));
+                MethodInfo arrive = AccessTools.Method(typeof(ShipJob_Arrive), nameof(ShipJob_Arrive.TryStart));
+                if (unload == null || preTick == null || requirements == null || childMaps == null || arrive == null || PushFactionMethod == null || PopFactionMethod == null || AsyncTimeMethod == null || MapPausedProperty == null || TickingMapField == null)
                 {
                     Log.Error("[MP-MeowOnlineShop] REQUIRED_TARGET_FAILED transport unload map boundary.");
                     return;
@@ -126,13 +129,67 @@ namespace MP_MeowOnlineShop
                     finalizer: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(UnloadFinalizer)) { priority = Priority.Last },
                     transpiler: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(UsePassengerHomeContext)));
                 harmony.Patch(preTick, postfix: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(MapPreTickPostfix)) { priority = Priority.Last });
+                harmony.Patch(requirements, transpiler: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(UseLoadedChildPocketMaps)));
+                harmony.Patch(arrive, prefix: new HarmonyMethod(typeof(Patch_TransportShipUnloadMp), nameof(ArrivePrefix)) { priority = Priority.First });
                 Log.Message("[MP-MeowOnlineShop] Transport unload map boundary active: serialized, deduplicated native replay with owner faction context.");
+                Log.Message("[MP-MeowOnlineShop] Shuttle requirements guard active: unloaded pocket maps cannot interrupt the transport ship manager.");
+                Log.Message("[MP-MeowOnlineShop] Shuttle arrival resume guard active: started arrivals do not re-containerize a landed player shuttle.");
             }
             catch (Exception e)
             {
                 Log.Error("[MP-MeowOnlineShop] REQUIRED_TARGET_FAILED transport unload: " + e);
             }
         }
+
+        private static bool ArrivePrefix(ShipJob_Arrive __instance, ref bool __result)
+        {
+            TransportShip ship = __instance.transportShip;
+            if (!MP.IsInMultiplayer || __instance.jobState != ShipJobState.Working ||
+                ship?.def?.playerShuttle != true || ship.shipThing?.Spawned != true)
+                return true;
+
+            // A delayed, already-started arrival can remain behind an unload.
+            // The shuttle has landed: replaying TryStart would try to put a
+            // spawned building into a skyfaller and destroy it in ThingOwner.
+            // Finish only this completed arrival; preserve the other jobs,
+            // contents and new (Uninitialized) arrival requests.
+            __instance.End();
+            ship.RemoveJob(__instance);
+            __result = false;
+            return false;
+        }
+
+        // A PocketMapParent can outlive its generated map. Vanilla's iterator
+        // includes parent.Map == null; the colonist requirement then throws.
+        // ShipObjectsTick processes all ships in one loop, so a newer quest
+        // shuttle prevents older player shuttles from advancing Arrive/Unload.
+        // Keep the original requirement checks and every loaded child map.
+        private static IEnumerable<Map> LoadedChildPocketMaps(Map map)
+        {
+            foreach (Map child in map.ChildPocketMaps)
+                if (child != null || !MP.IsInMultiplayer)
+                    yield return child;
+        }
+
+        private static IEnumerable<CodeInstruction> UseLoadedChildPocketMaps(IEnumerable<CodeInstruction> instructions)
+        {
+            MethodInfo getter = AccessTools.PropertyGetter(typeof(Map), nameof(Map.ChildPocketMaps));
+            MethodInfo replacement = AccessTools.Method(typeof(Patch_TransportShipUnloadMp), nameof(LoadedChildPocketMaps));
+            int matches = 0;
+            foreach (CodeInstruction instruction in instructions)
+            {
+                if (instruction.Calls(getter))
+                {
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = replacement;
+                    matches++;
+                }
+                yield return instruction;
+            }
+            if (matches != 1)
+                throw new InvalidOperationException("REQUIRED_TARGET_FAILED shuttle child pocket map checks=" + matches);
+        }
+
         private static bool UnloadPrefix(
             TransportShip ship,
             Thing thingToDrop,

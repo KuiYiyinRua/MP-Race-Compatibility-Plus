@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -25,8 +25,6 @@ public static class MilianModification_WorldDeterminism
     private static readonly Harmony Harmony;
 
     private static Type _churchType;
-    private static Type _gcType;
-    private static FieldInfo _researchHistoryRecordField;
     private static FieldInfo _ofPlayerField;
     private static FieldInfo _currentMapIndexField;
 
@@ -58,10 +56,6 @@ public static class MilianModification_WorldDeterminism
         try
         {
             _churchType = Resolve("MilianModification.Milian_ChurchCooperativeStudy");
-            _gcType = Resolve("MilianModification.MiliraGameComponent_MilianComponentRecipe");
-            _researchHistoryRecordField = _gcType == null
-                ? null
-                : AccessTools.DeclaredField(_gcType, "researchHistoryRecord");
             _ofPlayerField = AccessTools.Field(typeof(FactionManager), "ofPlayer");
             _currentMapIndexField = AccessTools.Field(typeof(Game), "currentMapIndex");
 
@@ -332,16 +326,14 @@ public static class MilianModification_WorldDeterminism
 
     private static bool GenerateUniqueIdPrefix(ref string __result)
     {
-        if (!MP.IsInMultiplayer)
+        if (!MP.IsInMultiplayer || MP.InInterface)
             return true;
 
-        object gc = GetGameComp();
-        int count = 0;
-        if (gc != null && _researchHistoryRecordField?.GetValue(gc) is IDictionary dict)
-            count = dict.Count;
-
-        __result = "MIL-" + GenTicks.TicksAbs + "-" +
-                   Find.TickManager.TicksGame + "-" + count;
+        // Counts can repeat after deletion, even within the same simulation tick.
+        // MP already supports this saved allocator for non-Thing persistent IDs.
+        // A separate prefix keeps existing GUID/count-based record keys valid.
+        __result = "MIL-HISTORY-" + Find.UniqueIDsManager.GetNextThingID()
+            .ToString(CultureInfo.InvariantCulture);
         return false;
     }
 
@@ -387,18 +379,6 @@ public static class MilianModification_WorldDeterminism
         {
             Rand.PopState();
         }
-    }
-
-    private static object GetGameComp()
-    {
-        if (_gcType == null || Current.Game == null)
-            return null;
-        foreach (GameComponent comp in Current.Game.components)
-        {
-            if (comp != null && _gcType.IsInstanceOfType(comp))
-                return comp;
-        }
-        return null;
     }
 
     private static Type Resolve(string fullName)

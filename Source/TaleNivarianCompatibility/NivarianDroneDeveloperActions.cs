@@ -27,8 +27,8 @@ namespace Meow.TaleNivarianCompatibility
             radius=AccessTools.Field(props.PropertyType,"orbitRadius") ?? throw new MissingFieldException("orbitRadius");
             reset=AccessTools.DeclaredMethod(batteryType,"<CompGetGizmosExtra>b__9_0",Type.EmptyTypes)
                 ?? throw new MissingMethodException("native drone battery reset action");
-            navigateAction=AccessTools.DeclaredMethod(movingType,"<CompGetGizmosExtra>b__42_0",new[]{typeof(LocalTargetInfo)}) ?? throw new MissingMethodException("native drone navigate action");
-            orbitAction=AccessTools.DeclaredMethod(movingType,"<CompGetGizmosExtra>b__42_1",new[]{typeof(LocalTargetInfo)}) ?? throw new MissingMethodException("native drone orbit action");
+            navigateAction=AccessTools.DeclaredMethod(movingType,"<CompGetGizmosExtra>b__47_0",new[]{typeof(LocalTargetInfo)}) ?? throw new MissingMethodException("native drone navigate action");
+            orbitAction=AccessTools.DeclaredMethod(movingType,"<CompGetGizmosExtra>b__47_1",new[]{typeof(LocalTargetInfo)}) ?? throw new MissingMethodException("native drone orbit action");
             moveCommand=MP.RegisterSyncMethod(typeof(NivarianDroneDeveloperActions),nameof(Move)).SetDebugOnly();
             resetCommand=MP.RegisterSyncMethod(typeof(NivarianDroneDeveloperActions),nameof(ResetBattery)).SetDebugOnly();
             harmony.Patch(AccessTools.DeclaredMethod(movingType,"CompGetGizmosExtra"),postfix:new HarmonyMethod(typeof(NivarianDroneDeveloperActions),nameof(MovingGizmos)));

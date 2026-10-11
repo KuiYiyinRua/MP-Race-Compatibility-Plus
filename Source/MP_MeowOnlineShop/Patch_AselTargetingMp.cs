@@ -89,15 +89,15 @@ namespace MP_MeowOnlineShop
                 MethodInfo syncConstructor = AccessTools.Method(
                     typeof(Patch_AselTargetingMp),
                     nameof(SyncConstructor),
-                    new[] { typeof(int), typeof(int), typeof(int), typeof(int) });
+                    new[] { typeof(Map), typeof(int), typeof(int), typeof(int) });
                 MethodInfo syncTeleport = AccessTools.Method(
                     typeof(Patch_AselTargetingMp),
                     nameof(SyncTeleport),
-                    new[] { typeof(int), typeof(int), typeof(int), typeof(int) });
+                    new[] { typeof(Map), typeof(int), typeof(int), typeof(int) });
                 MethodInfo syncTransform = AccessTools.Method(
                     typeof(Patch_AselTargetingMp),
                     nameof(SyncTransform),
-                    new[] { typeof(int), typeof(int), typeof(int), typeof(int) });
+                    new[] { typeof(Map), typeof(int), typeof(int), typeof(int) });
                 if (syncConstructor == null || syncTeleport == null || syncTransform == null)
                     return;
 
@@ -142,53 +142,71 @@ namespace MP_MeowOnlineShop
                 return true;
 
             IntVec3 cell = targetInfo.Cell;
+            // Retain the native local reject/reopen flow. Check again during
+            // replay because another command may occupy the destination.
+            MethodInfo validator = AccessTools.Method(__instance.GetType(), "IsValidTeleportLocation", new[] { typeof(IntVec3) });
+            if (validator == null || !(bool)validator.Invoke(__instance, new object[] { cell }))
+                return true;
             if (ReferenceEquals(__instance.GetType(), AccessTools.TypeByName("ASEL.CompConstructor")))
-                SyncConstructor(map.Index, parent.thingIDNumber, cell.x, cell.z);
+                SyncConstructor(map, parent.thingIDNumber, cell.x, cell.z);
             else if (ReferenceEquals(__instance.GetType(), AccessTools.TypeByName("ASEL.CompTeleport")))
-                SyncTeleport(map.Index, parent.thingIDNumber, cell.x, cell.z);
+                SyncTeleport(map, parent.thingIDNumber, cell.x, cell.z);
             else if (ReferenceEquals(__instance.GetType(), AccessTools.TypeByName("ASEL.CompTransform")))
-                SyncTransform(map.Index, parent.thingIDNumber, cell.x, cell.z);
+                SyncTransform(map, parent.thingIDNumber, cell.x, cell.z);
             else
                 return true;
 
             return false;
         }
 
-        public static void SyncConstructor(int mapIndex, int thingId, int cellX, int cellZ)
+        public static void SyncConstructor(Map map, int thingId, int cellX, int cellZ)
         {
-            object comp = FindComp(mapIndex, thingId, "ASEL.CompConstructor");
+            object comp = FindComp(map, thingId, "ASEL.CompConstructor");
             if (comp == null || _spawnLightBuilder == null || _constructorLastUsed == null)
                 return;
+            if (!CanExecute(comp, new IntVec3(cellX, 0, cellZ), _constructorLastUsed)) return;
 
             _spawnLightBuilder.Invoke(comp, new object[] { new IntVec3(cellX, 0, cellZ) });
             _constructorLastUsed.SetValue(comp, Find.TickManager.TicksGame);
         }
 
-        public static void SyncTeleport(int mapIndex, int thingId, int cellX, int cellZ)
+        public static void SyncTeleport(Map map, int thingId, int cellX, int cellZ)
         {
-            object comp = FindComp(mapIndex, thingId, "ASEL.CompTeleport");
+            object comp = FindComp(map, thingId, "ASEL.CompTeleport");
             if (comp == null || _moveBuilding == null || _teleportLastUsed == null)
                 return;
+            if (!CanExecute(comp, new IntVec3(cellX, 0, cellZ), _teleportLastUsed)) return;
 
             _moveBuilding.Invoke(comp, new object[] { new IntVec3(cellX, 0, cellZ) });
             _teleportLastUsed.SetValue(comp, Find.TickManager.TicksGame);
         }
 
-        public static void SyncTransform(int mapIndex, int thingId, int cellX, int cellZ)
+        public static void SyncTransform(Map map, int thingId, int cellX, int cellZ)
         {
-            object comp = FindComp(mapIndex, thingId, "ASEL.CompTransform");
+            object comp = FindComp(map, thingId, "ASEL.CompTransform");
             if (comp == null || _transform == null || _transformLastUsed == null)
                 return;
+            if (!CanExecute(comp, new IntVec3(cellX, 0, cellZ), _transformLastUsed)) return;
 
             _transform.Invoke(comp, new object[] { new IntVec3(cellX, 0, cellZ) });
             _transformLastUsed.SetValue(comp, Find.TickManager.TicksGame);
         }
 
-        private static object FindComp(int mapIndex, int thingId, string typeName)
+        private static bool CanExecute(object instance, IntVec3 cell, FieldInfo lastUsed)
+        {
+            var comp = instance as ThingComp;
+            if (comp?.parent == null || comp.parent.Destroyed || comp.parent.Map == null) return false;
+            var validator = AccessTools.Method(comp.GetType(), "IsValidTeleportLocation", new[] { typeof(IntVec3) });
+            if (validator == null || !(bool)validator.Invoke(comp, new object[] { cell })) return false;
+            var cooldown = AccessTools.Field(comp.props.GetType(), "cooldownTicks");
+            if (cooldown == null || cooldown.FieldType != typeof(int)) throw new MissingFieldException(comp.props.GetType().FullName, "cooldownTicks");
+            return DebugSettings.ShowDevGizmos || Find.TickManager.TicksGame - (int)lastUsed.GetValue(comp) >= (int)cooldown.GetValue(comp.props);
+        }
+
+        private static object FindComp(Map map, int thingId, string typeName)
         {
             Type compType = AccessTools.TypeByName(typeName);
-            Map map = Find.Maps?.FirstOrDefault(m => m != null && m.Index == mapIndex);
-            if (map?.listerThings?.AllThings == null || compType == null)
+            if (map?.listerThings?.AllThings == null || !Find.Maps.Contains(map) || compType == null)
                 return null;
 
             for (int i = 0; i < map.listerThings.AllThings.Count; i++)

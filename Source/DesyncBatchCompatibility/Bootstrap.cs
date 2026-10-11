@@ -45,6 +45,11 @@ namespace Meow.DesyncBatchCompatibility
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual") && ModsConfig.IsActive("Ariandel.AriandelLibrary"))
                 ok &= InstallGroup("ariandel-local-music-random", AriandelMusicRandom.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("lazy-caches", LazySimulationCaches.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("tick-timer-snapshot", TickTimerSnapshot.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
+                ok &= InstallGroup("nivarian-active-bill-query", NivarianBillQuery.Apply);
+            if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("raven") && ModsConfig.IsActive("ZuoYao.RavenRace"))
+                ok &= InstallGroup("raven-pending-movement", RavenPendingMovement.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("core")) ok &= InstallGroup("world-component-clock", WorldComponentClock.Apply);
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual") &&
                 (ModsConfig.IsActive("telardo.RomanceOnTheRim.chillkill190.pe") || ModsConfig.IsActive("telardo.RomanceOnTheRim")))

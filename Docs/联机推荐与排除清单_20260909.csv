@@ -1,0 +1,230 @@
+﻿原顺序,名称,包ID,推荐,依据/排除原因,创意工坊
+1,Prepatcher,zetrith.prepatcher,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=2934420800
+2,Harmony,brrainz.harmony,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077
+3,Loading Progress,ilyvion.LoadingProgress,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3535481557
+4,ludeon.rimworld,ludeon.rimworld,否,游戏/DLC，不是工坊条目,
+5,ludeon.rimworld.royalty,ludeon.rimworld.royalty,否,游戏/DLC，不是工坊条目,
+6,ludeon.rimworld.ideology,ludeon.rimworld.ideology,否,游戏/DLC，不是工坊条目,
+7,ludeon.rimworld.biotech,ludeon.rimworld.biotech,否,游戏/DLC，不是工坊条目,
+8,ludeon.rimworld.anomaly,ludeon.rimworld.anomaly,否,游戏/DLC，不是工坊条目,
+9,ludeon.rimworld.odyssey,ludeon.rimworld.odyssey,否,游戏/DLC，不是工坊条目,
+10,Performance - Slower Pawn Tick Rate,Arkymn.SlowerPawnTickRate,否,替换 Pawn tick 调度，与本补丁TPS调度冲突,https://steamcommunity.com/sharedfiles/filedetails/?id=3524116050
+11,FSharp.Core,latta.fsharp.core,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=2059725183
+12,Multiplayer [Continuous],rwmt.Multiplayer,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=2606448745
+13,Multiplayer Compatibility,rwmt.MultiplayerCompatibility,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=1629973374
+14,========必备前置========,humblecoder.prerequisite,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138423248
+15,HugsLib,UnlimitedHugs.HugsLib,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=818773962
+16,Image Opt,dev.soeur.imageopt,是,本地随附源码核对：纹理/搜索/信息显示，推荐保留；未新增实机测试,https://steamcommunity.com/sharedfiles/filedetails/?id=3543873568
+17,RimSaves,aRandomKiwi.RimSaves,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=1713367505
+18,Ancot Library,Ancot.AncotLibrary,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2988801276
+19,XML Extensions,imranfish.xmlextensions,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2574315206
+20,P-Music,Peppsen.PMusic,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=725130005
+21,music,s.g,否,无可核验工坊ID,
+22,Adaptive Storage Framework,adaptive.storage.framework,是,当前安装官方MP兼容程序集有对应模块,https://steamcommunity.com/sharedfiles/filedetails/?id=3033901359
+23,========开局-地图========,humblecoder.beginning.map,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138433613
+24,=====界面优化+详细信息=====,humblecoder.UIimprovementandoverview,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138429810
+25,Visible Raid Points,visibleraidpoints.1trickPwnyta,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2562730174
+26,RimHUD,Jaxe.RimHUD,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=1508850027
+27,[NL] Custom Portraits,Nals.CustomPortraits,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=1569605867
+28,BetterInfoCard,Creeper.BetterInfoCard,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2890920739
+29,[NL] Dynamic Portraits,Nals.DynamicPortraits,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2253730555
+30,SimpleCameraSetting,ray1203.SimpleCameraSetting,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3232415388
+31,CM Color Coded Mood Bar [1.1+],CrashM.ColorCodedMoodBar.11,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2006605356
+32,Dubs Mint Minimap,dubwise.dubsmintminimap,是,当前安装官方MP兼容程序集有对应模块,https://steamcommunity.com/sharedfiles/filedetails/?id=1662119905
+33,Explicit Timings,Leoltron.ExplicitTimings,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3205587823
+34,=======开局-叙述者=======,humblecoder.beginning.storyteller,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2224564539
+35,======功能-逻辑优化======,humblecoder.function.alogrithmimprovement,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138436167
+36,Humanoid Alien Races,erdelf.HumanoidAlienRaces,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=839005762
+37,拼音搜索 Pinyin Quick Search,cedaro.PinyinQuickSearch,是,本地随附源码核对：纹理/搜索/信息显示，推荐保留；未新增实机测试,https://steamcommunity.com/sharedfiles/filedetails/?id=3244870513
+38,Choose Where To Land,kearril.ChooseWhereToLand,否,官方兼容库低评分：Only works on maps that have been loaded. If you try to choose a landing spot on an unloaded map you will lose the shuttle and the pawns inside.,https://steamcommunity.com/sharedfiles/filedetails/?id=3537970831
+39,No Version Warning,Mlie.NoVersionWarning,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2599504692
+40,[NL] Facial Animation - WIP,Nals.FacialAnimation,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=1635901197
+41,[NL] Facial Animation - Experimentals,Nals.FacialAnimationExperimentals,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2581693737
+42,No Random Relations,dvs.NoRandomRelations,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2583377522
+43,Trap Disable,velc.TrapDisable,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=1542019602
+44,======功能-操作优化======,humblecoder.function.operationimprovement,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2572866924
+45,Better Workbench Management,falconne.BWM,否,"官方兼容库低评分：Renaming bills do not sync across clients. The addtional count in bill detail will not sync and cause desync if the pawn try to check the requirement. The copied bill from ""Copy All"" will not copy the detail of the bills. It just create the new bills of the same things when you paste it. (Bearbeitet)",https://steamcommunity.com/sharedfiles/filedetails/?id=935982361
+46,Auto links,automatic.autolinks,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2059389912
+47,Killfeed,kahdeg.Killfeed,是,本地随附源码核对：纹理/搜索/信息显示，推荐保留；未新增实机测试,https://steamcommunity.com/sharedfiles/filedetails/?id=1362098265
+48,======开局-人物外形======,humblecoder.beginning.pawnappearance,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138432520
+49,Apparel BodyType Resolver,gguake.apparelbodyresolver,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=2037354634
+50,BattIePatch: Ghoul Mood Bar Shows Their Hunger,BattIeBear.BattIePatch.GhoulMoodBarFix,是,本地随附源码核对：纹理/搜索/信息显示，推荐保留；未新增实机测试,https://steamcommunity.com/sharedfiles/filedetails/?id=3239542802
+51,AB's Head Apparel Tweaker,AB.HATweaker,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=2990606008
+52,======开局-人物编辑======,humblecoder.beginning.pawneditor,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138430989
+53,======开局-人物性格======,humblecoder.beginning.pawntrait,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138431763
+54,=======环境与生态=======,humblecoder.environmentsandbiomes,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2572866392
+55,==========系统==========,humblecoder.system,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138451597
+56,Custom Quest Framework,HaiLuan.CustomQuestFramework,是,本补丁萌螈剧情适配的既有组合前置,https://steamcommunity.com/sharedfiles/filedetails/?id=2978572782
+57,Tech Advancing,GHXX.TechAdvancing,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=735268789
+58,Misc. Training,Haplo.Miscellaneous.Training,是,当前安装官方MP兼容程序集有对应模块,https://steamcommunity.com/sharedfiles/filedetails/?id=717575199
+59,========功能-增加========,humblecoder.function.addition,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138961501
+60,Mod Options Sort,Superniquito.ModOptionsSort,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2910865748
+61,You Are So Beautiful,CN.YouAreSoBeautiful,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3576178532
+62,自修复电缆 - Self-repairing cables,Layyoune.CitadelCable,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3575860043
+63,=======派系与种族=======,humblecoder.factionsandrace,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138454214
+64,========功能-其他========,humblecoder.function.other,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2142895211
+65,NewRatkinPlus,Solaris.RatkinRaceMod,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=1578693166
+66,Ratkin Weapons+,bbb.ratkinweapon.morefailure,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2779404660
+67,Ratkin Faction+,fxz.ratkinfaction,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3036302713
+68,Hyacinth's Ratkin Facial Animation,fxz.Ratkin.FacialAnimation,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2852881266
+69,Ratkin Knights+,RKK.RatKnights.Core,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3394862242
+70,[OA]Oberonia Aurea Framework,OARK.OberoniaAurea.Framework,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3713589764
+71,[OA]Ratkin Faction: Oberonia aurea,OARK.RatkinFaction.OberoniaAurea,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3159926804
+72,[OA]Ratkin Gene Expand,OARK.RatkinFaction.GeneExpand,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3300291918
+73,[OA]Ratkin Scenario: Snowstorm Orphan,OARK.RatkinFaction.ScenarioExpand.Snowstorm,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3381392312
+74,MoeLotl Race,HenTaiLoliTeam.Axolotl,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3292351432
+75,Kiiro Race,Ancot.KiiroRace,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2988200143
+76,Kiiro Race Gene Patch,Ancot.KiiroRaceGenePatch,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2988200826
+77,Tinimar the Harfling,nsns.Tinimar,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3211734754
+78,Milira Race,Ancot.MiliraRace,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3256974620
+79,Milira Cultivated SolarCrystal,Linruo.MiliraCultivatedSolarCrystal,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3368426221
+80,瓦莱丽的米莉拉扩展包,Valeries.miliraexpansion,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3422615030
+81,Milira Event Story Expand: The Tale of Milira,Pakerwot.MiliraEventandStortExpandTheTaleofMilira,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3477405110
+82,Milira Race Gene Patch,Ancot.MiliraRaceGenePatch,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3257000248
+83,Ideology Scavenger Role,amegakull.SCVRole,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3565039115
+84,Blood Animations,Fuu.BloodAnimations,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3228047321
+85,Kiiro Medieval Expansion,Chougou.KiiroMedievalExpansion,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3552593338
+86,Tinimar the Harfling Facial Animation,Talos.Tinimar.FA,否,"需要未纳入/不推荐的本体或前置：3211734754, nsns.Tinimar",https://steamcommunity.com/sharedfiles/filedetails/?id=3307106822
+87,[SYR] Processor Framework,syrchalis.processor.framework,是,当前安装官方MP兼容程序集有对应模块,https://steamcommunity.com/sharedfiles/filedetails/?id=3210544395
+88,MoeLotl Faction Expand,HenTaiLoliTeam.Axolotl.FactionExpand,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3412260468
+89,MoeLotl: Rigor Mortis,fxz.moelotlzombie.update,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3454053400
+90,Simple Slavery Collars,TRIBeagle.simpleslaverycollars,否,官方兼容库低评分：Game desyncs when using any collar,https://steamcommunity.com/sharedfiles/filedetails/?id=2557274194
+91,==========综合==========,humblecoder.composite,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138454785
+92,MoeLotl Facial Animation,HenTaiLoliTeam.Axolotl.FA,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3292354961
+93,Basic Double Doors,GT.Sam.BasicDoubleDoors,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3223646936
+94,TAWM's MoeLotl,TAWM.ML,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3497111393
+95,Show mechanoid weapons,IssacZhuang.ShowMechanoidWeapon,是,本地随附源码核对：纹理/搜索/信息显示，推荐保留；未新增实机测试,https://steamcommunity.com/sharedfiles/filedetails/?id=2880100021
+96,==========物品==========,humblecoder.thing,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138962089
+97,LWM's Adaptive Deep Storage,ASF.DeepStorage,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3373064575
+98,Warehouse Storage,vin.warehouse.storage,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3519963835
+99,[sbz] Workbench Shelf,sbz.NeatStorageWorkbenchShelf,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3484671309
+100,[sbz] Neat Storage,sbz.NeatStorage,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3416243474
+101,[sbz] Fridge,sbz.NeatStorageFridge,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3486264784
+102,======物品-能源与电力======,humblecoder.thing.energyandelectricity,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138444451
+103,======物品-武器与装备======,humblecoder.thing.armament,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138962736
+104,GiTS Cyberoptic Visors,moistestWhale.gitsCyberoptics,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3496827622
+105,GiTS Cybernetic Equipment,moistestWhale.gitsCyberneticEquipment,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3352838918
+106,GiTS赛博光学护目镜个人汉化,ZH.moistestWhale.gitsCyberoptics,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3499878953
+107,GiTS Cybernetic Equipment GiTS设备个人汉化,ZH.moistestWhale.gitsCyberneticEquipment,否,"需要未纳入/不推荐的本体或前置：3352838918, moistestWhale.gitsCyberneticEquipment",https://steamcommunity.com/sharedfiles/filedetails/?id=3354873380
+108,GiTS Seburo Advanced Weapon Systems,moistestWhale.SACGuns,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3257892278
+109,ARC-920 Railgun,rabiosus.HaloRailgun,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3562320091
+110,======物品-食物与饮品======,humblecoder.thing.foodanddrink,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2205621891
+111,========功能-增强========,humblecoder.function.enhancement,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138437073
+112,========功能-娱乐========,humblecoder.function.recreation,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138434922
+113,Static Quality,vis.StaticQuality,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2801204005
+114,机械升级18级,TBMR.ICEorANGE,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3108445333
+115,Elite Raid 精英化袭击,trigger.eliteRaid,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3492954974
+116,Level Up!,Krafs.LevelUp,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=1701592470
+117,Infinite apparel durability,fxz.appareldura,是,源码核对：模拟tick内按固定规则恢复耐久；两端同版本,https://steamcommunity.com/sharedfiles/filedetails/?id=3252574315
+118,Rails and Roads of the Rim (Continued),Mlie.RailsAndRoadsOfTheRim,否,"官方兼容库低评分：Desyncs every time the world map gets updated with a new patch of road Additional info: (1.5)(w/ MP Compat)(Prepatcher) After every resync, the road is now there, so expect a desync for every cell of road being built. Also, only the host can build roads as far as we could test",https://steamcommunity.com/sharedfiles/filedetails/?id=3271115410
+119,Milira Tech: Milian Modification,Ancot.MilianModification,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3496629836
+120,==========医疗==========,humblecoder.medicine,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2590674304
+121,=======事件与任务=======,humblecoder.eventandtask,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138453628
+122,Kiiro Story: Events Expanded,Ancot.KiiroStoryEventsExpanded,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3036480100
+123,========物品-动物========,humblecoder.thing.animal,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138446854
+124,虫娘 Insect Girls,PuPa.InsectGirls,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2451340446
+125,Sandevistan Implant,jamlik.Sandevistan,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3638577164
+126,kemomimihouse,psyche.kemomimihouse,否,工坊前置无法公开核验,https://steamcommunity.com/sharedfiles/filedetails/?id=2075974335
+127,kemomimihouse Kz,Moo.kemomimihouse.Kz,否,依赖无法公开核验的兽耳屋本体,https://steamcommunity.com/sharedfiles/filedetails/?id=2211305406
+128,kemomimihouse HardworkingKz,Moo.Hardworking.Kz,否,依赖无法公开核验的兽耳屋本体,https://steamcommunity.com/sharedfiles/filedetails/?id=2574995438
+129,AutoBlink,rabiosus.autoblink,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3493889625
+130,JumpLifter,rabiosus.jumplifter,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3493717994
+131,========物品-植物========,humblecoder.thing.plant,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138449839
+132,========物品-载具========,humblecoder.thing.vehicle,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138446267
+133,Vehicle Framework,SmashPhil.VehicleFramework,否,仅部分兼容，未认证驾驶/起降完整流程,https://steamcommunity.com/sharedfiles/filedetails/?id=3014915404
+134,true Shooting-Wall 真实射击墙,Laayoune.shootingWall,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3579241361
+135,RimThunder - Core,RimThunder.Core,否,"官方兼容库低评分：Items regularly despawn on join-point. Had it happen a bunch of times now, where road wheels, engines, transmission and heavy components simply despawned. Some items also won't spawn on game start if you want to start with/near them or even scattered.",https://steamcommunity.com/sharedfiles/filedetails/?id=3070495204
+136,Fortified Features Framework,AOBA.Framework,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3498575851
+137,Almost There! Fork,duz.almosttherefork,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3515165298
+138,Cinders of the Embergarden,BreadMo.Cinders,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3421959154
+139,Ancient amorphous threat,XMB.AncientThreat.MO,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3313313985
+140,[Patch]Chips No HitPoints|芯片无耐久度,Biotech.Patch.Chip.Wwskyon,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3240732935
+141,Vehicles - Pelican(Helldivers 2),HD2.pelican,否,"需要未纳入/不推荐的本体或前置：3014915404, 3070495204, SmashPhil.VehicleFramework, RimThunder.Core",https://steamcommunity.com/sharedfiles/filedetails/?id=3370607942
+142,Vehicles - partridge(Helldivers 2),HD2.partridge,否,"需要未纳入/不推荐的本体或前置：3014915404, 3070495204, SmashPhil.VehicleFramework, RimThunder.Core",https://steamcommunity.com/sharedfiles/filedetails/?id=3396863286
+143,========物品-农牧========,humblecoder.thing.farming,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2141299745
+144,=======材质与画质=======,humblecoder.textureandgraphics,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138429405
+145,Realistic Human Sounds (Continued),Mlie.RealisticHumanSounds,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3497264525
+146,Realistic Human Sounds Anime Overhaul,Lemontea.realistichumansounds,否,"需要未纳入/不推荐的本体或前置：2013191418, 3497264525",https://steamcommunity.com/sharedfiles/filedetails/?id=2874326666
+147,[Haderoth] Rubicon Industries Gun Retexture,Haderoth.RIGR,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3618258427
+148,Realistic Humansounds HAR Patch,Verniy709.RealisticHumanSounds.HARPatch,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=2505010072
+149,[QW]房间统计数据染色,QW.ColoredRoomStats,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3079295527
+150,Simple Texture Tweaks,buyue.SimpleTextureTweaks,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3245917504
+151,Show Me Your Hands,Mlie.ShowMeYourHands,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2475965842
+152,AFU女士发型_Women's hairstyles,JintuziLamian.Hairstyle.AFUWomenshairstyles,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2020779666
+153,AFU男士发型_Men's hairstyles,JintuziLamian.Hairstyle.AFUMenshairstyles,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2072106893
+154,Trait Rarity Colors,CarnySenpai.TraitRarityColors,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=1751884355
+155,Milira Race Facial Animation,Ancot.MiliraRaceFacialAnimation,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3260848700
+156,Yayo's Animation (Continued),com.yayo.yayoAni.continued,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2877292196
+157,Ponpeco Hair,ponpeco.PPHair,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3258157717
+158,Kiiro Race Facial Animation,Ancot.KiiroFacialAnimation,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2991489003
+159,What's That Mod,co.uk.epicguru.whatsthatmod,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2258431182
+160,Toggleable Readouts,Owlchemist.ToggleableReadouts,是,本地随附源码核对：纹理/搜索/信息显示，推荐保留；未新增实机测试,https://steamcommunity.com/sharedfiles/filedetails/?id=3261317086
+161,Trait and Backstory Icons,Superniquito.TraitIcons,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2873494547
+162,Floordrawings,Tials.Floordrawings,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2878970750
+163,Scattered Flames,Owlchemist.ScatteredFlames,否,含额外点火指令和FireWatcher行为，不能仅当纯视觉模组推荐,https://steamcommunity.com/sharedfiles/filedetails/?id=3261108120
+164,Compact Hediffs,PeteTimesSix.CompactHediffs,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2031734067
+165,Show Weapon Tallies,kathanon.ShowWeaponTallies,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2901520677
+166,Architect Icons,com.bymarcin.ArchitectIcons,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=1195427067
+167,Optional Icons for Architect Icons,proxyer.optionalicons4ai,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=1966995052
+168,Vanilla Beards Retextured,Neronix17.Retexture.VanillaBeards,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2777098392
+169,Ratkin Texture Upgrade,MoManaCha.RatkinTextureUpgrade,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3383002343
+170,[XND] Visible Pants,XeoNovaDan.VisiblePants,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2264108215
+171,Yunia,yunia.sg00,否,无可核验工坊ID,
+172,Vanilla Combat Reloaded,Donald.VCR,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=2860414285
+173,[MOMO]Stay in bed,momo.stayinbed,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3613092072
+174,All Turrets Can Set Forced Target (Continued),Mlie.AllTurretsCanSetForcedTarget,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3256513109
+175,Turret Performance Tweaks,jaeger972.turretperformancetweaks,否,额外炮塔tick调度未验证,https://steamcommunity.com/sharedfiles/filedetails/?id=3621644930
+176,FPS And TPS,Yuki.FPSAndTPS,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3264612179
+177,=======后置汉化包=======,humblecoder.postchinese,否,原列表的分类分隔符,https://steamcommunity.com/sharedfiles/filedetails/?id=2138456745
+178,Cutting out Head (1.6),ab.beheading,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3700765558
+179,Gear Stat Optimization,secsky2.GearStatOptimization,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3691858170
+180,Tactical Fulton Extraction System,RoltonsMods.FultonExtraction,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3687327231
+181,chokey.tpsoptimizer,chokey.tpsoptimizer,否,重复TPS调度,
+182,Vanilla Combat Reloaded-汉化,ZH.Donald.VCR,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2888046020
+183,Performance Esmolas,Arkymn.PerformanceEsmolas,否,性能调度组合风险,https://steamcommunity.com/sharedfiles/filedetails/?id=3676343434
+184,Compact Hediffs_zh,lan.CompactHediffs.zh,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3256133883
+185,NewRatkinPlus_zh,ZH.NEW.Solaris.RatkinRaceMod,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2898638732
+186,[sbz] Neat Storage_zh,ZH.MZMGOW.sbz.NeatStorage,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3424068498
+187,Dynamic Trade Interface_zh,dynamictradeinterface.zh,否,需要未纳入/不推荐的本体或前置：3020706506,https://steamcommunity.com/sharedfiles/filedetails/?id=3205295998
+188,Humanoid Alien Races zh-pack,RWZH.ChinesePack.HumanoidAlienRaces,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=1783630214
+189,Get Out Of My Chair!_zh,GetOutOfMyChair.zh,否,需要未纳入/不推荐的本体或前置：3119651616,https://steamcommunity.com/sharedfiles/filedetails/?id=3192936930
+190,Moyo-From the depth_zh,ZH.Nemonian.MY,否,汉化对应的主要内容本体未纳入；仅有通用框架不算本体齐全,https://steamcommunity.com/sharedfiles/filedetails/?id=2910520165
+191,RimHUD_zh,shouer.chinesepack.RimHUD,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=1928161832
+192,[Kit] Graze up_zh,grazeup.zh,否,需要未纳入/不推荐的本体或前置：2302739121,https://steamcommunity.com/sharedfiles/filedetails/?id=2903856521
+193,Static Quality_zh,ZH.vis.StaticQuality,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2907151281
+194,角色名字汉化补全PawnNameZH,kapa.PawnNameZH,否,官方兼容库低评分：It cause unable to successfully connect to the host.,https://steamcommunity.com/sharedfiles/filedetails/?id=2556008664
+195,[NL] Dynamic Portraits_zh,zh.nals.dynamicportraits,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=3461359451
+196,DevelopMode fix,Observer.developMode.fix,否,开发/调试工具，不加入日常联机推荐,https://steamcommunity.com/sharedfiles/filedetails/?id=2879782112
+197,Pocket Sand_zh,soulwolf.ch.pocketsand,否,需要未纳入/不推荐的本体或前置：2226330302,https://steamcommunity.com/sharedfiles/filedetails/?id=3270713366
+198,Smart Speed_zh,Soulwolf.ch.smartspeed,否,需要未纳入/不推荐的本体或前置：1504723424,https://steamcommunity.com/sharedfiles/filedetails/?id=3231575678
+199,Warehouse Storage_zh,ZH.MZMGOW.vin.warehouse.storage,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3523765143
+200,Adaptive Storage_zh,ZH.adaptive.storage.neolithic,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3050506223
+201,Melee Animation_zh,ZH.co.uk.epicguru.meleeanimation,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2946827690
+202,Mid-saver Saver_zh,ChinesePackage.Owlchemist.MidSaverSaver,否,需要未纳入/不推荐的本体或前置：3261311100,https://steamcommunity.com/sharedfiles/filedetails/?id=2924284353
+203,RimSaves zh-pack,RWZH.ChinesePack.RimSaves,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2199383843
+204,HugsLib zh-pack,RWZH.ChinesePack.HugsLib,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=1798770746
+205,Ponpeco Kids' Clothes_zh,lan.ppclothes.zh,否,需要未纳入/不推荐的本体或前置：3237739433,https://steamcommunity.com/sharedfiles/filedetails/?id=3241230303
+206,[sbz] Gravship Storage_zh,ZH.MZMGOW.sbz.GravshipStorage,否,汉化对应的主要内容本体未纳入；仅有通用框架不算本体齐全,https://steamcommunity.com/sharedfiles/filedetails/?id=3539569902
+207,WVC - Work Modes简体汉化,Buyue.MoreMechanoidsWorkModes.zh,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2892263408
+208,[sbz] Workbench Shelf_zh,ZH.MZMGOW.sbz.NeatStorageWorkbenchShelf,否,汉化对应的主要内容本体未纳入；仅有通用框架不算本体齐全,https://steamcommunity.com/sharedfiles/filedetails/?id=3487401483
+209,[sbz] Fridge_zh,ZH.MZMGOW.sbz.NeatStorageFridge,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3487401191
+210,Diner Supplies_zh,ZH.MZMGOW.DSP.LUN,否,需要未纳入/不推荐的本体或前置：3501336537,https://steamcommunity.com/sharedfiles/filedetails/?id=3539559038
+211,Childhood Backstories 简繁中文汉化包,Nide.ChinesePack.ChildhoodBackstories,否,需要未纳入/不推荐的本体或前置：3000770956,https://steamcommunity.com/sharedfiles/filedetails/?id=3002478001
+212,Basic Double Doors基础大门汉化,GT.Sam.BasicDoubleDoors.cn,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3223843680
+213,[SYR] Processor Framework_zh,ZH.syrchalis.processor.framework,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=2969948866
+214,Defensive Positions zh-pack,RWZH.ChinesePack.DefensivePositions,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=1965035484
+215,Tinimar the Harfling 系列中文翻译,Whuh.Tinimar.Zh,否,"需要未纳入/不推荐的本体或前置：3211734754, 3287751415, nsns.Tinimar",https://steamcommunity.com/sharedfiles/filedetails/?id=3305158416
+216,Explicit Timings-汉化,ZH.Leoltron.ExplicitTimings,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3215424017
+217,鼠族名称扩展RatkinNamePlus,TheWWworld.RatkinNamePlus,是,无独立DLL的XML/贴图/汉化内容；需两端一致,https://steamcommunity.com/sharedfiles/filedetails/?id=3116965370
+218,Vehicle Framework 载具框架 简繁汉化包,shavius.vehicleframework.zh,否,需要未纳入/不推荐的本体或前置：3014915404,https://steamcommunity.com/sharedfiles/filedetails/?id=3014286601
+219,Resource Delivery Helper,ferny.ResourceDeliveryHelper,是,官方兼容库评分4；仍受版本影响,https://steamcommunity.com/sharedfiles/filedetails/?id=3696859196
+220,Perspective Shift,ferny.PerspectiveShift,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3686618980
+221,PA's God Hands,Palpha.godhands,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=3610069762
+222,Shella Backgrounds,stm.ShellaBackgrounds,是,本补丁已有专项适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2853407446
+223,Dont Hit Allies,fxz.damagepatch,否,未找到足够联机依据，待核验,https://steamcommunity.com/sharedfiles/filedetails/?id=2970906473
+224,Dev In Your Language,latta.devl10n,否,开发/调试工具，不加入日常联机推荐,https://steamcommunity.com/sharedfiles/filedetails/?id=2142743468
+225,Dev In Your Language_zh,latta.devl10n.zh,否,开发/调试工具，不加入日常联机推荐,https://steamcommunity.com/sharedfiles/filedetails/?id=2574656057
+226,MP-Race-Compatibility-Plus,local.mp.meowonlineshop.sellslingshot,是,联机基础框架/本补丁,https://steamcommunity.com/sharedfiles/filedetails/?id=3777248347
+211,Melee Animation,co.uk.epicguru.meleeanimation,是,补齐用户列表已有汉化对应的本体；本补丁已有适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2944488802
+211,Defensive Positions,UnlimitedHugs.DefensivePositions,是,补齐用户列表已有汉化对应的本体；本补丁已有适配,https://steamcommunity.com/sharedfiles/filedetails/?id=761219125
+211,WVC - Work Modes,wvc.sergkart.biotech.MoreMechanoidsWorkModes,是,补齐用户列表已有汉化对应的本体；本补丁已有适配,https://steamcommunity.com/sharedfiles/filedetails/?id=2888380373

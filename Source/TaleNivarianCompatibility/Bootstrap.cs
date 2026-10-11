@@ -71,6 +71,12 @@ namespace Meow.TaleNivarianCompatibility
                     NivarianMetricInputs.Apply(harmony);
                     NivarianCurrencyCollectors.Apply(harmony);
                     NivarianLentColonists.Apply(harmony);
+                    NivarianUpdateActions.Apply(harmony);
+                    NivarianGuestHosting.Apply(harmony);
+                    NivarianLetterClock.Apply(harmony);
+                    NivarianLogisticsOrder.Apply(harmony);
+                    NivarianReinforcementTarget.Apply(harmony);
+                    NivarianIndustryActions.Apply(harmony);
 
 
                     var existingTrio=AccessTools.TypeByName("Meow.RaceTrioCompatibility.Bootstrap");
@@ -80,7 +86,7 @@ namespace Meow.TaleNivarianCompatibility
                         NivarianControlSettings.Apply(harmony);
                         NivarianJoinContexts.Apply(harmony);
                     }
-                    var orbit = AccessTools.DeclaredMethod(AccessTools.TypeByName("Nivarian.NivarianDrones.NivarianDroneComps.NivarianDroneComp_MovingBase"), "OrbitTarget");
+                    var orbit = AccessTools.DeclaredMethod(AccessTools.TypeByName("Nivarian.NivarianDrones.NivarianStraftingAttackerDrone"), "CalcEntryPoint");
                     if (Harmony.GetPatchInfo(orbit)?.Owners.Contains("meow.trio.nivarian-simulation-random") != true)
                         NivarianSimulationRandom.Apply(harmony);
                     var accept = AccessTools.DeclaredMethod(AccessTools.TypeByName("Nivarian_Race.Code.Incidents.ChoiceLetter_NivarianAid"), "ExecuteAccept");
@@ -93,7 +99,7 @@ namespace Meow.TaleNivarianCompatibility
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Pakerwot.MiliraEventandStortExpandTheTaleofMilira")) { Tale.Apply(harmony); TaleArrival.Apply(harmony); TaleSupplyDialog.Apply(harmony); }
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("rjw") && ModsConfig.IsActive("abscon.privacy.please")) Privacy.Apply(harmony);
                 Ready = true;
-                Log.Message("[TaleNivarianCompat] 1.1.3 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
+                Log.Message("[TaleNivarianCompat] 1.1.6 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
             }
             catch (Exception e)
             {
@@ -112,6 +118,8 @@ namespace Meow.TaleNivarianCompatibility
         }
     }
 }
+
+
 
 
 

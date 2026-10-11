@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
     <AssemblyName>Meow.RaceTrioCompatibility</AssemblyName>
-    <Version>1.1.5</Version>
+    <Version>1.1.8</Version>
     <GameRoot>G:/Steam/steamapps/common/RimWorld</GameRoot>
     <ReferenceRoot>../../BuildValidation/WolfeinSuite_20260906/Game/Mods</ReferenceRoot>
   </PropertyGroup>
@@ -18,3 +18,4 @@
     <Reference Include="MP_MeowOnlineShop"><HintPath>../../1.6/Assemblies/MP_MeowOnlineShop.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>
+

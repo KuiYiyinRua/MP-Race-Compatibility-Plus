@@ -1,3 +1,18 @@
+# Full release 3.0.151 (2026-10-11)
+
+发布当前全部 22 个生产模块和现有实验功能，GitHub 同步完整源码、测试源码、工具及文档。包含 3.0.148–3.0.151 的主角认定、随机数与状态持久化、米莉拉穿梭机返航修复，以及涅瓦莲本体更新兼容和 Monolyn 补充程序集 1.1.8。武器法典同步存入、取出、神圣武器切换、落地取出及机械体切换，保留原生装备与工作行为；感谢 AzzyH 的设计参考。
+
+验证：22 项目编译通过，发布使用当前归档 DLL。Monolyn 基础两图/冷加入专项及法典七项双端操作通过；涅瓦莲历史正常/异步三轮冷加入与长测通过，但该专项使用当时独立候选，不能作为本次全部模块组合验收。完整最新整合包未新增全量双端长测。实验功能保留既有开关与默认值。所有玩家须更新完全相同的文件并彻底重启。
+
+
+[完整发布记录](Docs/releases/3.0.151-full-20261011.md)。
+
+# Local release 3.0.151 (2026-10-09)
+
+3.0.151：修复米莉拉穿梭机返航后连船带人丢失。联机乘员检查跳过未加载的子地图，避免任务穿梭机阻塞整个运输管理器；已落地的玩家穿梭机不再重放旧的已开始抵达任务，防止降落容器因所有权冲突销毁船体。单端主持测试：两地图、两种穿梭机 12 次带人往返及 10,000 tick 专项通过；最新 320 模组存档副本中地图 2 原 Wyvern/Harrier 均带人往返成功，旧队列清空，另推进 1,000 tick 并成功保存联机快照。完整存档测试仅把读取阶段改为主线程，以绕过后台贴图加载崩溃。原存档未改动。所有玩家需更新相同文件并完全重启游戏。
+
+证据：[存档与验证记录](BuildValidation/MiliraShuttle_20261009/verification.json)。
+
 # Release 3.0.147 (2026-10-03)
 
 375 的妓院通知消息 ID、378–380 的 PitGate 镜头震动随机数、以及此前 355/356/358 的 Ariandel 本地音乐随机数已加入定点兼容补丁。22 个生产模块编译通过；新补丁仍需双端场景验证，376/377 的上游原因未定。所有玩家须安装同一完整版本并完全重启。详见 [3.0.147 发布说明](Docs/releases/3.0.147.md)。
@@ -74,3 +89,4 @@ ReplayR1 首个当前输入异常：host.log:3980–3982，RK_InfernoGrenadeLaun
 - 当前安装源权威：Raven 1.0.6/zuoyao.ravenrace，SHA74AE9E1D…；原生 Assembly-CSharp SHA8FD7E750…；MP SHA28D2CDA4…；Milira SHA371891B8…。完整 SHA 和路径见 provenance.json。Raven 当前反编译签名与轨迹类型匹配；并未证明每位远端机器 DLL 都等于当前安装哈希。
 - source-changes.diff 保存配置、版本、工程、新边界的变更；启动注册在 Patch_SellSlingshot 加一行 Patch_Desync325Boundaries.Apply(harmony)，该文件冻结全文在 SourceSnapshot。测试源和精确 harness DLL 在 HarnessSnapshot；生产包不含 harness。
 - 候选增量包：Releases/MP-Race-Compatibility-Plus-3.0.143-Desync325-328-Candidate.zip，基于已安装完整 3.0.142，仅主 DLL/PDB、候选 About、说明和哈希。它不是独立完整模组。
+

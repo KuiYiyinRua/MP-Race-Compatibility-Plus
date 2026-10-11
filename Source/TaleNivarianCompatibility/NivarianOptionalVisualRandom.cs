@@ -23,6 +23,19 @@ namespace Meow.TaleNivarianCompatibility
             PatchDrone(harmony, scheduler, "CompTick");
             // The public overload can be called outside the scheduler as well.
             PatchDrone(harmony, words, "ThrowText", Required("Nivarian.NivarianDrones.DroneState"));
+            if (ModsConfig.IsActive("keeptpa.NivarianDraconiture"))
+            {
+                // Despite the namespace, this worker belongs to Draconiture, not
+                // DraconicMilitary. Its local speech setting and static rate limit
+                // can skip word selection differently after a join. Both the retry
+                // interval and selected text are cosmetic; isolate only this worker.
+                var engineer = Required("NivarianRace.DraconicMilitary.EngineeringDroneThing");
+                harmony.Patch(AccessTools.DeclaredMethod(engineer, "TickThrowWords", Type.EmptyTypes)
+                    ?? throw new MissingMethodException(engineer.FullName, "TickThrowWords"),
+                    prefix: new HarmonyMethod(typeof(NivarianOptionalVisualRandom), nameof(BeginEngineer)),
+                    finalizer: new HarmonyMethod(typeof(NivarianOptionalVisualRandom), nameof(End)));
+                Log.Message("[TaleNivarianCompat] Draconiture engineering drone speech Rand isolated: interval, retry and word selection; MVID=" + engineer.Module.ModuleVersionId);
+            }
             Log.Message("[TaleNivarianCompat] Optional icy fog and drone chatter random scopes installed; local preferences retained.");
         }
         static Type Required(string name) => AccessTools.TypeByName(name) ?? throw new TypeLoadException(name);
@@ -43,6 +56,12 @@ namespace Meow.TaleNivarianCompatibility
             // to the two verified cosmetic workers, including their token/retry scheduling.
             __state = MP.IsInMultiplayer && (__instance.GetType() == words || __instance.GetType() == voice);
             if (__state) Rand.PushState(Gen.HashCombineInt(__instance.parent.thingIDNumber, Find.TickManager.TicksGame));
+        }
+        static void BeginEngineer(Thing __instance, out bool __state)
+        {
+            __state = MP.IsInMultiplayer;
+            if (__state) Rand.PushState(Gen.HashCombineInt(
+                Gen.HashCombineInt(0x454E4757, __instance.thingIDNumber), Find.TickManager.TicksGame));
         }
         static void End(bool __state)
         {

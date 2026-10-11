@@ -61,7 +61,8 @@ namespace Meow.RatkinCompatibility
                 {
                     Harmony.Patch(M("GlassPlatycodon", method), transpiler: H(nameof(VisualRanges))); resolved++;
                 }
-                Log.Message("[RatkinMP] Anomaly targets resolved=" + resolved + " version=1.0.0");
+                GlassPlatycodonBoundary.Apply(Harmony);
+                Log.Message("[RatkinMP] Anomaly targets resolved=" + resolved + " version=" + typeof(Anomaly).Assembly.GetName().Version + " MVID=" + typeof(Anomaly).Module.ModuleVersionId);
             }
             catch (Exception e) { Log.Error("[RatkinMP] REQUIRED TARGET FAILED " + e); }
         }

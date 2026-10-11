@@ -657,6 +657,10 @@ public static class AriandelMiliraImperium_Compat
 				Type[] types = assembly.GetTypes();
 				foreach (Type type in types)
 				{
+					// This worker has an exact map/faction payload and local targeting
+					// context restoration in MilianModification_StateSync.
+					if (type.FullName == "MilianModification.RoyalTitlePermitWorker_DropMilianComponent")
+						continue;
 					if (type.IsAbstract || type.IsInterface)
 					{
 						continue;

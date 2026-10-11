@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods><li>Daily furniture 塔林家具</li></mods>
+    <match Class="PatchOperationReplace">
+      <xpath>Defs/ThingDef[defName='ADH_B_MiddleWalls_A_WALL']/building/blueprintGraphicData/graphicClass</xpath>
+      <value><graphicClass>Graphic_Single</graphicClass></value>
+    </match>
+  </Operation>
+</Patch>

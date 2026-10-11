@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Multiplayer.API;
 using RimWorld;
@@ -11,6 +13,7 @@ using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 
 namespace MP_MeowOnlineShop
 {
@@ -55,6 +58,13 @@ namespace MP_MeowOnlineShop
         private static Game _componentCacheGame;
         private static PerspectiveShiftMpComponent _componentCache;
         private static bool _componentCacheValid;
+        private static FieldInfo multiplayerSessionField;
+        private static FieldInfo sessionPlayerIdField;
+        private static FieldInfo commandPlayerIdField;
+        private static FieldInfo multiplayerReloadingField;
+        private static Game pendingHostResetGame;
+        private static PerspectiveShiftControlledAvatar rejoinReleaseRequested;
+        private static MethodInfo originalIsAvatar;
         private static readonly Dictionary<Type, AccessTools.FieldRef<object, Pawn>> NestedPawnRefCache =
             new Dictionary<Type, AccessTools.FieldRef<object, Pawn>>();
         private static readonly object NestedPawnRefCacheLock = new object();
@@ -72,6 +82,13 @@ namespace MP_MeowOnlineShop
         [ThreadStatic] private static bool clearingLocalView;
         [ThreadStatic] private static IntVec3? forcedMouseCell;
         [ThreadStatic] private static string executingCommandOwner;
+        [ThreadStatic] private static int? executingCommandPlayerId;
+
+        public struct CommandIssuerContext
+        {
+            public string owner;
+            public int? playerId;
+        }
         [ThreadStatic] private static int _localAvatarCacheFrame;
         [ThreadStatic] private static object _localAvatarCacheObject;
         [ThreadStatic] private static Pawn _localAvatarCachePawn;
@@ -384,13 +401,23 @@ namespace MP_MeowOnlineShop
             MethodInfo stateTick = AccessTools.Method(stateType, "Tick");
             MethodInfo stateOnGui = AccessTools.Method(stateType, "OnGUI");
             MethodInfo isAvatar = AccessTools.Method(stateType, "IsAvatar", new[] { typeof(Pawn) });
+            originalIsAvatar = isAvatar;
             MethodInfo updatePhysics = AccessTools.Method(avatarType, "UpdatePhysics");
             MethodInfo updateCamera = AccessTools.Method(avatarType, "UpdateCamera");
             MethodInfo renderPawn = AccessTools.Method(avatarType, "RenderPawn");
+            Type multiplayerType = AccessTools.TypeByName("Multiplayer.Client.Multiplayer");
+            multiplayerSessionField = AccessTools.Field(multiplayerType, "session");
+            sessionPlayerIdField = AccessTools.Field(multiplayerSessionField?.FieldType, "playerId");
+            commandPlayerIdField = AccessTools.Field(AccessTools.TypeByName("Multiplayer.Common.ScheduledCommand"), "playerId");
+            multiplayerReloadingField = AccessTools.Field(multiplayerType, "reloading");
+            MethodInfo hostSession = AccessTools.Method("Multiplayer.Client.HostUtil:CreateSession");
+            MethodInfo saveGameData = AccessTools.Method("Multiplayer.Client.SaveLoad:SaveGameData");
 
             if (stateAvatarField == null || avatarPawnConstructor == null || setAvatar == null ||
                 clearAvatar == null || revokeControl == null || stateUpdate == null || stateTick == null || stateOnGui == null ||
-                isAvatar == null || updatePhysics == null || renderPawn == null || _shootSourceOffsetRef == null)
+                isAvatar == null || updatePhysics == null || renderPawn == null || _shootSourceOffsetRef == null ||
+                hostSession == null || saveGameData == null || multiplayerSessionField == null ||
+                sessionPlayerIdField == null || commandPlayerIdField == null || multiplayerReloadingField == null)
             {
                 Log.Warning("[MP-MeowOnlineShop] Perspective Shift API shape is unsupported; compatibility patch skipped.");
                 return;
@@ -405,6 +432,11 @@ namespace MP_MeowOnlineShop
                 postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(AvatarMapPostTick)));
             harmony.Patch(stateOnGui, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(StateOnGuiPrefix)));
             harmony.Patch(isAvatar, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(IsAvatarPrefix)));
+            PatchAvatarIdentityCallSites(harmony);
+            harmony.Patch(hostSession, postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(NewHostSessionPostfix)));
+            harmony.Patch(saveGameData, prefix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(BeforeHostSnapshot)));
+            harmony.Patch(AccessTools.Method(typeof(Pawn), nameof(Pawn.GetGizmos)),
+                postfix: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(ReclaimGizmosPostfix)) { priority = Priority.Last });
             MethodInfo draftedSetter = AccessTools.PropertySetter(
                 typeof(Pawn_DraftController), nameof(Pawn_DraftController.Drafted));
             if (draftedSetter != null)
@@ -462,20 +494,26 @@ namespace MP_MeowOnlineShop
             DisableSimulationUseOfPredictedPosition(harmony);
             NeutralizeSingletonSimulationPatches(harmony);
 
+            // Every Pawn-bearing command derives its map from serialization.
+            // CurrentMap would conflict when the camera leaves the avatar's map.
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncClaimAvatar))
-                .SetContext(SyncContext.CurrentMap);
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncClaimAvatarWithMode))
-                .SetContext(SyncContext.CurrentMap);
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncReleaseAvatar))
                 .SetContext(SyncContext.CurrentMap);
+            // The pawn serializer selects its map, including when the local
+            // camera is on another map or the world view during rejoin.
+            MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncReleaseAvatarForPawn))
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncSetMoveIntent))
-                .SetContext(SyncContext.CurrentMap);
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncAvatarMapClick))
-                .SetContext(SyncContext.CurrentMap);
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncFireAvatar))
-                .SetContext(SyncContext.CurrentMap);
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncAimAndFireAvatar))
-                .SetContext(SyncContext.CurrentMap);
+                .SetContext(SyncContext.None);
             MP.RegisterSyncMethod(typeof(Patch_PerspectiveShiftMp), nameof(SyncToggleSeekAtWill))
                 .SetContext(SyncContext.None);
 
@@ -492,7 +530,168 @@ namespace MP_MeowOnlineShop
             Log.Message(
                 "[MP-MeowOnlineShop] Perspective Shift MP: multi-avatar registry, " +
                 "ordered sequence-acknowledged movement, replay prediction, and " +
-                "independent camera smoothing enabled.");
+                "independent camera smoothing enabled. Session ownership reset v3 enabled.");
+        }
+
+        private static void PatchAvatarIdentityCallSites(Harmony harmony)
+        {
+            int patched = 0;
+            // State.IsAvatar is AggressiveInlining. Patching the helper alone
+            // leaves already-compiled target patches using the local singleton
+            // (R04: host MoveToStandable versus client Orders on drafting).
+            // Rewrite exact call sites, including iterator/think-node methods.
+            foreach (Type type in stateType.Assembly.GetTypes().OrderBy(t => t.FullName, StringComparer.Ordinal))
+                foreach (MethodInfo method in AccessTools.GetDeclaredMethods(type).OrderBy(m => m.MetadataToken))
+                {
+                    if (method.ContainsGenericParameters || method.GetMethodBody() == null || method == originalIsAvatar)
+                        continue;
+                    if (!PatchProcessor.GetOriginalInstructions(method).Any(instruction => instruction.Calls(originalIsAvatar)))
+                        continue;
+                    harmony.Patch(method, transpiler: new HarmonyMethod(typeof(Patch_PerspectiveShiftMp), nameof(AvatarIdentityTranspiler)));
+                    patched++;
+                }
+            if (patched == 0)
+                throw new MissingMethodException("Perspective Shift avatar identity call sites were not resolved.");
+            Log.Message($"[MP-MeowOnlineShop] Perspective Shift shared avatar identity: {patched} call sites rewritten.");
+        }
+
+        public static IEnumerable<CodeInstruction> AvatarIdentityTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            MethodInfo replacement = AccessTools.Method(typeof(Patch_PerspectiveShiftMp), nameof(IsRegisteredAvatar));
+            foreach (CodeInstruction instruction in instructions)
+            {
+                if (instruction.Calls(originalIsAvatar))
+                {
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = replacement;
+                }
+                yield return instruction;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool IsRegisteredAvatar(Pawn pawn)
+        {
+            return MP.IsInMultiplayer && Active
+                ? CurrentComponent()?.IsControlled(pawn) == true
+                : AvatarPawnOf(stateAvatarField?.GetValue(null)) == pawn;
+        }
+
+        internal static void NotifyClaimRejected(string owner, Pawn pawn)
+        {
+            if (!string.Equals(owner, MP.PlayerName, StringComparison.Ordinal))
+                return;
+            Game game = Current.Game;
+            localHealthNotifications.Enqueue(() =>
+            {
+                if (ReferenceEquals(Current.Game, game))
+                    Messages.Message("该角色已由其他玩家控制。", pawn, MessageTypeDefOf.RejectInput, false);
+            });
+        }
+
+        public static void NewHostSessionPostfix()
+        {
+            // HostUtil calls this for both single-player saves and MP replays.
+            // Do not clear in every FinalizeInit: live join points reload too.
+            pendingHostResetGame = Current.Game;
+        }
+
+        public static void BeforeHostSnapshot()
+        {
+            if (!Active || pendingHostResetGame == null ||
+                !ReferenceEquals(pendingHostResetGame, Current.Game) ||
+                !MP.IsHosting || !(multiplayerReloadingField.GetValue(null) is bool reloading) || !reloading)
+                return;
+
+            // SaveAndReload has disabled interface sync and entered its long
+            // event. Cleanup now becomes part of the first shared snapshot,
+            // before peers can join or replay commands.
+            PerspectiveShiftMpComponent component = CurrentComponent();
+            if (component == null)
+                throw new InvalidOperationException("Perspective Shift ownership component missing before host snapshot.");
+            int count = component.OrderedStates.Count();
+            component.ResetOwnershipForNewSession();
+            pendingHostResetGame = null;
+            Log.Message($"[MP-MeowOnlineShop] Perspective Shift new room: released {count} saved avatar claim(s); explicit selection required.");
+        }
+
+        private static int LocalPlayerId()
+        {
+            object session = multiplayerSessionField?.GetValue(null);
+            return session != null && sessionPlayerIdField?.GetValue(session) is int id ? id : -1;
+        }
+
+        public static void ResetLocalStateForNewSession()
+        {
+            // A single-player Avatar may not have a registry entry. Let the
+            // original cleanup restore its lord/draft state before nulling it.
+            try
+            {
+                object avatar = stateAvatarField?.GetValue(null);
+                Pawn pawn = avatar == null ? null : AvatarPawnOf(avatar);
+                if (pawn?.GetLord() != null)
+                    savedLordField?.SetValue(avatar, null);
+                clearingLocalView = true;
+                originalClearAvatarMethod?.Invoke(null, null);
+            }
+            finally
+            {
+                clearingLocalView = false;
+                ClearLocalViewOnly();
+            }
+            rejoinReleaseRequested = null;
+            localHealthNotifications.Clear();
+            AccessTools.Field(stateType, "authenticPawnId")?.SetValue(null, -1);
+            AccessTools.Field(stateType, "pendingDeathMenu")?.SetValue(null, false);
+        }
+
+        private static void ReleasePreviousConnectionAvatar()
+        {
+            if (!MP.IsInMultiplayer || !Active || !MP.InInterface || MP.IsExecutingSyncCommand)
+                return;
+            PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(MP.PlayerName);
+            int playerId = LocalPlayerId();
+            if (state == null || playerId < 0 || state.ownerPlayerId == playerId)
+            {
+                rejoinReleaseRequested = null;
+                return;
+            }
+            ClearLocalViewOnly();
+            if (!ReferenceEquals(rejoinReleaseRequested, state))
+            {
+                rejoinReleaseRequested = state;
+                SyncReleaseAvatarForPawn(state.owner, state.pawn, state.epoch);
+            }
+        }
+
+        public static IEnumerable<Gizmo> ReclaimGizmosPostfix(IEnumerable<Gizmo> __result, Pawn __instance)
+        {
+            bool offered = false;
+            string takeControl = "PS_TakeControl".Translate();
+            string swapCharacter = "PS_SwapCharacter".Translate();
+            foreach (Gizmo gizmo in __result)
+            {
+                if (gizmo is Command command && (command.defaultLabel == takeControl || command.defaultLabel == swapCharacter))
+                    offered = true;
+                yield return gizmo;
+            }
+            // Authentic mode's original UI requires a saved authenticPawnId.
+            // Once that old ID is cleared, always provide an explicit way back
+            // into control for a healthy player pawn.
+            if (offered || !Active || !MP.IsInMultiplayer || __instance == null ||
+                !string.Equals(AccessTools.Field(stateType, "CurrentMode")?.GetValue(null)?.ToString(), "Authentic", StringComparison.Ordinal) ||
+                __instance.Destroyed || __instance.Dead || __instance.Downed || __instance.InMentalState ||
+                __instance.Faction != Faction.OfPlayer || __instance.RaceProps.Animal ||
+                CurrentComponent()?.ForOwner(MP.PlayerName) != null ||
+                CurrentComponent()?.IsControlled(__instance) == true)
+                yield break;
+            yield return new Command_Action
+            {
+                defaultLabel = takeControl,
+                defaultDesc = "本次联机需要重新认定主角。",
+                icon = ContentFinder<Texture2D>.Get("Gizmos/TakeControl"),
+                action = () => SetAvatarPrefix(__instance)
+            };
         }
 
         private static void PatchExecutingCommandOwnerContext(Harmony harmony)
@@ -601,17 +800,18 @@ namespace MP_MeowOnlineShop
             if (BindingMatches("PS_Walk", code)) heldWalk = held;
         }
 
-        public static void ExecutingCommandOwnerPrefix(object[] __args, out string __state)
+        public static void ExecutingCommandOwnerPrefix(object[] __args, out CommandIssuerContext __state)
         {
-            __state = executingCommandOwner;
-            executingCommandOwner = ResolveCommandOwner(__args != null && __args.Length > 0
-                ? __args[0]
-                : null);
+            __state = new CommandIssuerContext { owner = executingCommandOwner, playerId = executingCommandPlayerId };
+            object command = __args != null && __args.Length > 0 ? __args[0] : null;
+            executingCommandPlayerId = command == null ? null : commandPlayerIdField?.GetValue(command) as int?;
+            executingCommandOwner = ResolveCommandOwner(command);
         }
 
-        public static Exception ExecutingCommandOwnerFinalizer(Exception __exception, string __state)
+        public static Exception ExecutingCommandOwnerFinalizer(Exception __exception, CommandIssuerContext __state)
         {
-            executingCommandOwner = __state;
+            executingCommandOwner = __state.owner;
+            executingCommandPlayerId = __state.playerId;
             return __exception;
         }
 
@@ -976,7 +1176,7 @@ namespace MP_MeowOnlineShop
         {
             if (!ValidateSynchronizedOwner(owner, nameof(SyncClaimAvatar)))
                 return;
-            CurrentComponent()?.Claim(owner, pawn);
+            CurrentComponent()?.Claim(owner, pawn, executingCommandPlayerId ?? LocalPlayerId());
             InvalidateControlledCache();
         }
 
@@ -985,7 +1185,7 @@ namespace MP_MeowOnlineShop
             if (!ValidateSynchronizedOwner(owner, nameof(SyncClaimAvatarWithMode)))
                 return;
             PerspectiveShiftMpComponent component = CurrentComponent();
-            component?.Claim(owner, pawn);
+            component?.Claim(owner, pawn, executingCommandPlayerId ?? LocalPlayerId());
             PerspectiveShiftControlledAvatar state = component?.ForOwner(owner);
             if (state != null && state.pawn == pawn)
                 state.retainOnDowned = retainOnDowned;
@@ -1009,6 +1209,24 @@ namespace MP_MeowOnlineShop
             InvalidateControlledCache();
         }
 
+        public static void SyncReleaseAvatarForPawn(string owner, Pawn pawn, int epoch)
+        {
+            if (!ValidateSynchronizedOwner(owner, nameof(SyncReleaseAvatarForPawn)))
+                return;
+            PerspectiveShiftMpComponent component = CurrentComponent();
+            if (component?.EnsureState(owner, pawn, epoch) == null)
+                return;
+            component.Release(owner, epoch);
+            InvalidateOwnershipCaches();
+        }
+
+        private static PerspectiveShiftControlledAvatar CurrentCommandState(string owner, Pawn pawn, int epoch)
+        {
+            PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(owner, pawn, epoch);
+            int playerId = executingCommandPlayerId ?? LocalPlayerId();
+            return state != null && playerId >= 0 && state.ownerPlayerId == playerId ? state : null;
+        }
+
         public static void SyncSetMoveIntent(
             string owner,
             Pawn pawn,
@@ -1023,7 +1241,7 @@ namespace MP_MeowOnlineShop
                 return;
 
             PerspectiveShiftMpComponent component = CurrentComponent();
-            PerspectiveShiftControlledAvatar state = component?.EnsureState(
+            PerspectiveShiftControlledAvatar state = CurrentCommandState(
                 owner,
                 pawn,
                 epoch);
@@ -1064,7 +1282,7 @@ namespace MP_MeowOnlineShop
             if (!ValidateSynchronizedOwner(owner, nameof(SyncAvatarMapClick)))
                 return;
 
-            PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(
+            PerspectiveShiftControlledAvatar state = CurrentCommandState(
                 owner,
                 pawn,
                 epoch);
@@ -1155,7 +1373,7 @@ namespace MP_MeowOnlineShop
         {
             if (!ValidateSynchronizedOwner(owner, nameof(SyncAimAndFireAvatar)))
                 return;
-            PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(owner, pawn, epoch);
+            PerspectiveShiftControlledAvatar state = CurrentCommandState(owner, pawn, epoch);
             if (state == null)
                 return;
             // The newest intent supersedes the old one even if its target
@@ -1205,6 +1423,8 @@ namespace MP_MeowOnlineShop
             LogFireDiagnostic(
                 $"enter owner={owner} pawn={(pawn != null ? pawn.thingIDNumber.ToString() : "null")} " +
                 $"cell={cell} drafted={(pawn != null && pawn.Drafted)}");
+            // This is also called later from a shared map tick. The input was
+            // already authorized; never consult a peer's local connection here.
             PerspectiveShiftControlledAvatar state = CurrentComponent()?.EnsureState(
                 owner,
                 pawn,
@@ -1331,9 +1551,6 @@ namespace MP_MeowOnlineShop
                 return true;
             if (!MP.IsInMultiplayer || !Active)
                 return true;
-            if (!MP.InInterface && !MP.IsExecutingSyncCommand)
-                return false;
-
             // Automatic health revocation has a pawn-based executor. A tick
             // or world cleanup must never infer authority from this peer's UI.
             if (!MP.InInterface && !MP.IsExecutingSyncCommand)
@@ -1349,7 +1566,7 @@ namespace MP_MeowOnlineShop
 
             PerspectiveShiftControlledAvatar state = CurrentComponent()?.ForOwner(owner);
             if (state != null)
-                SyncReleaseAvatar(owner, state.epoch);
+                SyncReleaseAvatarForPawn(owner, state.pawn, state.epoch);
             else if (string.Equals(owner, MP.PlayerName, StringComparison.Ordinal))
                 ClearLocalViewOnly();
             return false;
@@ -1449,6 +1666,7 @@ namespace MP_MeowOnlineShop
 
         public static void StateUpdatePrefix()
         {
+            ReleasePreviousConnectionAvatar();
             EnsureLocalAvatarView("Update");
             if (MP.IsInMultiplayer && (!MP.InInterface || MP.IsExecutingSyncCommand))
                 return;
@@ -1518,13 +1736,6 @@ namespace MP_MeowOnlineShop
 
             Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state = CurrentOwnerState();
-            if (pawn != null && state == null && MayPreserveHostMigrationAvatar(__instance))
-            {
-                // Migrate a pre-existing single-player Perspective Shift avatar
-                // when that save is first hosted. Only the host may seed it.
-                SyncClaimAvatarWithMode(MP.PlayerName, pawn, LocalRetainOnDowned());
-                return false;
-            }
             if (pawn == null || state == null || state.pawn != pawn)
                 return false;
 
@@ -1539,7 +1750,11 @@ namespace MP_MeowOnlineShop
             if (KeyDown("PS_MoveForward", heldMoveForward)) moveZ++;
 
             bool hasMoveInput = moveX != 0 || moveZ != 0;
-            bool hardBlocked = WorldRendererUtility.WorldSelected ||
+            // The stop heartbeat still belongs to the avatar's map when the
+            // local camera changes maps. Never interpret keys for that offscreen
+            // pawn; the Pawn serializer routes its zero intent independently.
+            bool hardBlocked = pawn.Map != Find.CurrentMap || !pawn.Spawned ||
+                               WorldRendererUtility.WorldSelected ||
                                Find.WindowStack.AnySearchWidgetFocused ||
                                (pawn.CurJob != null && !pawn.CurJob.def.playerInterruptible);
             if (hardBlocked)
@@ -1694,7 +1909,8 @@ namespace MP_MeowOnlineShop
                 return false;
             }
 
-            if (Find.Targeter.IsTargeting || Find.TickManager.Paused || pawn.Downed || pawn.InMentalState)
+            if (!pawn.Spawned || pawn.Map != Find.CurrentMap || WorldRendererUtility.WorldSelected ||
+                Find.Targeter.IsTargeting || Find.TickManager.Paused || pawn.Downed || pawn.InMentalState)
             {
                 __result = false;
                 return false;
@@ -1727,6 +1943,7 @@ namespace MP_MeowOnlineShop
             Pawn pawn = AvatarPawnOf(__instance);
             PerspectiveShiftControlledAvatar state = CurrentOwnerState();
             if (pawn == null || state == null || state.pawn != pawn || !pawn.Drafted ||
+                !pawn.Spawned || pawn.Map != Find.CurrentMap || WorldRendererUtility.WorldSelected ||
                 pawn.Downed || pawn.InMentalState || Find.Targeter.IsTargeting || Find.TickManager.Paused)
                 return false;
 
@@ -2112,6 +2329,7 @@ namespace MP_MeowOnlineShop
                 cameraLockPositionField?.SetValue(null, null);
                 isActiveCacheFrameField?.SetValue(null, -999);
                 stateAvatarField?.SetValue(null, state.runtimeAvatar);
+                AccessTools.Field(stateType, "authenticPawnId")?.SetValue(null, state.pawn.thingIDNumber);
                 sentInput = false;
                 localMovementInputLogged = false;
                 ClearHeldMovementKeys();
@@ -2141,8 +2359,7 @@ namespace MP_MeowOnlineShop
             else
             {
                 object unownedAvatar = stateAvatarField?.GetValue(null);
-                if (unownedAvatar != null &&
-                    !MayPreserveHostMigrationAvatar(unownedAvatar))
+                if (unownedAvatar != null && MP.IsInMultiplayer)
                 {
                     ClearLocalViewOnly();
                 }
@@ -2152,7 +2369,6 @@ namespace MP_MeowOnlineShop
         private static void EnsureLocalAvatarView(string source)
         {
             if (!MP.IsInMultiplayer || !Active ||
-                !HasControlledAvatars() ||
                 stateAvatarField == null || avatarPawnField == null)
                 return;
 
@@ -2160,8 +2376,7 @@ namespace MP_MeowOnlineShop
             if (!IsExclusiveLocalOwnership(state))
             {
                 object unownedAvatar = stateAvatarField.GetValue(null);
-                if (unownedAvatar != null &&
-                    !MayPreserveHostMigrationAvatar(unownedAvatar))
+                if (unownedAvatar != null)
                 {
                     ClearLocalViewOnly();
                 }
@@ -2200,35 +2415,14 @@ namespace MP_MeowOnlineShop
                 return;
             }
 
-            // Joining clients must never inherit the host's serialized/static
-            // Perspective Shift singleton. Preserve an unregistered Avatar only
-            // on the hosting peer, briefly, so UpdatePhysics can migrate a save
-            // that was switched from single-player to Multiplayer.
-            if (MayPreserveHostMigrationAvatar(previousAvatar))
-                stateAvatarField.SetValue(null, previousAvatar);
-            else
-                stateAvatarField?.SetValue(null, null);
-        }
-
-        private static bool MayPreserveHostMigrationAvatar(object avatar)
-        {
-            if (!MP.IsHosting || MP.IsExecutingSyncCommand || avatar == null ||
-                avatarPawnField == null)
-            {
-                return false;
-            }
-
-            Pawn pawn = avatarPawnField.GetValue(avatar) as Pawn;
-            PerspectiveShiftMpComponent component = CurrentComponent();
-            return pawn != null && component != null &&
-                   component.CanMigrateSinglePlayerAvatar && !pawn.Dead && !pawn.Downed &&
-                   component.ForPawn(pawn) == null;
+            stateAvatarField?.SetValue(null, null);
         }
 
         private static bool IsExclusiveLocalOwnership(
             PerspectiveShiftControlledAvatar state)
         {
             if (state == null || state.pawn == null ||
+                state.ownerPlayerId < 0 || state.ownerPlayerId != LocalPlayerId() ||
                 !string.Equals(state.owner, MP.PlayerName, StringComparison.Ordinal))
             {
                 return false;
@@ -2487,6 +2681,12 @@ namespace MP_MeowOnlineShop
         {
             _ownerStateCacheFrame = -1;
             _ownerStateCache = null;
+        }
+
+        internal static void InvalidateOwnershipCaches()
+        {
+            InvalidateControlledCache();
+            InvalidateLocalAvatarCache();
         }
 
         private static bool KeyDown(string defName, bool eventHeld)

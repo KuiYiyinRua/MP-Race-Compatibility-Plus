@@ -93,6 +93,28 @@ namespace Meow.RaceTrioCompatibility
             {
                 MonolynUi.Apply(new Harmony("meow.trio.monolyn-ui"));
                 Determinism.Monolyn(new Harmony("meow.trio.monolyn-random"));
+                MonolynActions.Apply(new Harmony("meow.trio.monolyn-actions"));
+                MonolynCodex.Apply(new Harmony("meow.trio.monolyn-codex"));
+                MonolynState.Apply(new Harmony("meow.trio.monolyn-state"));
+                MonolynSight.Apply(new Harmony("meow.trio.monolyn-sight"));
+                MonolynEffects.Apply(new Harmony("meow.trio.monolyn-effects"));
+                MonolynDelayed.Apply(new Harmony("meow.trio.monolyn-delayed"));
+                MonolynCoverage.Apply(new Harmony("meow.trio.monolyn-coverage"));
+                MonolynOrdering.Apply(new Harmony("meow.trio.monolyn-ordering"));
+                MonolynSettings.Apply(new Harmony("meow.trio.monolyn-settings"));
+                MonolynRetainedRoots.Apply(new Harmony("meow.trio.monolyn-retained-roots"));
+                MonolynLanternCanonical.Initialize();
+                MonolynFlareCache.Apply(new Harmony("meow.trio.monolyn-flare-cache"));
+                MonolynSwapTarget.Apply(new Harmony("meow.trio.monolyn-swap-target"));
+                MonolynEyeRenderRand.Apply(new Harmony("meow.trio.monolyn-eye-render-rand"));
+                MonolynSchedule.Apply(new Harmony("meow.trio.monolyn-schedule"));
+                MonolynRoots.Apply(new Harmony("meow.trio.monolyn-roots"));
+                MonolynProjectiles.Apply(new Harmony("meow.trio.monolyn-projectiles"));
+                MonolynProgress.Apply(new Harmony("meow.trio.monolyn-progress"));
+                MonolynAbilityBoundary.Apply(new Harmony("meow.trio.monolyn-ability-boundary"));
+                MonolynVerbs.Apply(new Harmony("meow.trio.monolyn-verbs"));
+                MonolynStages.Apply(new Harmony("meow.trio.monolyn-stages"));
+                MonolynLanternCache.Apply(new Harmony("meow.trio.monolyn-lantern-cache"));
                 // Replay the entire activation callback, including PowerOn/PowerOff.
                 Register("ASEL.MonolynConsumer", "<GetGizmos>b__20_1");
                 Register("ASEL.AstralBeacon", "<GetGizmos>b__11_1");

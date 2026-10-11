@@ -38,6 +38,7 @@ public static class MilianModification_StateSync
 
     private static MethodInfo _addSlotsToUninstallRecipeSync;
     private static MethodInfo _batteryChargeOnce;
+    private static FieldInfo _permitCaller, _permitMap, _permitFaction, _permitFree;
     private static MethodInfo _permitOrderForceTarget;
     private static MethodInfo _permitCallResourcesToCaravan;
 
@@ -86,6 +87,12 @@ public static class MilianModification_StateSync
             _researchBillSavedField = AccessTools.DeclaredField(_gcType, "researchBillSaved");
             _researchHistoryRecordField = AccessTools.DeclaredField(_gcType, "researchHistoryRecord");
             _minResearchSkillField = AccessTools.DeclaredField(_gcType, "minResearchSkill");
+            if (_tmpResourcesField == null || _researchBillSavedField == null || _researchHistoryRecordField == null || _minResearchSkillField == null ||
+                AccessTools.Property(_itabResearchType, "Resources") == null || AccessTools.Property(typeof(ITab), "SelThing") == null ||
+                AccessTools.Method(_itabResearchType, "GetResearchBill", Type.EmptyTypes) == null ||
+                AccessTools.Method(_itabResearchType, "RemoveResearchBills", Type.EmptyTypes) == null ||
+                AccessTools.Method(_gcType, "GenerateRecipeDef", new[] { typeof(RecipeDef).MakeByRefType() }) == null)
+                throw new MissingMemberException("Milian research atomic boundary");
             _addSlotsToUninstallRecipeSync = AccessTools.Method(
                 _utilType,
                 "AddSlotsToUninstallRecipeSync",
@@ -100,13 +107,23 @@ public static class MilianModification_StateSync
                 "CallResourcesToCaravan",
                 new[] { typeof(Pawn), typeof(Faction), typeof(bool) });
 
+            _permitCaller = AccessTools.Field(_permitType, "caller");
+            _permitMap = AccessTools.Field(_permitType, "map");
+            _permitFaction = AccessTools.DeclaredField(_permitType, "faction");
+            _permitFree = AccessTools.Field(_permitType, "free");
+            if (_permitCaller?.FieldType != typeof(Pawn) || _permitMap?.FieldType != typeof(Map) ||
+                _permitFaction?.FieldType != typeof(Faction) || _permitFree?.FieldType != typeof(bool) ||
+                _permitOrderForceTarget == null || _permitCallResourcesToCaravan == null)
+                throw new MissingMemberException("Milian royal permit context");
+
             RegisterSyncMethods();
             PatchUiBoundaries();
+            Log.Message(LogTag + " REQUIRED_TARGETS_OK atomic research submission and UI rollback");
             Log.Message(LogTag + " active: batch uninstall, research UI, battery, royal permit.");
         }
         catch (Exception e)
         {
-            Log.Error(LogTag + " DoPatch failed: " + e);
+            Log.Error(LogTag + " REQUIRED_TARGET_FAILED DoPatch: " + e);
         }
     }
 
@@ -118,9 +135,9 @@ public static class MilianModification_StateSync
         CompatUtility.TryRegisterSyncMethod(AccessTools.Method(
             typeof(MilianModification_StateSync),
             nameof(SyncedSetMinResearchSkill)));
-        CompatUtility.TryRegisterSyncMethod(AccessTools.Method(
+        MP.RegisterSyncMethod(AccessTools.Method(
             typeof(MilianModification_StateSync),
-            nameof(SyncedSetTmpResources)));
+            nameof(SyncedSubmitResearchBill)));
         CompatUtility.TryRegisterSyncMethod(AccessTools.Method(
             typeof(MilianModification_StateSync),
             nameof(SyncedSaveResearchBill)));
@@ -274,15 +291,15 @@ public static class MilianModification_StateSync
             return 0;
         Harmony.Patch(
             target,
-            postfix: new HarmonyMethod(AccessTools.Method(
+            prefix: new HarmonyMethod(AccessTools.Method(
                 typeof(MilianModification_StateSync),
-                nameof(GetResearchBillPostfix))));
+                nameof(GetResearchBillPrefix))));
         return 1;
     }
 
     private static bool ShouldIntercept()
     {
-        return MP.IsInMultiplayer && !MP.IsExecutingSyncCommand;
+        return MP.IsInMultiplayer && MP.InInterface && !MP.IsExecutingSyncCommand;
     }
 
     private static bool BatchUninstallPrefix(Pawn pawn, object slots)
@@ -337,7 +354,10 @@ public static class MilianModification_StateSync
             return;
         int current = (int)_minResearchSkillField.GetValue(gc);
         if (current != __state)
+        {
+            _minResearchSkillField.SetValue(gc, __state);
             SyncedSetMinResearchSkill(current);
+        }
     }
 
     public static void SyncedSetMinResearchSkill(int value)
@@ -370,7 +390,7 @@ public static class MilianModification_StateSync
         if (gc == null || !(_researchBillSavedField?.GetValue(gc) is IDictionary dict))
             return;
 
-        foreach (object keyObject in dict.Keys)
+        foreach (object keyObject in dict.Keys.Cast<object>().ToArray())
         {
             string key = keyObject as string;
             if (string.IsNullOrEmpty(key) || __state.Contains(key))
@@ -380,69 +400,66 @@ public static class MilianModification_StateSync
                 string[] defNames;
                 int[] counts;
                 BillToArrays(bill, out defNames, out counts);
+                dict.Remove(key);
                 SyncedSaveResearchBill(key, defNames, counts);
             }
         }
     }
 
-    private static void GetResearchBillPostfix()
+    private static bool GetResearchBillPrefix(object __instance)
     {
-        if (!ShouldIntercept() || _tmpResourcesField == null)
-            return;
-        object gc = GetGameComp();
-        if (gc == null || !(_tmpResourcesField.GetValue(gc) is IDictionary dict))
-            return;
-
-        var defNames = new List<string>();
-        var counts = new List<int>();
-        foreach (DictionaryEntry entry in dict)
-        {
-            if (entry.Key is ThingDef def)
-            {
-                defNames.Add(def.defName);
-                counts.Add(Convert.ToInt32(entry.Value));
-            }
-        }
-        SyncedSetTmpResources(defNames.ToArray(), counts.ToArray());
+        if (!ShouldIntercept()) return true;
+        var table = AccessTools.Property(typeof(ITab), "SelThing").GetValue(__instance) as Building_WorkTable;
+        var resources = (Dictionary<ThingDef, int>)AccessTools.Property(_itabResearchType, "Resources").GetValue(null);
+        var entries = resources.ToArray();
+        SyncedSubmitResearchBill(table, entries.Select(e => e.Key.defName).ToArray(), entries.Select(e => e.Value).ToArray());
+        return false;
     }
 
-    public static void SyncedSetTmpResources(string[] defNames, int[] counts)
+    public static void SyncedSubmitResearchBill(Building_WorkTable table, string[] defNames, int[] counts)
     {
-        if (_tmpResourcesField == null || defNames == null || counts == null)
-            return;
-        object gc = GetGameComp();
-        if (gc == null || !(_tmpResourcesField.GetValue(gc) is IDictionary dict))
-            return;
-
-        dict.Clear();
-        int len = Math.Min(defNames.Length, counts.Length);
-        for (int i = 0; i < len; i++)
+        if (table == null || !table.Spawned || table.Destroyed || table.def.thingClass.FullName != "MilianModification.Building_MilianComponentTable" ||
+            defNames == null || counts == null || defNames.Length != counts.Length) return;
+        var resources = new Dictionary<ThingDef, int>();
+        for (int i = 0; i < defNames.Length; i++)
         {
-            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(defNames[i]);
-            if (def != null)
-                dict[def] = counts[i];
+            var def = DefDatabase<ThingDef>.GetNamedSilentFail(defNames[i]);
+            if (def == null || counts[i] < 0 || resources.ContainsKey(def)) return;
+            resources.Add(def, counts[i]);
         }
+        object gc = GetGameComp();
+        if (gc == null) return;
+        // Preserve the native operation order without relying on another player's selection.
+        var tab = Activator.CreateInstance(_itabResearchType);
+        AccessTools.Method(_itabResearchType, "RemoveResearchBills", Type.EmptyTypes).Invoke(tab, null);
+        _tmpResourcesField.SetValue(gc, resources);
+        object[] args = { null };
+        AccessTools.Method(_gcType, "GenerateRecipeDef", new[] { typeof(RecipeDef).MakeByRefType() }).Invoke(gc, args);
+        table.BillStack.AddBill(BillUtility.MakeNewBill((RecipeDef)args[0]));
     }
 
-    private static void StoredBillPrefix(string key, ref bool __state)
+    private static void StoredBillPrefix(string key, ref object __state)
     {
-        __state = false;
+        __state = null;
         if (!ShouldIntercept() || string.IsNullOrEmpty(key))
             return;
         object gc = GetGameComp();
         if (gc != null && _researchBillSavedField?.GetValue(gc) is IDictionary dict)
-            __state = dict.Contains(key);
+            __state = dict.Contains(key) ? dict[key] : null;
     }
 
-    private static void StoredBillPostfix(string key, bool __state)
+    private static void StoredBillPostfix(string key, object __state)
     {
-        if (!__state || !ShouldIntercept() || string.IsNullOrEmpty(key))
+        if (__state == null || !ShouldIntercept() || string.IsNullOrEmpty(key))
             return;
         object gc = GetGameComp();
         if (gc == null || !(_researchBillSavedField?.GetValue(gc) is IDictionary dict))
             return;
         if (!dict.Contains(key))
+        {
+            dict[key] = __state;
             SyncedRemoveResearchBill(key);
+        }
     }
 
     public static void SyncedRemoveResearchBill(string key)
@@ -450,25 +467,28 @@ public static class MilianModification_StateSync
         RemoveDictionaryKey(_researchBillSavedField, key);
     }
 
-    private static void HistoryRecordPrefix(string key, ref bool __state)
+    private static void HistoryRecordPrefix(string key, ref object __state)
     {
-        __state = false;
+        __state = null;
         if (!ShouldIntercept() || string.IsNullOrEmpty(key))
             return;
         object gc = GetGameComp();
         if (gc != null && _researchHistoryRecordField?.GetValue(gc) is IDictionary dict)
-            __state = dict.Contains(key);
+            __state = dict.Contains(key) ? dict[key] : null;
     }
 
-    private static void HistoryRecordPostfix(string key, bool __state)
+    private static void HistoryRecordPostfix(string key, object __state)
     {
-        if (!__state || !ShouldIntercept() || string.IsNullOrEmpty(key))
+        if (__state == null || !ShouldIntercept() || string.IsNullOrEmpty(key))
             return;
         object gc = GetGameComp();
         if (gc == null || !(_researchHistoryRecordField?.GetValue(gc) is IDictionary dict))
             return;
         if (!dict.Contains(key))
+        {
+            dict[key] = __state;
             SyncedRemoveResearchHistory(key);
+        }
     }
 
     public static void SyncedRemoveResearchHistory(string key)
@@ -522,38 +542,54 @@ public static class MilianModification_StateSync
         RoyalTitlePermitWorker worker = __instance as RoyalTitlePermitWorker;
         if (worker?.def == null)
             return true;
-        Pawn caller = Traverse.Create(worker).Field("caller").GetValue<Pawn>();
-        if (caller == null || caller.MapHeld == null)
-            return true;
-        bool free = Traverse.Create(worker).Field("free").GetValue<bool>();
-        SyncedPermitOrderForceTarget(worker.def, caller, target, free);
+        Pawn caller = (Pawn)_permitCaller.GetValue(worker);
+        Map map = (Map)_permitMap.GetValue(worker);
+        Faction faction = (Faction)_permitFaction.GetValue(worker);
+        if (caller == null || map == null || faction == null)
+            return false;
+        bool free = (bool)_permitFree.GetValue(worker);
+        SyncedPermitOrderForceTarget(worker.def, caller, map, faction, target, free);
         return false;
     }
 
     public static void SyncedPermitOrderForceTarget(
         RoyalTitlePermitDef def,
         Pawn caller,
+        Map map,
+        Faction faction,
         LocalTargetInfo target,
         bool isFree)
     {
-        if (def == null || caller == null || caller.MapHeld == null ||
+        if (def == null || caller == null || map == null || faction == null ||
+            !target.Cell.InBounds(map) || caller.royalty?.GetPermit(def, faction) == null ||
             _permitOrderForceTarget == null)
             return;
         try
         {
             RoyalTitlePermitWorker worker = def.Worker;
-            if (worker == null)
+            if (worker == null || !_permitType.IsInstanceOfType(worker))
                 return;
-            Faction faction = FindPermitFaction(def, caller);
-            SetPermitContext(worker, caller, caller.MapHeld, faction, isFree);
-            CompatUtility.PushRand();
+            // Def.Worker is shared with local targeting. Restore its UI context after replay.
+            object oldCaller = _permitCaller.GetValue(worker);
+            object oldMap = _permitMap.GetValue(worker);
+            object oldFaction = _permitFaction.GetValue(worker);
+            object oldFree = _permitFree.GetValue(worker);
             try
             {
-                _permitOrderForceTarget.Invoke(worker, new object[] { target });
+                _permitCaller.SetValue(worker, caller);
+                _permitMap.SetValue(worker, map);
+                _permitFaction.SetValue(worker, faction);
+                _permitFree.SetValue(worker, isFree);
+                CompatUtility.PushRand();
+                try { _permitOrderForceTarget.Invoke(worker, new object[] { target }); }
+                finally { CompatUtility.PopRand(); }
             }
             finally
             {
-                CompatUtility.PopRand();
+                _permitCaller.SetValue(worker, oldCaller);
+                _permitMap.SetValue(worker, oldMap);
+                _permitFaction.SetValue(worker, oldFaction);
+                _permitFree.SetValue(worker, oldFree);
             }
         }
         catch (Exception e)
@@ -561,7 +597,6 @@ public static class MilianModification_StateSync
             Log.Error(LogTag + " SyncedPermitOrderForceTarget failed: " + e.Message);
         }
     }
-
     private static bool PermitCallResourcesPrefix(
         object __instance,
         Pawn caller,
@@ -591,7 +626,7 @@ public static class MilianModification_StateSync
             RoyalTitlePermitWorker worker = def.Worker;
             if (worker == null)
                 return;
-            SetPermitContext(worker, caller, caller.MapHeld, faction, isFree);
+            // Caravan executor takes its complete context directly as arguments.
             CompatUtility.PushRand();
             try
             {
@@ -607,53 +642,6 @@ public static class MilianModification_StateSync
         catch (Exception e)
         {
             Log.Error(LogTag + " SyncedPermitCallResourcesToCaravan failed: " + e.Message);
-        }
-    }
-
-    private static Faction FindPermitFaction(RoyalTitlePermitDef def, Pawn caller)
-    {
-        if (caller.royalty == null || Find.FactionManager == null)
-            return null;
-        foreach (Faction faction in Find.FactionManager.AllFactions)
-        {
-            try
-            {
-                if (caller.royalty.HasPermit(def, faction))
-                    return faction;
-            }
-            catch
-            {
-                // A faction that cannot grant this permit is simply skipped.
-            }
-        }
-        return null;
-    }
-
-    private static void SetPermitContext(
-        RoyalTitlePermitWorker worker,
-        Pawn caller,
-        Map map,
-        Faction faction,
-        bool free)
-    {
-        TrySetField(worker, "caller", caller);
-        TrySetField(worker, "map", map);
-        TrySetField(worker, "instigator", caller);
-        TrySetField(worker, "faction", faction);
-        TrySetField(worker, "_faction", faction);
-        TrySetField(worker, "calledFaction", faction);
-        TrySetField(worker, "free", free);
-    }
-
-    private static void TrySetField(object target, string name, object value)
-    {
-        try
-        {
-            Traverse.Create(target).Field(name).SetValue(value);
-        }
-        catch
-        {
-            // Missing optional fields are ignored.
         }
     }
 

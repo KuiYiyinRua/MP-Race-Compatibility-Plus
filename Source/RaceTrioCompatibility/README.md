@@ -12,6 +12,8 @@ UI field registrations are paired with WatchBegin/WatchEnd at their actual editi
 
 Validation scripts and immutable per-run logs are under `BuildValidation/RaceTrio_20260909`; see the matching document under `Docs` for the tested scope and limitations.
 
+The 2026-10-11 Monolyn functional compatibility update is documented in `Docs/Monolyn-Functional-Compatibility-20261011.md`. Its exact installed-binary checks and candidate archives are under `BuildValidation/MonolynFull_20261011`. The current user scope excludes edge cases and exhaustive stress testing; consult the dated release record for the final artifact and actual runtime results.
+
 ## 1.1.3 compatibility additions (2026-09-10)
 
 Includes the earlier aid-event, brothel-price and selection-boost fixes. Additional synchronized boundaries cover scale thresholds and regional focus, weapon transformation, flight mode, skill absorption and XP-canister settings/actions, energy-tower battery selections, Nira glow settings, the seven storyteller settings, and manual work priorities. Holo-dice daily refresh no longer mutates shared state from drawing the UI; its existing simulation tick remains responsible for refresh.
