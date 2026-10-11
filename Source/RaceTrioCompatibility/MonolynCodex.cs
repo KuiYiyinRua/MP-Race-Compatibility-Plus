@@ -46,6 +46,8 @@ namespace Meow.RaceTrioCompatibility
             ensureSync = MP.RegisterSyncMethod(typeof(MonolynCodex), nameof(EnsureMenuState));
             harmony.Patch(AccessTools.DeclaredMethod(comp, "Apply", new[] { typeof(LocalTargetInfo), typeof(LocalTargetInfo) }),
                 transpiler: new HarmonyMethod(typeof(MonolynCodex), nameof(MenuStateBoundary)));
+            harmony.Patch(AccessTools.DeclaredMethod(comp, "Apply", new[] { typeof(LocalTargetInfo), typeof(LocalTargetInfo) }),
+                transpiler: new HarmonyMethod(typeof(MonolynCodex), nameof(MenuWindowBoundary)));
             Method(outer, "<Apply>b__0");
             Method(dogma, "<Apply>b__3");
             MP.RegisterSyncDelegate(comp, outer.Name, "<Apply>b__0", new[] { "wearer", "codex", "<>4__this" })
@@ -57,6 +59,8 @@ namespace Meow.RaceTrioCompatibility
             harmony.Patch(Method(outer, "<Apply>b__0"), prefix: new HarmonyMethod(typeof(MonolynCodex), nameof(StoreState)));
             harmony.Patch(Method(dogma, "<Apply>b__3"), prefix: new HarmonyMethod(typeof(MonolynCodex), nameof(DogmaState)));
             var mech = Require("ASEL.CompAbilityEffect_WeaponCodexMech");
+            harmony.Patch(AccessTools.DeclaredMethod(mech, "Apply", new[] { typeof(LocalTargetInfo), typeof(LocalTargetInfo) }),
+                transpiler: new HarmonyMethod(typeof(MonolynCodex), nameof(MenuWindowBoundary)));
             var mechOuter = Require(mech.FullName + "+<>c__DisplayClass4_0");
             var mechChoice = Require(mech.FullName + "+<>c__DisplayClass4_1");
             Field(mechOuter, "wearer"); Field(mechOuter, "<>4__this");
@@ -121,6 +125,38 @@ namespace Meow.RaceTrioCompatibility
                 yield return code;
             }
             if (replaced != 1) throw new InvalidOperationException("Native Codex menu state boundary changed: " + replaced);
+        }
+
+        static IEnumerable<CodeInstruction> MenuWindowBoundary(IEnumerable<CodeInstruction> codes)
+        {
+            int count = 0;
+            var add = AccessTools.Method(typeof(WindowStack), nameof(WindowStack.Add), new[] { typeof(Window) });
+            foreach (var code in codes)
+            {
+                if (code.Calls(add))
+                {
+                    code.opcode = OpCodes.Call;
+                    code.operand = AccessTools.Method(typeof(MonolynCodex), nameof(ShowMenu));
+                    count++;
+                }
+                yield return code;
+            }
+            if (count != 1) throw new InvalidOperationException("Native Codex window boundary changed: " + count);
+        }
+
+        static void ShowMenu(WindowStack stack, Window window)
+        {
+            if (MP.IsInMultiplayer && MP.IsExecutingSyncCommand)
+            {
+                // MP's debug WindowStack interceptor replaces ordinary menu choices
+                // with label hashes. Different peer languages then replay different
+                // options. Queue only the issuer's presentation after command replay;
+                // choices use our stable SyncDelegate/TakeWeapon boundaries.
+                if (MP.IsExecutingSyncCommandIssuedBySelf)
+                    Current.Game.GetComponent<MonolynCodexMenuComponent>().Enqueue(window);
+                return;
+            }
+            stack.Add(window);
         }
 
         static Hediff AddMenuState(Pawn_HealthTracker health, HediffDef def, BodyPartRecord part,

@@ -1,8 +1,8 @@
 {
-  "release": "3.0.151",
+  "release": "3.0.152",
   "publicationDate": "2026-10-11",
   "runtimeAssemblyCount": 22,
-  "verification": "All 22 current projects compile and match deployed type/field/method-body structure. Exact archived runtime DLLs retained. Monolyn MN44 and MN50 targeted tests passed; Nivarian prior exact-candidate tests are documented separately. No new combined full-loadout soak is claimed.",
+  "verification": "All 22 current projects compile and match deployed type/field/method-body structure. Exact archived runtime DLLs retained. Candidate02 compile and 516 static checks passed; runtime verification incomplete after explicit user cancellation; no smoke or soak pass claimed. No new combined full-loadout soak is claimed.",
   "assemblies": [
     {
       "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
@@ -73,8 +73,8 @@
     {
       "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-      "version": "1.1.8.0",
-      "sha256": "2AB75D0876B1D2053B51A298BC89C8BC135C60ED5F8C029A231CFE93543B3122"
+      "version": "1.1.9.0",
+      "sha256": "4DA08640DFF617BF99D51E28E47ECED6CBBFB4BE3CA7152C2A07E05A48CCDB0A"
     },
     {
       "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
@@ -121,8 +121,8 @@
     {
       "project": "Source/TaleNivarianCompatibility/TaleNivarianCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
-      "version": "1.1.6.0",
-      "sha256": "24992CCB026620515AC51824B27D3A7BB5A0FB711B3040B78F9B6B266779724D"
+      "version": "1.1.7.0",
+      "sha256": "F5B2C6AFF4D01B4E247350336CEE1F392A4754BCE494EA43A7539124F203258B"
     },
     {
       "project": "Source/TurretCombatSleep/TurretCombatSleep.csproj",
@@ -185,8 +185,8 @@
     },
     {
       "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-      "size": 221184,
-      "sha256": "2AB75D0876B1D2053B51A298BC89C8BC135C60ED5F8C029A231CFE93543B3122"
+      "size": 223744,
+      "sha256": "4DA08640DFF617BF99D51E28E47ECED6CBBFB4BE3CA7152C2A07E05A48CCDB0A"
     },
     {
       "path": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
@@ -206,7 +206,7 @@
     {
       "path": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
       "size": 244224,
-      "sha256": "24992CCB026620515AC51824B27D3A7BB5A0FB711B3040B78F9B6B266779724D"
+      "sha256": "F5B2C6AFF4D01B4E247350336CEE1F392A4754BCE494EA43A7539124F203258B"
     },
     {
       "path": "1.6/Assemblies/Meow.TurretCombatSleep.dll",
@@ -230,8 +230,8 @@
     },
     {
       "path": "About/About.xml",
-      "size": 6876,
-      "sha256": "2E045AFE33CF4D4CDDB067E778A9E3026A4F21B35BC504B0D0FF4520A168B012"
+      "size": 7220,
+      "sha256": "7AD61CD709D7363FAE6AC70E2EF946A440410ADD7E06A2C112BD61EFA204DEEE"
     },
     {
       "path": "About/Preview.png",
@@ -270,8 +270,8 @@
     },
     {
       "path": "Patches/Monolyn-Definitions.xml",
-      "size": 1401,
-      "sha256": "8207A5E6A6ECFF7F5C0581EFF29137242B85597B476BFEAB720F11AE6EA6BF9C"
+      "size": 2500,
+      "sha256": "45BD1F2C20D1404EA2D269F42D79292C5777F5D93E37188F18D90935F476154A"
     },
     {
       "path": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll",
@@ -306,15 +306,10 @@
   ],
   "previousReleaseMetadata": {
     "release": "3.0.151",
+    "publicationDate": "2026-10-11",
     "runtimeAssemblyCount": 22,
-    "verification": "Exact core candidate F4B0FC4A2BE8143C79487E80790A4930C95DB48B03A7C56A4F19670BEC11B7C3 passed single hosted Multiplayer only, per user scope. Two-map null-pocket-map plus Working-arrival regression: 12 native Wyvern/Harrier passenger round trips, 10000-world-tick soak, join-point save. Latest frozen 320-mod replay: original map 2 Wyvern3748879 and Harrier76031 queues cleared, both completed native passenger world round trips, 1000-world-tick soak and join-point save. Full replay used main-thread LoadingLongEvent only, preserving native asynchronous scene transition, to avoid background graphic-loading crash. Original save unchanged; no two-peer acceptance claimed. Other modules inherited; all peers must update identically and fully restart.",
+    "verification": "All 22 current projects compile and match deployed type/field/method-body structure. Exact archived runtime DLLs retained. Monolyn MN44 and MN50 targeted tests passed; Nivarian prior exact-candidate tests are documented separately. No new combined full-loadout soak is claimed.",
     "assemblies": [
-      {
-        "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
-        "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll",
-        "version": "3.0.151.0",
-        "sha256": "F4B0FC4A2BE8143C79487E80790A4930C95DB48B03A7C56A4F19670BEC11B7C3"
-      },
       {
         "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
         "destination": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
@@ -352,6 +347,12 @@
         "sha256": "AED6CD02B069C9059E135A09966835680722D29E8268526FE4D112F3CE7237E2"
       },
       {
+        "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
+        "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+        "version": "3.0.151.0",
+        "sha256": "822E4E292049BFFC8FEE3EF65A206246F44B5DAF2980329384862B21C325F56D"
+      },
+      {
         "project": "Source/MultifactionStoryCompatibility/MultifactionStoryCompatibility.csproj",
         "destination": "1.6/Assemblies/Meow.MultifactionStory.dll",
         "version": "1.0.0.0",
@@ -378,8 +379,8 @@
       {
         "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
         "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-        "version": "1.1.7.0",
-        "sha256": "38338B32C4B955628E0FD8A9CE9FADFCFFF34A700A58DAB5133BF1D6467EE0CF"
+        "version": "1.1.8.0",
+        "sha256": "2AB75D0876B1D2053B51A298BC89C8BC135C60ED5F8C029A231CFE93543B3122"
       },
       {
         "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
@@ -444,6 +445,11 @@
     ],
     "workshopFiles": [
       {
+        "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+        "size": 2104320,
+        "sha256": "822E4E292049BFFC8FEE3EF65A206246F44B5DAF2980329384862B21C325F56D"
+      },
+      {
         "path": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
         "size": 58880,
         "sha256": "9B6C9FFE263933B3118D57BC46BE194E64381FBA00544ADBDBCCCD0C66F2EB4D"
@@ -485,8 +491,8 @@
       },
       {
         "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-        "size": 157696,
-        "sha256": "38338B32C4B955628E0FD8A9CE9FADFCFFF34A700A58DAB5133BF1D6467EE0CF"
+        "size": 221184,
+        "sha256": "2AB75D0876B1D2053B51A298BC89C8BC135C60ED5F8C029A231CFE93543B3122"
       },
       {
         "path": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
@@ -519,11 +525,6 @@
         "sha256": "D0515F55DBB82419B8E8BC2FA00BECC7B0FF802422DE8AFBCE1A6DEF5390522D"
       },
       {
-        "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
-        "size": 2103808,
-        "sha256": "F4B0FC4A2BE8143C79487E80790A4930C95DB48B03A7C56A4F19670BEC11B7C3"
-      },
-      {
         "path": "1.6/Patches/CommsConsole_MeowPatch.xml",
         "size": 394,
         "sha256": "D1D015F07FD04C282C3CC9989BD5CD60E89DAE47B0A6072C477729A4264C4584"
@@ -535,8 +536,8 @@
       },
       {
         "path": "About/About.xml",
-        "size": 6037,
-        "sha256": "7E1DEF336ADE6E6D3BA29FDEA340C2DE379B90215969D0F304265B5365F01FC7"
+        "size": 6876,
+        "sha256": "2E045AFE33CF4D4CDDB067E778A9E3026A4F21B35BC504B0D0FF4520A168B012"
       },
       {
         "path": "About/Preview.png",
@@ -569,6 +570,16 @@
         "sha256": "53849659F7B0951CF0CB71B0D4B2C6FF22F91B86B4D57A7939A7EE881AB414B4"
       },
       {
+        "path": "Patches/MilianModification-DailyFurniture-BlueprintIcon.xml",
+        "size": 404,
+        "sha256": "33921DBB07C14D8538C4014FB89E3362CBDF8AAC60FB886F248336279FF7BD15"
+      },
+      {
+        "path": "Patches/Monolyn-Definitions.xml",
+        "size": 1401,
+        "sha256": "8207A5E6A6ECFF7F5C0581EFF29137242B85597B476BFEAB720F11AE6EA6BF9C"
+      },
+      {
         "path": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll",
         "size": 35840,
         "sha256": "E0FE7841F014A99AD2B60FA0D42EFE349581196F4C14F34DD1A5400F2C40EE6F"
@@ -599,49 +610,345 @@
         "sha256": "2DB6E00E15927A2FFC35EA077717A1A39994BCE2983A991121789AD14D7518CA"
       }
     ],
-    "previousVerification": "22 production projects compiled and installed target IL statically inspected. New Brothel, PitGate and Ariandel fixes are runtime-unverified; Desync-376/377 unresolved. User explicitly requested deployment and publication. All peers must fully restart with identical files.",
-    "validationReport": "BuildValidation/MiliraShuttle_20261009/verification.json",
-    "priorReleaseVerification": {
-      "release": "3.0.148",
-      "verification": "Perspective Shift session ownership: exact main DLL passed one-map MP save rehosting smoke, two-map saved-game smoke, and two-map 120000-world-tick soaks with async time off and on. Three cold rejoin action/baseline stages per mode were independently checked; the original combined long-run controllers were aborted for a fixture completion-gate defect and their terminal soaks were rerun separately. See Docs/PERSPECTIVE_SHIFT_SESSION_OWNERSHIP_20261005.zh-CN.md. Other modules are inherited and were not revalidated in this task. Local deployment only; all peers must fully restart with identical files.",
-      "validationReport": "Docs/PERSPECTIVE_SHIFT_SESSION_OWNERSHIP_20261005.zh-CN.md"
-    },
-    "nivarianUpdateVerification": {
-      "date": "2026-10-11",
-      "scope": "Nivarian Race installed 20260922151508 update compatibility; two-module overlay, no core rebuild",
-      "candidate": "BuildValidation/NivarianUpdate_20261011/Candidate14",
-      "report": "Docs/Nivarian-Update-20261011.md",
-      "normal": {
-        "coldRejoins": 3,
-        "status": "PASS",
-        "soakWorldTicks": 120000,
-        "evidence": "BuildValidation/NivarianUpdate_20261011/Accepted/Normal",
-        "nativeActions": 192
+    "previousReleaseMetadata": {
+      "release": "3.0.151",
+      "runtimeAssemblyCount": 22,
+      "verification": "Exact core candidate F4B0FC4A2BE8143C79487E80790A4930C95DB48B03A7C56A4F19670BEC11B7C3 passed single hosted Multiplayer only, per user scope. Two-map null-pocket-map plus Working-arrival regression: 12 native Wyvern/Harrier passenger round trips, 10000-world-tick soak, join-point save. Latest frozen 320-mod replay: original map 2 Wyvern3748879 and Harrier76031 queues cleared, both completed native passenger world round trips, 1000-world-tick soak and join-point save. Full replay used main-thread LoadingLongEvent only, preserving native asynchronous scene transition, to avoid background graphic-loading crash. Original save unchanged; no two-peer acceptance claimed. Other modules inherited; all peers must update identically and fully restart.",
+      "assemblies": [
+        {
+          "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
+          "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+          "version": "3.0.151.0",
+          "sha256": "F4B0FC4A2BE8143C79487E80790A4930C95DB48B03A7C56A4F19670BEC11B7C3"
+        },
+        {
+          "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
+          "version": "1.0.9.0",
+          "sha256": "9B6C9FFE263933B3118D57BC46BE194E64381FBA00544ADBDBCCCD0C66F2EB4D"
+        },
+        {
+          "project": "Source/FactionDiplomacyIsolation/FactionDiplomacyIsolation.csproj",
+          "destination": "1.6/Assemblies/Meow.FactionDiplomacy.dll",
+          "version": "3.0.127.0",
+          "sha256": "1F3E936B66E64784E1146F4130C25EE142D5974022C6A4D7A66AA7D1F2291007"
+        },
+        {
+          "project": "Source/FactionPurge/FactionPurge.csproj",
+          "destination": "1.6/Assemblies/Meow.FactionPurge.dll",
+          "version": "0.1.0.0",
+          "sha256": "55BB78BDD8752BD6C7F0491CE57A51E94C1046854F365F4CE95DEBC5D4E13773"
+        },
+        {
+          "project": "Source/FactionStoryIsolation/FactionStoryIsolation.csproj",
+          "destination": "1.6/Assemblies/Meow.FactionStoryIsolation.dll",
+          "version": "0.2.1.0",
+          "sha256": "B6151F1686B78EE80802A4375148A490325CA004C61BF55E31054CFB3DE3C430"
+        },
+        {
+          "project": "Source/LatestSavePerformance/LatestSavePerformance.csproj",
+          "destination": "RavenCompatibility/Assemblies/Meow.LatestSavePerformance.dll",
+          "version": "1.0.0.0",
+          "sha256": "C45DC87345DE5A34E3EBE1C57AD6951CFDA500F1DB0EB1798705AE2654949D24"
+        },
+        {
+          "project": "Source/MeleeAnimationCompat/MeleeAnimationCompat.csproj",
+          "destination": "MeleeAnimation/Assemblies/MP_MeowOnlineShop.MeleeAnimation.dll",
+          "version": "1.0.0.0",
+          "sha256": "AED6CD02B069C9059E135A09966835680722D29E8268526FE4D112F3CE7237E2"
+        },
+        {
+          "project": "Source/MultifactionStoryCompatibility/MultifactionStoryCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.MultifactionStory.dll",
+          "version": "1.0.0.0",
+          "sha256": "1F84E635663468F2989734403C74522346F31A258767273371E1635CC068243F"
+        },
+        {
+          "project": "Source/NivarianFocusCompatibility/NivarianFocusCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.NivarianFocusCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "91171686F4EF75D98C1AA2D70A43675AA334E2DB67CF0BDE250CDCF12FF8A8E2"
+        },
+        {
+          "project": "Source/ParallelRenderCompatibility/ParallelRenderCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.ParallelRenderCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "5637A9D4B0BF417A79207CA5572F5A10150AEF6E8909FF57909F27FF477AE09F"
+        },
+        {
+          "project": "Source/PerformanceCompatibility/PerformanceCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.PerformanceCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "67A57883DA276ACDAE04671B094394A9A87901C6CCEF9C90B16458BBBB24F4D4"
+        },
+        {
+          "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
+          "version": "1.1.7.0",
+          "sha256": "38338B32C4B955628E0FD8A9CE9FADFCFFF34A700A58DAB5133BF1D6467EE0CF"
+        },
+        {
+          "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
+          "version": "1.0.1.0",
+          "sha256": "5CE407E9C4D636504B172DA3950A38742319C7695959B2237D87B737EBF2391F"
+        },
+        {
+          "project": "Source/RatkinUndergroundCompatibility/RatkinUndergroundCompatibility.csproj",
+          "destination": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "E0FE7841F014A99AD2B60FA0D42EFE349581196F4C14F34DD1A5400F2C40EE6F"
+        },
+        {
+          "project": "Source/RavenApparelCacheFix/RavenApparelCacheFix.csproj",
+          "destination": "RavenCompatibility/Assemblies/Meow.RavenApparelCacheFix.dll",
+          "version": "1.0.0.0",
+          "sha256": "606E5AFC70CF70B0EE38FB371D2F7DB04F7A7E7AD516D9B2A167612350E91C0E"
+        },
+        {
+          "project": "Source/RavenCompatibility/RavenCompatibility.csproj",
+          "destination": "RavenCompatibility/Assemblies/Meow.RavenCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "FAE204987162952D0206D0E6916D64A6ECDFF7869095A24B23609F1BE769CE40"
+        },
+        {
+          "project": "Source/RavenIndustryOptimization/RavenIndustryOptimization.csproj",
+          "destination": "RavenCompatibility/Assemblies/Meow.RavenIndustryOptimization.dll",
+          "version": "1.0.0.0",
+          "sha256": "2DB6E00E15927A2FFC35EA077717A1A39994BCE2983A991121789AD14D7518CA"
+        },
+        {
+          "project": "Source/RjwInfrastructureCompatibility/RjwInfrastructureCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.RjwInfrastructure.dll",
+          "version": "1.0.0.0",
+          "sha256": "711B9083C98A218E8D70292D1AB62EEDF641D3C6E819CCAE10D3361F4D15E93C"
+        },
+        {
+          "project": "Source/SpecialPawnIdeologyCompatibility/SpecialPawnIdeologyCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.SpecialPawnIdeologyCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "0BB54615EB6513BEEE557BF3B2E93389E6E4A87D2E2B4F38F4B19AA9055950D5"
+        },
+        {
+          "project": "Source/TaleNivarianCompatibility/TaleNivarianCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
+          "version": "1.1.6.0",
+          "sha256": "24992CCB026620515AC51824B27D3A7BB5A0FB711B3040B78F9B6B266779724D"
+        },
+        {
+          "project": "Source/TurretCombatSleep/TurretCombatSleep.csproj",
+          "destination": "1.6/Assemblies/Meow.TurretCombatSleep.dll",
+          "version": "1.5.1.0",
+          "sha256": "28F5160B8F4DC76759239E591AE3512AF18E1729E66FC81D9F5921F15F845ADF"
+        },
+        {
+          "project": "Source/WolfeinAchtungCompatibility/WolfeinAchtungCompatibility.csproj",
+          "destination": "1.6/Assemblies/Meow.WolfeinAchtungCompatibility.dll",
+          "version": "1.0.0.0",
+          "sha256": "D0515F55DBB82419B8E8BC2FA00BECC7B0FF802422DE8AFBCE1A6DEF5390522D"
+        }
+      ],
+      "workshopFiles": [
+        {
+          "path": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
+          "size": 58880,
+          "sha256": "9B6C9FFE263933B3118D57BC46BE194E64381FBA00544ADBDBCCCD0C66F2EB4D"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.FactionDiplomacy.dll",
+          "size": 32768,
+          "sha256": "1F3E936B66E64784E1146F4130C25EE142D5974022C6A4D7A66AA7D1F2291007"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.FactionPurge.dll",
+          "size": 37888,
+          "sha256": "55BB78BDD8752BD6C7F0491CE57A51E94C1046854F365F4CE95DEBC5D4E13773"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.FactionStoryIsolation.dll",
+          "size": 15360,
+          "sha256": "B6151F1686B78EE80802A4375148A490325CA004C61BF55E31054CFB3DE3C430"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.MultifactionStory.dll",
+          "size": 23552,
+          "sha256": "1F84E635663468F2989734403C74522346F31A258767273371E1635CC068243F"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.NivarianFocusCompatibility.dll",
+          "size": 16384,
+          "sha256": "91171686F4EF75D98C1AA2D70A43675AA334E2DB67CF0BDE250CDCF12FF8A8E2"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.ParallelRenderCompatibility.dll",
+          "size": 10752,
+          "sha256": "5637A9D4B0BF417A79207CA5572F5A10150AEF6E8909FF57909F27FF477AE09F"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.PerformanceCompatibility.dll",
+          "size": 16896,
+          "sha256": "67A57883DA276ACDAE04671B094394A9A87901C6CCEF9C90B16458BBBB24F4D4"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
+          "size": 157696,
+          "sha256": "38338B32C4B955628E0FD8A9CE9FADFCFFF34A700A58DAB5133BF1D6467EE0CF"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
+          "size": 27136,
+          "sha256": "5CE407E9C4D636504B172DA3950A38742319C7695959B2237D87B737EBF2391F"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.RjwInfrastructure.dll",
+          "size": 22016,
+          "sha256": "711B9083C98A218E8D70292D1AB62EEDF641D3C6E819CCAE10D3361F4D15E93C"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.SpecialPawnIdeologyCompatibility.dll",
+          "size": 12800,
+          "sha256": "0BB54615EB6513BEEE557BF3B2E93389E6E4A87D2E2B4F38F4B19AA9055950D5"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
+          "size": 244224,
+          "sha256": "24992CCB026620515AC51824B27D3A7BB5A0FB711B3040B78F9B6B266779724D"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.TurretCombatSleep.dll",
+          "size": 59392,
+          "sha256": "28F5160B8F4DC76759239E591AE3512AF18E1729E66FC81D9F5921F15F845ADF"
+        },
+        {
+          "path": "1.6/Assemblies/Meow.WolfeinAchtungCompatibility.dll",
+          "size": 7680,
+          "sha256": "D0515F55DBB82419B8E8BC2FA00BECC7B0FF802422DE8AFBCE1A6DEF5390522D"
+        },
+        {
+          "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+          "size": 2103808,
+          "sha256": "F4B0FC4A2BE8143C79487E80790A4930C95DB48B03A7C56A4F19670BEC11B7C3"
+        },
+        {
+          "path": "1.6/Patches/CommsConsole_MeowPatch.xml",
+          "size": 394,
+          "sha256": "D1D015F07FD04C282C3CC9989BD5CD60E89DAE47B0A6072C477729A4264C4584"
+        },
+        {
+          "path": "1.6/Patches/Meow_LegacyDefReferences.xml",
+          "size": 1684,
+          "sha256": "18A63BF0BF712D20F6C129038CAE432C3AEE7F088BF9221DEB97818D181ACFB2"
+        },
+        {
+          "path": "About/About.xml",
+          "size": 6037,
+          "sha256": "7E1DEF336ADE6E6D3BA29FDEA340C2DE379B90215969D0F304265B5365F01FC7"
+        },
+        {
+          "path": "About/Preview.png",
+          "size": 2374775,
+          "sha256": "4160FD8D7C1C35F8F8D881DD5C2977F231F568DE07208EB1F44FB134A18928DF"
+        },
+        {
+          "path": "About/PublishedFileId.txt",
+          "size": 10,
+          "sha256": "5AEE7BD0D26BC8243DA775B3399F9C29AF56566227588FA9EFE6351A036CD6DE"
+        },
+        {
+          "path": "Languages/ChineseSimplified/Keyed/Actions.xml",
+          "size": 375,
+          "sha256": "C1A159F20DAD5B2814E7A20C311B7CC05C0F9821F0DEAD6D5A51AF0EF0165B1F"
+        },
+        {
+          "path": "LoadFolders.xml",
+          "size": 327,
+          "sha256": "FAF20B408E1F4A6B652B505B78E111B32472F954BE7A9C24CF684534A1E82857"
+        },
+        {
+          "path": "MeleeAnimation/Assemblies/MP_MeowOnlineShop.MeleeAnimation.dll",
+          "size": 59392,
+          "sha256": "AED6CD02B069C9059E135A09966835680722D29E8268526FE4D112F3CE7237E2"
+        },
+        {
+          "path": "Patches/CommsConsole_MeowPatch.xml",
+          "size": 402,
+          "sha256": "53849659F7B0951CF0CB71B0D4B2C6FF22F91B86B4D57A7939A7EE881AB414B4"
+        },
+        {
+          "path": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll",
+          "size": 35840,
+          "sha256": "E0FE7841F014A99AD2B60FA0D42EFE349581196F4C14F34DD1A5400F2C40EE6F"
+        },
+        {
+          "path": "RatkinUnderground/Defs/Letters.xml",
+          "size": 234,
+          "sha256": "0B6E1756982FB1FE25D52584669376010560BE03A3CADCF742DBE9AC86D02632"
+        },
+        {
+          "path": "RavenCompatibility/Assemblies/Meow.LatestSavePerformance.dll",
+          "size": 8704,
+          "sha256": "C45DC87345DE5A34E3EBE1C57AD6951CFDA500F1DB0EB1798705AE2654949D24"
+        },
+        {
+          "path": "RavenCompatibility/Assemblies/Meow.RavenApparelCacheFix.dll",
+          "size": 6656,
+          "sha256": "606E5AFC70CF70B0EE38FB371D2F7DB04F7A7E7AD516D9B2A167612350E91C0E"
+        },
+        {
+          "path": "RavenCompatibility/Assemblies/Meow.RavenCompatibility.dll",
+          "size": 186368,
+          "sha256": "FAE204987162952D0206D0E6916D64A6ECDFF7869095A24B23609F1BE769CE40"
+        },
+        {
+          "path": "RavenCompatibility/Assemblies/Meow.RavenIndustryOptimization.dll",
+          "size": 31744,
+          "sha256": "2DB6E00E15927A2FFC35EA077717A1A39994BCE2983A991121789AD14D7518CA"
+        }
+      ],
+      "previousVerification": "22 production projects compiled and installed target IL statically inspected. New Brothel, PitGate and Ariandel fixes are runtime-unverified; Desync-376/377 unresolved. User explicitly requested deployment and publication. All peers must fully restart with identical files.",
+      "validationReport": "BuildValidation/MiliraShuttle_20261009/verification.json",
+      "priorReleaseVerification": {
+        "release": "3.0.148",
+        "verification": "Perspective Shift session ownership: exact main DLL passed one-map MP save rehosting smoke, two-map saved-game smoke, and two-map 120000-world-tick soaks with async time off and on. Three cold rejoin action/baseline stages per mode were independently checked; the original combined long-run controllers were aborted for a fixture completion-gate defect and their terminal soaks were rerun separately. See Docs/PERSPECTIVE_SHIFT_SESSION_OWNERSHIP_20261005.zh-CN.md. Other modules are inherited and were not revalidated in this task. Local deployment only; all peers must fully restart with identical files.",
+        "validationReport": "Docs/PERSPECTIVE_SHIFT_SESSION_OWNERSHIP_20261005.zh-CN.md"
       },
-      "async": {
-        "clientLanguage": "ChineseSimplified",
-        "soakWorldTicks": 120000,
-        "evidence": "BuildValidation/NivarianUpdate_20261011/Accepted/Async",
-        "status": "PASS",
-        "maps": 2,
-        "nativeActions": 384,
-        "guestFixture": "Test-only Raven_FusangGuard; installed Raven_FusangEliteResponse absent",
-        "coldRejoins": 3
-      },
-      "representative": {
-        "soakWorldTicks": 10000,
-        "originalMods": 247,
-        "maps": 1,
-        "status": "PASS",
-        "testOnlyLoader": "Native async scene transition preserved; data load runs on main thread; reflection-only native Managed dependency resolution",
-        "nativeActions": 48,
-        "saveSHA256": "1D593D6FE4C8ACC1EA5272088A51F42AE99AF56B1F2CCB990003DEB798239FD2",
-        "evidence": "BuildValidation/NivarianUpdate_20261011/Accepted/Representative",
-        "coldRejoins": 0
-      },
-      "testedCoreSHA256": "29888D9BD3A8821DCFBDEC963DBEB218E1C5A61B176803FA0B985A30AF509BAA",
-      "targetSHA256": "A58F00EBC704AB03163BFF94181B3C6901D2B86F9F500FB0C4D470D7A10CBFF3",
-      "notes": "Existing release/core verification history retained. Other runtime DLLs matched frozen candidates. No claim for every mod combination, absent retrieval-hound binaries, missing Raven EliteResponse, two-player-faction lifecycle, or full lent-colonist quest return."
+      "nivarianUpdateVerification": {
+        "date": "2026-10-11",
+        "scope": "Nivarian Race installed 20260922151508 update compatibility; two-module overlay, no core rebuild",
+        "candidate": "BuildValidation/NivarianUpdate_20261011/Candidate14",
+        "report": "Docs/Nivarian-Update-20261011.md",
+        "normal": {
+          "coldRejoins": 3,
+          "status": "PASS",
+          "soakWorldTicks": 120000,
+          "evidence": "BuildValidation/NivarianUpdate_20261011/Accepted/Normal",
+          "nativeActions": 192
+        },
+        "async": {
+          "clientLanguage": "ChineseSimplified",
+          "soakWorldTicks": 120000,
+          "evidence": "BuildValidation/NivarianUpdate_20261011/Accepted/Async",
+          "status": "PASS",
+          "maps": 2,
+          "nativeActions": 384,
+          "guestFixture": "Test-only Raven_FusangGuard; installed Raven_FusangEliteResponse absent",
+          "coldRejoins": 3
+        },
+        "representative": {
+          "soakWorldTicks": 10000,
+          "originalMods": 247,
+          "maps": 1,
+          "status": "PASS",
+          "testOnlyLoader": "Native async scene transition preserved; data load runs on main thread; reflection-only native Managed dependency resolution",
+          "nativeActions": 48,
+          "saveSHA256": "1D593D6FE4C8ACC1EA5272088A51F42AE99AF56B1F2CCB990003DEB798239FD2",
+          "evidence": "BuildValidation/NivarianUpdate_20261011/Accepted/Representative",
+          "coldRejoins": 0
+        },
+        "testedCoreSHA256": "29888D9BD3A8821DCFBDEC963DBEB218E1C5A61B176803FA0B985A30AF509BAA",
+        "targetSHA256": "A58F00EBC704AB03163BFF94181B3C6901D2B86F9F500FB0C4D470D7A10CBFF3",
+        "notes": "Existing release/core verification history retained. Other runtime DLLs matched frozen candidates. No claim for every mod combination, absent retrieval-hound binaries, missing Raven EliteResponse, two-player-faction lifecycle, or full lent-colonist quest return."
+      }
     }
   }
 }

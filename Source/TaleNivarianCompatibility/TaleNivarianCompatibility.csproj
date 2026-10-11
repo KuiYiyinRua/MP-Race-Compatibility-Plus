@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
-    <AssemblyName>Meow.TaleNivarianCompatibility</AssemblyName><Version>1.1.6</Version>
+    <AssemblyName>Meow.TaleNivarianCompatibility</AssemblyName><Version>1.1.7</Version>
     <GameRoot Condition="'$(GameRoot)' == ''">$(MSBuildProjectDirectory)/../../../..</GameRoot>
     <ModRoot Condition="'$(ModRoot)' == ''">$(MSBuildProjectDirectory)/../../..</ModRoot>
   </PropertyGroup>

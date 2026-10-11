@@ -42,7 +42,9 @@ namespace Meow.RaceTrioCompatibility
                     (method == "OrbitTarget" ? "NativeDroneOrbitRandom" : "NativeTurretIdleRandom");
                 if (patch.owner != owner || p.Name != "Transpiler" || p.DeclaringType?.FullName != expectedType ||
                     p.Module.Assembly.GetName().Name != "NivarianCommander.Multiplayer") continue;
-                if (p.Module.ModuleVersionId == new Guid("3e83802b-86f4-43c8-b39d-7557dbbc6406"))
+                // Installed IL-reviewed NMC 0.9.6 and 0.9.7 own the exact same narrow draws.
+                if (p.Module.ModuleVersionId == new Guid("3e83802b-86f4-43c8-b39d-7557dbbc6406") ||
+                    p.Module.ModuleVersionId == new Guid("1b86d2ca-7741-4c1e-9118-e76d8224e4e2"))
                     {
                         Log.Message("[NivarianMP] reviewed NMC random owner retained: " + target);
                         return true;

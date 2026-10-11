@@ -9,6 +9,7 @@ using Multiplayer.Client;
 using Multiplayer.Common;
 using Multiplayer.Common.Networking.Packet;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
 using UnityEngine;
 using Mp = Multiplayer.Client.Multiplayer;
@@ -23,17 +24,21 @@ public sealed class CodexProbeComponent : GameComponent
 public static class CodexProbe
 {
     static readonly bool enabled = GenCommandLine.CommandLineArgPassed("monolyncodexprobe");
+    static readonly bool combined = GenCommandLine.CommandLineArgPassed("monolyncombined");
+    static int Stages => 7;
     static readonly bool client = GenCommandLine.CommandLineArgPassed("monolynclient");
     static readonly string root = Path.GetDirectoryName(GenFilePaths.SaveDataFolderPath);
     static string Peer => client ? "client" : "host";
-    static bool hosted, ready, prepared, sent, failed, done, dispatched, verifying, staging, gearSent;
+    static bool hosted, ready, prepared, sent, failed, done, dispatched, verifying, staging, gearSent, openSent;
+    static bool menuDiagnostic;
     static int stage, verified = -1, next, finish = -1;
     static string expectedMechWeapon;
     static Pawn wearer, mech;
     static Apparel codex;
     static ThingComp storage;
     static ThingWithComps knife;
-    static ISyncMethod prepare, verify, gear;
+    static ISyncMethod prepare, verify, gear, open;
+    static int preparedTick;
     static IList Weapons => (IList)AccessTools.Field(storage.GetType(), "weapons").GetValue(storage);
     static HediffDef Marker => DefDatabase<HediffDef>.GetNamed("MNArsenalCodex");
     static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
@@ -43,6 +48,7 @@ public static class CodexProbe
     static CodexProbe()
     {
         if (!enabled) return;
+        open = MP.RegisterSyncMethod(typeof(CodexProbe), nameof(OpenNative));
         prepare = MP.RegisterSyncMethod(typeof(CodexProbe), nameof(Prepare));
         verify = MP.RegisterSyncMethod(typeof(CodexProbe), nameof(Verify));
         gear = MP.RegisterSyncMethod(typeof(CodexProbe), nameof(PrepareGear));
@@ -85,13 +91,18 @@ public static class CodexProbe
         Find.ResearchManager.FinishProject(DefDatabase<ResearchProjectDef>.GetNamed("MNConstructII"), false, null, false);
         wearer.drafter.Drafted = true;
         mech.drafter.Drafted = true;
+        preparedTick = TickPatch.Timer;
         prepared = true; next = TickPatch.Timer + 100;
         Log.Message("CODEX_PROBE PREPARED " + State());
     }
     public static void PrepareGear(int value)
     {
+        wearer.drafter.Drafted = true; mech.drafter.Drafted = true;
         if (value % 7 == 0)
         {
+            var map = Find.Maps[(value / 7) % Find.Maps.Count];
+            foreach (var pawn in new[] { wearer, mech })
+                if (pawn.Map != map) { pawn.DeSpawn(); GenSpawn.Spawn(pawn, CellFinder.RandomClosewalkCellNear(map.Center, map, 8), map); }
             if (codex.Spawned) { codex.DeSpawn(); wearer.apparel.Wear(codex); }
             if (knife.Spawned) { knife.DeSpawn(); wearer.equipment.AddEquipment(knife); }
         }
@@ -104,6 +115,13 @@ public static class CodexProbe
         staging = true;
     }
     static Ability Ability(Pawn pawn, string name) => pawn.abilities.GetAbility(DefDatabase<AbilityDef>.GetNamed(name));
+    public static void OpenNative(Pawn pawn, string name)
+    {
+        Check(MP.IsExecutingSyncCommand, "Native menu must execute in replicated command");
+        var comp = Ability(pawn, name).comps.OfType<CompAbilityEffect>().Single(c => c.GetType().Name.StartsWith("CompAbilityEffect_WeaponCodex"));
+        comp.Apply(pawn, pawn);
+        Log.Message("CODEX_PROBE OPEN_NATIVE pawn=" + pawn.ThingID + " issuer=" + MP.IsExecutingSyncCommandIssuedBySelf);
+    }
     static FloatMenu Open(Pawn pawn, string name)
     {
         Current.Game.CurrentMap = pawn.Map;
@@ -133,13 +151,34 @@ public static class CodexProbe
     }
     public static void OnGUI()
     {
-        if (!enabled || !client || failed || done || !prepared || stage >= 7 || dispatched || !staging ||
+        if (enabled && client && openSent && !dispatched && !menuDiagnostic && TickPatch.Timer > next + 500)
+        {
+            menuDiagnostic = true;
+            var component = Current.Game.components.FirstOrDefault(c => c.GetType().Name == "MonolynCodexMenuComponent");
+            var queue = component == null ? null : AccessTools.Field(component.GetType(), "pending").GetValue(component);
+            Log.Message("CODEX_PROBE MENU_WAIT interface=" + MP.InInterface + " staging=" + staging + " prepared=" + prepared + " frozen=" + TickPatch.Frozen + " component=" + component + " pending=" + (queue == null ? "null" : AccessTools.Property(queue.GetType(), "Count").GetValue(queue)) + " windows=" + string.Join(",", Find.WindowStack.Windows.Select(w => w.GetType().FullName)));
+        }
+        if (!enabled || !client || failed || done || !prepared || stage >= Stages || dispatched || !staging ||
             TickPatch.Timer < next || !MP.InInterface || TickPatch.Frozen || Event.current.type != EventType.Repaint) return;
         try
         {
-            dispatched = true;
             var phase = stage % 7;
             FloatMenu menu;
+            if (combined && phase != 5)
+            {
+                var pawn = phase == 6 ? mech : wearer;
+                if (!openSent)
+                {
+                    Current.Game.CurrentMap = pawn.Map;
+                    Find.Selector.ClearSelection(); Find.Selector.Select(pawn, false, false);
+                    openSent = open.DoSync(null, pawn, phase == 6 ? "MNWeaponCodexMech" : "MNWeaponCodex");
+                    menuDiagnostic = false;
+                    return;
+                }
+                menu = Find.WindowStack.Windows.OfType<FloatMenu>().LastOrDefault();
+                if (menu == null) return;
+            }
+            dispatched = true;
             if (phase == 5)
             {
                 var command = storage.CompGetGizmosExtra().OfType<Command_Action>().Single(); command.action();
@@ -148,7 +187,7 @@ public static class CodexProbe
             }
             else
             {
-                menu = Open(phase == 6 ? mech : wearer, phase == 6 ? "MNWeaponCodexMech" : "MNWeaponCodex");
+                menu = combined ? Find.WindowStack.Windows.OfType<FloatMenu>().Last() : Open(phase == 6 ? mech : wearer, phase == 6 ? "MNWeaponCodexMech" : "MNWeaponCodex");
                 if (phase == 0 || phase == 4) Choice(menu, "<Apply>b__0").Chosen(false, menu);
                 else if (phase == 1 || phase == 3) Choice(menu, "<Apply>b__4", "twc", knife).Chosen(false, menu);
                 else if (phase == 2) Choice(menu, "<Apply>b__3", "ability", Ability(wearer, "ChangeCrossbow")).Chosen(false, menu);
@@ -173,7 +212,7 @@ public static class CodexProbe
         Check(Weapons.Cast<Thing>().Distinct().Count() == Weapons.Count, "Duplicated stored weapon");
         Log.Message("CODEX_PROBE ASSERT stage=" + value + " " + State());
         verified = value;
-        if (value == 6) finish = TickPatch.Timer + 1000;
+        if (value == Stages - 1) finish = TickPatch.Timer + 1000;
     }
     public static void Update()
     {
@@ -184,9 +223,16 @@ public static class CodexProbe
         {
             if (!client && !hosted && !MP.IsInMultiplayer)
             {
+                if (GenCommandLine.CommandLineArgPassed("monolyntwomaps"))
+                {
+                    var first = Find.CurrentMap; var tiles = new List<PlanetTile>(); Find.WorldGrid.GetTileNeighbors(first.Tile, tiles);
+                    var tile = tiles.OrderBy(t => t.tileId).First(t => !Find.WorldObjects.AnyMapParentAt(t) && Find.WorldPathGrid.Passable(t));
+                    var parent = (Settlement)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement); parent.Tile = tile; parent.SetFaction(Faction.OfPlayer); Find.WorldObjects.Add(parent);
+                    MapGenerator.GenerateMap(new IntVec3(80, 1, 80), parent, first.generatorDef); Current.Game.CurrentMap = first;
+                }
                 hosted = true; Find.TickManager.CurTimeSpeed = TimeSpeed.Paused; Mp.username = "CodexHost";
                 Check(HostWindow.HostProgrammatically(new ServerSettings { gameName = "Codex", direct = true, directAddress = "127.0.0.1:31245", lan = false, steam = false,
-                    multifaction = false, asyncTime = false, syncConfigs = false, pauseOnJoin = false, autoJoinPoint = 0, autosaveInterval = 0, desyncTraces = false }), "Host failed"); return;
+                    multifaction = false, debugMode = combined, asyncTime = combined, syncConfigs = false, pauseOnJoin = false, autoJoinPoint = 0, autosaveInterval = 0, desyncTraces = combined }), "Host failed"); return;
             }
             if (!MP.IsInMultiplayer || Mp.Client.State != ConnectionStateEnum.ClientPlaying || TickPatch.Simulating) return;
             Check(!Mp.session.desynced, "Desync");
@@ -204,14 +250,14 @@ public static class CodexProbe
             if (finish >= 0 && TickPatch.Timer >= finish)
             {
                 if (!TickPatch.Frozen) { if (!client) Mp.Client.Send(new ClientFreezePacket(true)); return; }
-                Check(verified == 6, "Incomplete codex actions"); Receipt(Peer + ".complete", Snapshot()); done = true; return;
+                Check(verified == Stages - 1, "Incomplete codex actions"); Receipt(Peer + ".complete", Snapshot()); done = true; return;
             }
             if (TickPatch.Frozen) return;
             if (!prepared) { if (client && !sent) sent = prepare.DoSync(null); return; }
-            if (client && stage >= 7) return;
+            if (client && stage >= Stages) return;
             if (client && !dispatched && !staging) { if (!gearSent) gearSent = gear.DoSync(null, stage); return; }
             if (client && dispatched && TickPatch.Timer >= next && !verifying) verifying = verify.DoSync(null, stage);
-            if (client && dispatched && verified == stage) { stage++; dispatched = verifying = staging = gearSent = false; next = TickPatch.Timer + 50; }
+            if (client && dispatched && verified == stage) { stage++; dispatched = verifying = staging = gearSent = openSent = false; next = TickPatch.Timer + 50; }
         }
         catch (Exception e) { Fail(e); }
     }

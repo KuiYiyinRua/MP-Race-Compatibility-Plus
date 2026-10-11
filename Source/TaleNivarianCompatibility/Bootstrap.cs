@@ -99,7 +99,7 @@ namespace Meow.TaleNivarianCompatibility
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("milira") && ModsConfig.IsActive("Pakerwot.MiliraEventandStortExpandTheTaleofMilira")) { Tale.Apply(harmony); TaleArrival.Apply(harmony); TaleSupplyDialog.Apply(harmony); }
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("rjw") && ModsConfig.IsActive("abscon.privacy.please")) Privacy.Apply(harmony);
                 Ready = true;
-                Log.Message("[TaleNivarianCompat] 1.1.6 READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
+                Log.Message("[TaleNivarianCompat] " + typeof(Bootstrap).Assembly.GetName().Version + " READY MVID=" + typeof(Bootstrap).Module.ModuleVersionId);
             }
             catch (Exception e)
             {

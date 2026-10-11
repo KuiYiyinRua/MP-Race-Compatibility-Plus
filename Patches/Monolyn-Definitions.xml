@@ -1,28 +1,55 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Patch>
   <Operation Class="PatchOperationFindMod">
-    <mods><li>Monolyn Race</li></mods>
+    <mods>
+      <li>Monolyn Race</li>
+    </mods>
     <match Class="PatchOperationSequence">
       <operations>
-        <li Class="PatchOperationReplace">
+        <li Class="PatchOperationConditional">
           <xpath>Defs/EffecterDef/children/li/soundDef[text()=' MNGravitySwitch']</xpath>
-          <value><soundDef>MNGravitySwitch</soundDef></value>
+          <match Class="PatchOperationReplace">
+            <xpath>Defs/EffecterDef/children/li/soundDef[text()=' MNGravitySwitch']</xpath>
+            <value>
+              <soundDef>MNGravitySwitch</soundDef>
+            </value>
+          </match>
         </li>
-        <li Class="PatchOperationReplace">
+        <li Class="PatchOperationConditional">
           <xpath>Defs/EffecterDef/children/li/soundDef[text()=' MNDownpourImpact']</xpath>
-          <value><soundDef>MNDownpourImpact</soundDef></value>
+          <match Class="PatchOperationReplace">
+            <xpath>Defs/EffecterDef/children/li/soundDef[text()=' MNDownpourImpact']</xpath>
+            <value>
+              <soundDef>MNDownpourImpact</soundDef>
+            </value>
+          </match>
         </li>
-        <li Class="PatchOperationReplace">
+        <li Class="PatchOperationConditional">
           <xpath>Defs/SoundDef[not(normalize-space(defName)) and subSounds/li/grains/li/clipPath='CallDown']/defName</xpath>
-          <value><defName>MNCallDown</defName></value>
+          <match Class="PatchOperationReplace">
+            <xpath>Defs/SoundDef[not(normalize-space(defName)) and subSounds/li/grains/li/clipPath='CallDown']/defName</xpath>
+            <value>
+              <defName>MNCallDown</defName>
+            </value>
+          </match>
         </li>
-        <li Class="PatchOperationReplace">
+        <li Class="PatchOperationConditional">
           <xpath>Defs/EffecterDef/children/li/soundDef[text()='hammerImpact']</xpath>
-          <value><soundDef>MNHammerImpact</soundDef></value>
+          <match Class="PatchOperationReplace">
+            <xpath>Defs/EffecterDef/children/li/soundDef[text()='hammerImpact']</xpath>
+            <value>
+              <soundDef>MNHammerImpact</soundDef>
+            </value>
+          </match>
         </li>
-        <li Class="PatchOperationReplace">
+        <li Class="PatchOperationConditional">
           <xpath>Defs/AlienRace.ThingDef_AlienRace/race/soundMeleeHitBuilding[text()='Pawn_Melee_Punch_HitBuilding']</xpath>
-          <value><soundMeleeHitBuilding>Pawn_Melee_Punch_HitBuilding_Generic</soundMeleeHitBuilding></value>
+          <match Class="PatchOperationReplace">
+            <xpath>Defs/AlienRace.ThingDef_AlienRace/race/soundMeleeHitBuilding[text()='Pawn_Melee_Punch_HitBuilding']</xpath>
+            <value>
+              <soundMeleeHitBuilding>Pawn_Melee_Punch_HitBuilding_Generic</soundMeleeHitBuilding>
+            </value>
+          </match>
         </li>
       </operations>
     </match>

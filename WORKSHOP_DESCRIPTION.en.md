@@ -1,10 +1,10 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.151 full update (2026-10-11)
+## 3.0.152 full update (2026-10-11)
 
-Publishes all 22 current production modules and existing experimental features, with complete source, test source, tools and documentation on GitHub. Includes the 3.0.148–3.0.151 ownership, deterministic randomness, persisted-state and Milira shuttle-return updates, the Nivarian Race update compatibility, and Monolyn auxiliary module 1.1.8. Weapon Codex storage, retrieval, divine weapon selection, ground ejection and mech weapon selection retain native equipment and job behavior. Thanks to AzzyH for the design reference.
+Adds patches for the Weapon Codex faults exposed by Desync-449/450: recognizes Nivarian Commander 0.9.7 native random owners and initializes Monolyn independently. Codex menus created inside synced commands are deferred to the issuing player's interface, avoiding Multiplayer debug-mode label-hash forwarding. Publishes all 22 modules and existing experiments, with complete source, tests, tools and documentation on GitHub. Thanks to AzzyH for the design reference.
 
-Validation: all 22 projects compiled; the package retains archived runtime DLLs. Monolyn targeted two-map/cold-join and seven paired Codex actions passed. Nivarian's earlier normal/async cold-join and soak tests used their own exact candidates, rather than this complete combined package. No new full-loadout two-peer long soak is claimed. Experimental switches and defaults are retained. Every player must install identical files and restart completely.
+Validation: all 22 projects compile and 506 target structure checks pass. Ten additional menu boundary static checks pass. Runtime testing was stopped at the user's explicit request. This new candidate has not completed two-peer runtime verification; no smoke or soak pass is claimed. Existing experimental defaults are retained. All players must update identical files and restart completely.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 
