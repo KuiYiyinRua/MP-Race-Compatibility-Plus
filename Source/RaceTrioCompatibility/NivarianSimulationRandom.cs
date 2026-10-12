@@ -26,7 +26,7 @@ namespace Meow.RaceTrioCompatibility
             if (CommanderOwns(target, method)) return;
             harmony.Patch(target,transpiler:new HarmonyMethod(typeof(NivarianSimulationRandom),nameof(Replace)));
         }
-        // Reviewed installed NMC 0.9.6 owns these draws and their save state. Do not
+        // Reviewed installed NMC owns these draws and their save state. Do not
         // replace its input with a new Meow helper (NMC pins the older helper MVID).
         static bool CommanderOwns(MethodInfo target, string method)
         {
@@ -42,9 +42,10 @@ namespace Meow.RaceTrioCompatibility
                     (method == "OrbitTarget" ? "NativeDroneOrbitRandom" : "NativeTurretIdleRandom");
                 if (patch.owner != owner || p.Name != "Transpiler" || p.DeclaringType?.FullName != expectedType ||
                     p.Module.Assembly.GetName().Name != "NivarianCommander.Multiplayer") continue;
-                // Installed IL-reviewed NMC 0.9.6 and 0.9.7 own the exact same narrow draws.
+                // Installed IL-reviewed NMC 0.9.6, 0.9.7 and 0.9.8 own the same narrow draws.
                 if (p.Module.ModuleVersionId == new Guid("3e83802b-86f4-43c8-b39d-7557dbbc6406") ||
-                    p.Module.ModuleVersionId == new Guid("1b86d2ca-7741-4c1e-9118-e76d8224e4e2"))
+                    p.Module.ModuleVersionId == new Guid("1b86d2ca-7741-4c1e-9118-e76d8224e4e2") ||
+                    p.Module.ModuleVersionId == new Guid("579a0deb-6d02-484c-a4c7-0e75d0df2fbb"))
                     {
                         Log.Message("[NivarianMP] reviewed NMC random owner retained: " + target);
                         return true;

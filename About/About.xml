@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <packageId>local.mp.meowonlineshop.sellslingshot</packageId>
-  <modVersion>3.0.153</modVersion>
+  <modVersion>3.0.155</modVersion>
   <name>MP-Race-Compatibility-Plus</name>
   <supportedVersions>
     <li>1.6</li>
   </supportedVersions>
   <author>尹怨怨</author>
-  <description>2026-10-11 本地补丁 3.0.153：修复 Monolyn 强制洗礼确认后联机命令重放再次弹框、人物无法进入的问题；修复 Desync-452 中 Replace Stuff 消雾使用本地镜头地图的分叉。RaceTrio 1.1.10、DesyncBatch 1.0.10，核心保持 3.0.151。专项双端简测通过，用户要求不扩展长测与冷重连；完整 247 模组双端因内存不足中止。所有玩家须更新相同文件并完全重启。
+  <description>2026-10-12 本地补丁 3.0.155：兼容母舰联机模块 NMC 0.9.8，保留其原生无人机与炮塔随机数所有权，恢复冰雾随机数隔离；冰雾模拟不再读取本地镜头地图的暂停状态，修复交易、更换职位窗口下另一张地图推进时的随机数分叉。RaceTrio 1.1.11、TaleNivarian 1.1.8，核心保持 3.0.151。双端双图异步专项简测通过：18 项配对操作、12 次实际钢材成交、至少 10000 共享 tick 与最终地图/世界随机数一致；更换职位覆盖窗口打开/停留/取消，未验收实际授职仪式结果。按用户要求不扩展长测、冷重连或完整 247 模组回归。所有玩家须更新相同文件并完全重启。
+
+2026-10-11 本地补丁 3.0.153：修复 Monolyn 强制洗礼确认后联机命令重放再次弹框、人物无法进入的问题；修复 Desync-452 中 Replace Stuff 消雾使用本地镜头地图的分叉。RaceTrio 1.1.10、DesyncBatch 1.0.10，核心保持 3.0.151。专项双端简测通过，用户要求不扩展长测与冷重连；完整 247 模组双端因内存不足中止。所有玩家须更新相同文件并完全重启。
 
 2026-10-11 全量发布：全部 22 个生产模块及现有实验功能；包版本 3.0.152，核心 3.0.151，Monolyn 补充 1.1.9，TaleNivarian 1.1.7。GitHub 提供完整源码、测试、工具与文档。实验开关保留现有默认值；最新完整组合未新增双端长测。所有玩家须安装相同文件并完全重启。
 
@@ -48,6 +50,7 @@ Local DesyncBatch 1.0.7: targeted wakeup, thunder and cold-rejoin regression pas
     </li>
   </modDependencies>
   <loadAfter>
+    <li>local.nivarian.mothership.commander</li>
     <li>fxz.ratkinanomaly.update</li>
     <li>rku.ratkinunderground</li>
     <li>keeptpa.NivarianRace</li>

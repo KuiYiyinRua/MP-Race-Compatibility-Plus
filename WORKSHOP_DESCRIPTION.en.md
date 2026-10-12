@@ -1,10 +1,10 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.153 baptism and unfog fixes (2026-10-11)
+## 3.0.155 trade, role-window and mothership compatibility fixes (2026-10-12)
 
-Fixes Monolyn Race forced baptism reopening confirmation during multiplayer command replay and failing to assign an entry job. Native local confirmation is retained; replay uses the verified nonvirtual base entry point. Fixes the Replace Stuff unfog branch found in Desync-452 by checking fog on the callback's map rather than the local camera map.
+Fixes Nivarian icy fog reading the local viewer map's pause state while trade or ideology role-change windows are open, causing RNG divergence as another map advances. Multiplayer simulation now follows the map being ticked, preserving local visual preferences and isolated fog randomness. Supports the reviewed NMC 0.9.8 multiplayer module, retaining its native drone/turret RNG and saved state rather than rewriting those calls twice and breaking patch initialization.
 
-RaceTrio 1.1.10 and DesyncBatch 1.0.10; the other 20 production assemblies and existing experimental defaults are unchanged. Both changed projects compile and 521 static checks pass. Three native baptisms on one map and three per map in a two-map async test completed naturally; final state and RNG matched after 10000 shared ticks. Unfog results matched while peers viewed different maps. The full 247-mod replay pair stopped for insufficient memory. Testing was limited to simple functional checks at the user's request; no full-loadout soak or cold-rejoin pass is claimed. All players must install identical files and restart completely.
+RaceTrio 1.1.11 and TaleNivarian 1.1.8; core remains 3.0.151. The other 20 production assemblies and experimental defaults are unchanged. A two-peer, two-map async smoke test passed: 18 paired actions, 12 actual NPC/world-caravan steel trades, and matching final world/map state and RNG after 10070 shared ticks. Role-change coverage includes opening, holding and cancelling the window; completed role-award rituals were not validated. No full-loadout soak or cold-rejoin test was added, at the user's request. All players must install identical files and restart completely.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 

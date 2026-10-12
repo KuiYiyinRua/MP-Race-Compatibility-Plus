@@ -1,8 +1,8 @@
 {
-  "release": "3.0.153",
-  "publicationDate": "2026-10-11",
+  "release": "3.0.155",
+  "publicationDate": "2026-10-12",
   "runtimeAssemblyCount": 22,
-  "verification": "Changed projects compile; 521 static checks pass. One-map three baptisms and two-map async three per map completed naturally; 10000 shared ticks with equal frozen state/RNG and different-camera native unfog proof. Full 247-mod pair aborted for memory. Long/cold matrix stopped at explicit user request.",
+  "verification": "Two changed projects compile; source/build IL matches archived deployed DLLs. Two-peer/two-map async smoke test: 18 equal paired receipts, 12 actual NPC/world-caravan steel trades, 10070 shared ticks, equal final world/map state and RNG. Role window open/hold/cancel only, no role-award completion proof. Full-loadout soak and cold-rejoin omitted at explicit user request.",
   "assemblies": [
     {
       "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
@@ -73,8 +73,8 @@
     {
       "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-      "version": "1.1.10.0",
-      "sha256": "08D69F59C061BC277A8D2040467B8C67E7B675D0A3C5D787A2693FA4620D6E67"
+      "version": "1.1.11.0",
+      "sha256": "AF603C8EC052B366122D8E8E213F0759CB1E3F55734CC3B9AAF980CAFFB5DD0C"
     },
     {
       "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
@@ -121,8 +121,8 @@
     {
       "project": "Source/TaleNivarianCompatibility/TaleNivarianCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
-      "version": "1.1.7.0",
-      "sha256": "F5B2C6AFF4D01B4E247350336CEE1F392A4754BCE494EA43A7539124F203258B"
+      "version": "1.1.8.0",
+      "sha256": "02B4F148512BA3C286F9663F39B5004948C8318C1A51626CD37E7AFAADE50964"
     },
     {
       "project": "Source/TurretCombatSleep/TurretCombatSleep.csproj",
@@ -186,7 +186,7 @@
     {
       "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
       "size": 224256,
-      "sha256": "08D69F59C061BC277A8D2040467B8C67E7B675D0A3C5D787A2693FA4620D6E67"
+      "sha256": "AF603C8EC052B366122D8E8E213F0759CB1E3F55734CC3B9AAF980CAFFB5DD0C"
     },
     {
       "path": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
@@ -205,8 +205,8 @@
     },
     {
       "path": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
-      "size": 244224,
-      "sha256": "F5B2C6AFF4D01B4E247350336CEE1F392A4754BCE494EA43A7539124F203258B"
+      "size": 245760,
+      "sha256": "02B4F148512BA3C286F9663F39B5004948C8318C1A51626CD37E7AFAADE50964"
     },
     {
       "path": "1.6/Assemblies/Meow.TurretCombatSleep.dll",
@@ -230,8 +230,8 @@
     },
     {
       "path": "About/About.xml",
-      "size": 7664,
-      "sha256": "0180F5FD22D164822619FAB808FEEAC3A9F197BF2AFB229C257D33069E5C92FD"
+      "size": 8435,
+      "sha256": "A5C111970275851A57F978698F916FAC07A390208139CB539805C51F29F24946"
     },
     {
       "path": "About/Preview.png",
@@ -304,5 +304,5 @@
       "sha256": "2DB6E00E15927A2FFC35EA077717A1A39994BCE2983A991121789AD14D7518CA"
     }
   ],
-  "previousRelease": "3.0.152"
+  "previousRelease": "3.0.153"
 }
