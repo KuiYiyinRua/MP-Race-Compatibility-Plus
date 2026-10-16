@@ -28,6 +28,7 @@ namespace Meow.TaleNivarianCompatibility
             {
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual")) FireVisualRandom.Apply(harmony);
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual")) WoundCacheRandom.Apply(harmony);
+                if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("visual")) CargoPodVisuals.Apply(harmony);
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("transport")) SweepPlanePath.Apply(harmony);
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("multifaction")) DateNotifierContextOrder.Apply(harmony);
                 if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("nivarian") && ModsConfig.IsActive("keeptpa.NivarianRace"))
@@ -69,13 +70,12 @@ namespace Meow.TaleNivarianCompatibility
                     NivarianUplinkProgressSignal.Apply(harmony);
                     NivarianMetricsRefresh.Apply(harmony);
                     NivarianMetricInputs.Apply(harmony);
+                    NivarianDiceContext.Apply(harmony);
                     NivarianCurrencyCollectors.Apply(harmony);
                     NivarianLentColonists.Apply(harmony);
                     NivarianUpdateActions.Apply(harmony);
                     NivarianGuestHosting.Apply(harmony);
-                    NivarianLetterClock.Apply(harmony);
                     NivarianLogisticsOrder.Apply(harmony);
-                    NivarianReinforcementTarget.Apply(harmony);
                     NivarianIndustryActions.Apply(harmony);
 
 
@@ -89,9 +89,6 @@ namespace Meow.TaleNivarianCompatibility
                     var orbit = AccessTools.DeclaredMethod(AccessTools.TypeByName("Nivarian.NivarianDrones.NivarianStraftingAttackerDrone"), "CalcEntryPoint");
                     if (Harmony.GetPatchInfo(orbit)?.Owners.Contains("meow.trio.nivarian-simulation-random") != true)
                         NivarianSimulationRandom.Apply(harmony);
-                    var accept = AccessTools.DeclaredMethod(AccessTools.TypeByName("Nivarian_Race.Code.Incidents.ChoiceLetter_NivarianAid"), "ExecuteAccept");
-                    if (Harmony.GetPatchInfo(accept)?.Owners.Contains("meow.trio.nivarian-aid-events") != true)
-                        NivarianAidEvents.Apply(harmony);
                     RegisterIfOldTrio("Nivarian_Race.Code.Comps.ThingComps.CompTransformableWeapon", "Transform", Type.EmptyTypes);
                     RegisterIfOldTrio("Nivarian_Race.Code.Comps.ThingComps.Comp_FlyActivator", "SwitchMode", Type.EmptyTypes);
                     RegisterIfOldTrio("Nivarian_Race.Code.Comps.ThingComps.ThingComp_ExpCanister", "StartAbsorption", new[] { typeof(Pawn) });

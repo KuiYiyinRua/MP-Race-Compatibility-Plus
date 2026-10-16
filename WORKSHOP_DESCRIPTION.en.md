@@ -1,10 +1,12 @@
 # [MP] Multiplayer Compatibility Patches
 
-## 3.0.155 trade, role-window and mothership compatibility fixes (2026-10-12)
+## 3.0.159 full update (2026-10-16)
 
-Fixes Nivarian icy fog reading the local viewer map's pause state while trade or ideology role-change windows are open, causing RNG divergence as another map advances. Multiplayer simulation now follows the map being ticked, preserving local visual preferences and isolated fog randomness. Supports the reviewed NMC 0.9.8 multiplayer module, retaining its native drone/turret RNG and saved state rather than rewriting those calls twice and breaking patch initialization.
+Includes all 22 production modules and accumulated changes since 3.0.155: restores native per-map power/environment ticks; refreshes stale power-loss icons after loading Nivarian Commander field-powered buildings; synchronizes Nira daily dice map/faction/world-time context and isolates drill-cargo visual RNG; covers cryoforge queue movement, Monolyn crucible production and reinforcement placement. Native mothership RNG ownership is validated independently of unrelated assembly rebuilds. Existing features and experiment switches remain, while the retired whole-map throttle stays disabled.
 
-RaceTrio 1.1.11 and TaleNivarian 1.1.8; core remains 3.0.151. The other 20 production assemblies and experimental defaults are unchanged. A two-peer, two-map async smoke test passed: 18 paired actions, 12 actual NPC/world-caravan steel trades, and matching final world/map state and RNG after 10070 shared ticks. Role-change coverage includes opening, holding and cancelling the window; completed role-award rituals were not validated. No full-loadout soak or cold-rejoin test was added, at the user's request. All players must install identical files and restart completely.
+Core 3.0.159, RaceTrio 1.1.12 and TaleNivarian 1.1.10. All 22 projects rebuilt and matched deployed method bodies; the release retains the exact deployed DLLs. Targeted power tests passed one-map, normal two-map and asynchronous two-map scenarios; both two-map soaks exceeded 120,000 shared world ticks, with three cold rejoins in the async run. Building functionality and Chinese power inspector text were checked in the full save. Other patches have separate verification limits: the latest forge/crucible/reinforcement changes are compiled and statically inspected, without a completed dedicated runtime regression. No complete 248-mod combined soak is claimed. Missing power information was not reproduced; unrelated logged errors remain outside this fix.
+
+The GitHub full ZIP includes runtime files, complete source, tests and tools. Workshop contains runtime files only. The autosave recovery draft is included as source/tests but is not enabled as a runtime module. Every player must update the complete package to identical files and restart the game completely.
 
 Harmony patches for RimWorld 1.6 Multiplayer, supplementing the official compatibility package. Mods with compatibility patch coverage (version and feature limits apply):
 

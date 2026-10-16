@@ -16,6 +16,7 @@ namespace Meow.RaceTrioCompatibility
             if (!MP.enabled) return;
             if (MP_MeowOnlineShop.CompatibilityPatchCategories.IsEnabled("races") && ModsConfig.IsActive("ASEL.MonolynRace"))
             {
+                MonolynProduction.Apply();
                 MonolynUi.Apply(new Harmony("meow.trio.monolyn-ui"));
                 Determinism.Monolyn(new Harmony("meow.trio.monolyn-random"));
                 MonolynActions.Apply(new Harmony("meow.trio.monolyn-actions"));

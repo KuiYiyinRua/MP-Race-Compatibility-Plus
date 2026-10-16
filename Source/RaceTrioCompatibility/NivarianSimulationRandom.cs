@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Linq;
 using HarmonyLib;
 using Multiplayer.API;
 using Verse;
@@ -42,14 +43,28 @@ namespace Meow.RaceTrioCompatibility
                     (method == "OrbitTarget" ? "NativeDroneOrbitRandom" : "NativeTurretIdleRandom");
                 if (patch.owner != owner || p.Name != "Transpiler" || p.DeclaringType?.FullName != expectedType ||
                     p.Module.Assembly.GetName().Name != "NivarianCommander.Multiplayer") continue;
-                // Installed IL-reviewed NMC 0.9.6, 0.9.7 and 0.9.8 own the same narrow draws.
-                if (p.Module.ModuleVersionId == new Guid("3e83802b-86f4-43c8-b39d-7557dbbc6406") ||
-                    p.Module.ModuleVersionId == new Guid("1b86d2ca-7741-4c1e-9118-e76d8224e4e2") ||
-                    p.Module.ModuleVersionId == new Guid("579a0deb-6d02-484c-a4c7-0e75d0df2fbb"))
-                    {
-                        Log.Message("[NivarianMP] reviewed NMC random owner retained: " + target);
-                        return true;
-                    }
+                // An unrelated NMC rebuild changes its MVID. Validate the actual
+                // installed replacement boundary instead of pinning the entire DLL.
+                string helperName = method == "OrbitTarget" ? "Value" : "Range";
+                Type[] args = method == "OrbitTarget" ? Type.EmptyTypes : new[] { typeof(float), typeof(float) };
+                var helper = AccessTools.DeclaredMethod(p.DeclaringType, helperName, args);
+                if (helper == null || !helper.IsStatic || helper.ReturnType != typeof(float))
+                    throw new InvalidOperationException("Invalid NMC random helper: " + target);
+                var body = PatchProcessor.GetOriginalInstructions(helper);
+                var calls = body.Where(i => i.operand is MethodInfo).Select(i => (MethodInfo)i.operand).ToArray();
+                var random = method == "OrbitTarget" ? AccessTools.PropertyGetter(typeof(Rand), "Value") :
+                    AccessTools.Method(typeof(Rand), "Range", args);
+                if (calls.Length != 4 || !calls.Contains(AccessTools.PropertyGetter(typeof(MP), "IsInMultiplayer")) ||
+                    !calls.Contains(AccessTools.PropertyGetter(typeof(MP), "InInterface")) || !calls.Contains(random) ||
+                    calls.Count(m => m.Name == "Invoke" && m.DeclaringType == (args.Length == 0 ? typeof(Func<float>) : typeof(Func<float,float,float>))) != 1)
+                    throw new InvalidOperationException("Unreviewed NMC random helper body: " + helper);
+                var current = PatchProcessor.GetCurrentInstructions(target);
+                int expected = method == "OrbitTarget" ? 1 : 2;
+                if (current.Count(i => i.Calls(helper)) != expected ||
+                    current.Any(i => i.operand is MethodInfo m && m.DeclaringType == typeof(UnityEngine.Random)))
+                    throw new InvalidOperationException("NMC does not own the complete random boundary: " + target);
+                Log.Message("[NivarianMP] verified NMC random owner retained: " + target + " MVID=" + p.Module.ModuleVersionId);
+                return true;
             }
             return false;
         }

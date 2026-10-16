@@ -1,0 +1,140 @@
+{
+  "packageVersion": "3.0.159",
+  "coreVersion": "3.0.159",
+  "modules": [
+    {
+      "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
+      "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+      "version": "3.0.159.0",
+      "sha256": "2BB74FC72399D0DCDF0CE7B3F7A2D9BA961E229598803741B22E26377D1D70FF"
+    },
+    {
+      "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
+      "version": "1.0.10.0",
+      "sha256": "1259368F84B57EA3D04B0BC8E97B1A391B243C24BECE79060F5A3817EDAADC09"
+    },
+    {
+      "project": "Source/FactionDiplomacyIsolation/FactionDiplomacyIsolation.csproj",
+      "destination": "1.6/Assemblies/Meow.FactionDiplomacy.dll",
+      "version": "3.0.127.0",
+      "sha256": "1F3E936B66E64784E1146F4130C25EE142D5974022C6A4D7A66AA7D1F2291007"
+    },
+    {
+      "project": "Source/FactionPurge/FactionPurge.csproj",
+      "destination": "1.6/Assemblies/Meow.FactionPurge.dll",
+      "version": "0.1.0.0",
+      "sha256": "55BB78BDD8752BD6C7F0491CE57A51E94C1046854F365F4CE95DEBC5D4E13773"
+    },
+    {
+      "project": "Source/FactionStoryIsolation/FactionStoryIsolation.csproj",
+      "destination": "1.6/Assemblies/Meow.FactionStoryIsolation.dll",
+      "version": "0.2.1.0",
+      "sha256": "B6151F1686B78EE80802A4375148A490325CA004C61BF55E31054CFB3DE3C430"
+    },
+    {
+      "project": "Source/LatestSavePerformance/LatestSavePerformance.csproj",
+      "destination": "RavenCompatibility/Assemblies/Meow.LatestSavePerformance.dll",
+      "version": "1.0.0.0",
+      "sha256": "C45DC87345DE5A34E3EBE1C57AD6951CFDA500F1DB0EB1798705AE2654949D24"
+    },
+    {
+      "project": "Source/MeleeAnimationCompat/MeleeAnimationCompat.csproj",
+      "destination": "MeleeAnimation/Assemblies/MP_MeowOnlineShop.MeleeAnimation.dll",
+      "version": "1.0.0.0",
+      "sha256": "AED6CD02B069C9059E135A09966835680722D29E8268526FE4D112F3CE7237E2"
+    },
+    {
+      "project": "Source/MultifactionStoryCompatibility/MultifactionStoryCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.MultifactionStory.dll",
+      "version": "1.0.0.0",
+      "sha256": "1F84E635663468F2989734403C74522346F31A258767273371E1635CC068243F"
+    },
+    {
+      "project": "Source/NivarianFocusCompatibility/NivarianFocusCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.NivarianFocusCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "91171686F4EF75D98C1AA2D70A43675AA334E2DB67CF0BDE250CDCF12FF8A8E2"
+    },
+    {
+      "project": "Source/ParallelRenderCompatibility/ParallelRenderCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.ParallelRenderCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "5637A9D4B0BF417A79207CA5572F5A10150AEF6E8909FF57909F27FF477AE09F"
+    },
+    {
+      "project": "Source/PerformanceCompatibility/PerformanceCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.PerformanceCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "67A57883DA276ACDAE04671B094394A9A87901C6CCEF9C90B16458BBBB24F4D4"
+    },
+    {
+      "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
+      "version": "1.1.12.0",
+      "sha256": "DFBEF6A0BF6269CBF891529E290B7C387A5B3258808732566C8AE93A2F60E7F8"
+    },
+    {
+      "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
+      "version": "1.0.1.0",
+      "sha256": "5CE407E9C4D636504B172DA3950A38742319C7695959B2237D87B737EBF2391F"
+    },
+    {
+      "project": "Source/RatkinUndergroundCompatibility/RatkinUndergroundCompatibility.csproj",
+      "destination": "RatkinUnderground/Assemblies/Meow.RatkinUndergroundCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "E0FE7841F014A99AD2B60FA0D42EFE349581196F4C14F34DD1A5400F2C40EE6F"
+    },
+    {
+      "project": "Source/RavenApparelCacheFix/RavenApparelCacheFix.csproj",
+      "destination": "RavenCompatibility/Assemblies/Meow.RavenApparelCacheFix.dll",
+      "version": "1.0.0.0",
+      "sha256": "606E5AFC70CF70B0EE38FB371D2F7DB04F7A7E7AD516D9B2A167612350E91C0E"
+    },
+    {
+      "project": "Source/RavenCompatibility/RavenCompatibility.csproj",
+      "destination": "RavenCompatibility/Assemblies/Meow.RavenCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "FAE204987162952D0206D0E6916D64A6ECDFF7869095A24B23609F1BE769CE40"
+    },
+    {
+      "project": "Source/RavenIndustryOptimization/RavenIndustryOptimization.csproj",
+      "destination": "RavenCompatibility/Assemblies/Meow.RavenIndustryOptimization.dll",
+      "version": "1.0.0.0",
+      "sha256": "2DB6E00E15927A2FFC35EA077717A1A39994BCE2983A991121789AD14D7518CA"
+    },
+    {
+      "project": "Source/RjwInfrastructureCompatibility/RjwInfrastructureCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.RjwInfrastructure.dll",
+      "version": "1.0.0.0",
+      "sha256": "711B9083C98A218E8D70292D1AB62EEDF641D3C6E819CCAE10D3361F4D15E93C"
+    },
+    {
+      "project": "Source/SpecialPawnIdeologyCompatibility/SpecialPawnIdeologyCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.SpecialPawnIdeologyCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "0BB54615EB6513BEEE557BF3B2E93389E6E4A87D2E2B4F38F4B19AA9055950D5"
+    },
+    {
+      "project": "Source/TaleNivarianCompatibility/TaleNivarianCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
+      "version": "1.1.10.0",
+      "sha256": "1EFC526A02938D7BCDA70F726C3A8064555DB76D103D7C4AD7BBE56528592876"
+    },
+    {
+      "project": "Source/TurretCombatSleep/TurretCombatSleep.csproj",
+      "destination": "1.6/Assemblies/Meow.TurretCombatSleep.dll",
+      "version": "1.5.1.0",
+      "sha256": "28F5160B8F4DC76759239E591AE3512AF18E1729E66FC81D9F5921F15F845ADF"
+    },
+    {
+      "project": "Source/WolfeinAchtungCompatibility/WolfeinAchtungCompatibility.csproj",
+      "destination": "1.6/Assemblies/Meow.WolfeinAchtungCompatibility.dll",
+      "version": "1.0.0.0",
+      "sha256": "D0515F55DBB82419B8E8BC2FA00BECC7B0FF802422DE8AFBCE1A6DEF5390522D"
+    }
+  ],
+  "verification": "All 22 production projects compiled in an isolated source snapshot and match deployed ordered method-body structure. Exact installed DLLs retained. Power candidate passed archived FO01B/FO02B/FO03B tests; latest forge/crucible/reinforcement patches remain runtime unverified. No complete-loadout combined stability claim.",
+  "releaseNotes": "Docs/releases/3.0.159-full-20261016.md"
+}

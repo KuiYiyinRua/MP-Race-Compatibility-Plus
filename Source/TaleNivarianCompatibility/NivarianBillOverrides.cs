@@ -16,7 +16,11 @@ namespace Meow.TaleNivarianCompatibility
             var remove = AccessTools.DeclaredMethod(forge, "RemoveQueue", new[] { typeof(int) })
                 ?? throw new MissingMethodException(forge.FullName, "RemoveQueue(int)");
             MP.RegisterSyncMethod(remove);
-            Log.Message("[TaleNivarianCompat] cryoforge RemoveQueue override synchronized, including active work reset.");
+            // The forge's drag/drop override also bypasses the registered base method.
+            var move = AccessTools.DeclaredMethod(forge, "MoveQueue", new[] { typeof(int), typeof(int) })
+                ?? throw new MissingMethodException(forge.FullName, "MoveQueue(int,int)");
+            MP.RegisterSyncMethod(move);
+            Log.Message("[TaleNivarianCompat] cryoforge RemoveQueue/MoveQueue overrides synchronized, including work state and hauling requirements.");
         }
     }
 }

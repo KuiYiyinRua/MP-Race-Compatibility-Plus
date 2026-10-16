@@ -1,9 +1,16 @@
 {
-  "release": "3.0.155",
-  "publicationDate": "2026-10-12",
+  "release": "3.0.159",
+  "publicationDate": "2026-10-16",
   "runtimeAssemblyCount": 22,
-  "verification": "Two changed projects compile; source/build IL matches archived deployed DLLs. Two-peer/two-map async smoke test: 18 equal paired receipts, 12 actual NPC/world-caravan steel trades, 10070 shared ticks, equal final world/map state and RNG. Role window open/hold/cancel only, no role-award completion proof. Full-loadout soak and cold-rejoin omitted at explicit user request.",
+  "previousRelease": "3.0.155",
+  "verification": "All 22 production projects compiled in an isolated source snapshot and match deployed ordered method-body structure. Exact installed DLLs retained. Power candidate passed archived FO01B/FO02B/FO03B tests; latest forge/crucible/reinforcement patches remain runtime unverified. No complete-loadout combined stability claim.",
   "assemblies": [
+    {
+      "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
+      "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+      "version": "3.0.159.0",
+      "sha256": "2BB74FC72399D0DCDF0CE7B3F7A2D9BA961E229598803741B22E26377D1D70FF"
+    },
     {
       "project": "Source/DesyncBatchCompatibility/DesyncBatchCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
@@ -41,12 +48,6 @@
       "sha256": "AED6CD02B069C9059E135A09966835680722D29E8268526FE4D112F3CE7237E2"
     },
     {
-      "project": "Source/MP_MeowOnlineShop/MP_MeowOnlineShop.csproj",
-      "destination": "1.6/Assemblies/MP_MeowOnlineShop.dll",
-      "version": "3.0.151.0",
-      "sha256": "822E4E292049BFFC8FEE3EF65A206246F44B5DAF2980329384862B21C325F56D"
-    },
-    {
       "project": "Source/MultifactionStoryCompatibility/MultifactionStoryCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.MultifactionStory.dll",
       "version": "1.0.0.0",
@@ -73,8 +74,8 @@
     {
       "project": "Source/RaceTrioCompatibility/RaceTrioCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-      "version": "1.1.11.0",
-      "sha256": "AF603C8EC052B366122D8E8E213F0759CB1E3F55734CC3B9AAF980CAFFB5DD0C"
+      "version": "1.1.12.0",
+      "sha256": "DFBEF6A0BF6269CBF891529E290B7C387A5B3258808732566C8AE93A2F60E7F8"
     },
     {
       "project": "Source/RatkinAnomalyCompatibility/RatkinAnomalyCompatibility.csproj",
@@ -121,8 +122,8 @@
     {
       "project": "Source/TaleNivarianCompatibility/TaleNivarianCompatibility.csproj",
       "destination": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
-      "version": "1.1.8.0",
-      "sha256": "02B4F148512BA3C286F9663F39B5004948C8318C1A51626CD37E7AFAADE50964"
+      "version": "1.1.10.0",
+      "sha256": "1EFC526A02938D7BCDA70F726C3A8064555DB76D103D7C4AD7BBE56528592876"
     },
     {
       "project": "Source/TurretCombatSleep/TurretCombatSleep.csproj",
@@ -138,11 +139,6 @@
     }
   ],
   "workshopFiles": [
-    {
-      "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
-      "size": 2104320,
-      "sha256": "822E4E292049BFFC8FEE3EF65A206246F44B5DAF2980329384862B21C325F56D"
-    },
     {
       "path": "1.6/Assemblies/Meow.DesyncBatchCompatibility.dll",
       "size": 61440,
@@ -185,8 +181,8 @@
     },
     {
       "path": "1.6/Assemblies/Meow.RaceTrioCompatibility.dll",
-      "size": 224256,
-      "sha256": "AF603C8EC052B366122D8E8E213F0759CB1E3F55734CC3B9AAF980CAFFB5DD0C"
+      "size": 226816,
+      "sha256": "DFBEF6A0BF6269CBF891529E290B7C387A5B3258808732566C8AE93A2F60E7F8"
     },
     {
       "path": "1.6/Assemblies/Meow.RatkinCompatibility.dll",
@@ -205,8 +201,8 @@
     },
     {
       "path": "1.6/Assemblies/Meow.TaleNivarianCompatibility.dll",
-      "size": 245760,
-      "sha256": "02B4F148512BA3C286F9663F39B5004948C8318C1A51626CD37E7AFAADE50964"
+      "size": 252416,
+      "sha256": "1EFC526A02938D7BCDA70F726C3A8064555DB76D103D7C4AD7BBE56528592876"
     },
     {
       "path": "1.6/Assemblies/Meow.TurretCombatSleep.dll",
@@ -217,6 +213,11 @@
       "path": "1.6/Assemblies/Meow.WolfeinAchtungCompatibility.dll",
       "size": 7680,
       "sha256": "D0515F55DBB82419B8E8BC2FA00BECC7B0FF802422DE8AFBCE1A6DEF5390522D"
+    },
+    {
+      "path": "1.6/Assemblies/MP_MeowOnlineShop.dll",
+      "size": 2085888,
+      "sha256": "2BB74FC72399D0DCDF0CE7B3F7A2D9BA961E229598803741B22E26377D1D70FF"
     },
     {
       "path": "1.6/Patches/CommsConsole_MeowPatch.xml",
@@ -230,8 +231,8 @@
     },
     {
       "path": "About/About.xml",
-      "size": 8435,
-      "sha256": "A5C111970275851A57F978698F916FAC07A390208139CB539805C51F29F24946"
+      "size": 10767,
+      "sha256": "F464E65673E3494BC459C1F44305B271B12CAC3DE5C7DEA64E32CFB410B4F7F0"
     },
     {
       "path": "About/Preview.png",
@@ -303,6 +304,5 @@
       "size": 31744,
       "sha256": "2DB6E00E15927A2FFC35EA077717A1A39994BCE2983A991121789AD14D7518CA"
     }
-  ],
-  "previousRelease": "3.0.153"
+  ]
 }

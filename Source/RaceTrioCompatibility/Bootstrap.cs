@@ -23,7 +23,9 @@ namespace Meow.RaceTrioCompatibility
             {
                 Recruitment.Apply(new Harmony("meow.trio.recruitment"));
                 NivarianUi.Apply(new Harmony("meow.trio.nivarian-ui"));
-                NivarianSimulationRandom.Apply(new Harmony("meow.trio.nivarian-simulation-random"));
+                // Let native companion startup install its owned random boundaries
+                // before validating them, independently of static constructor order.
+                LongEventHandler.ExecuteWhenFinished(() => NivarianSimulationRandom.Apply(new Harmony("meow.trio.nivarian-simulation-random")));
                 Mothership.Apply(new Harmony("meow.trio.mothership"));
                 JoinDecisions.Apply(new Harmony("meow.trio.join-decisions"));
                 NivarianAidEvents.Apply(new Harmony("meow.trio.nivarian-aid-events"));

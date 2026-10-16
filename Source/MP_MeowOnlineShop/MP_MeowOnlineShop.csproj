@@ -229,6 +229,7 @@
     <Compile Include="Patch_DeterministicTickList.cs" />
     <Compile Include="Patch_TickListOrderNormalizer.cs" />
     <Compile Include="Patch_MoteLifecycleMp.cs" />
+    <Compile Include="Patch_NivarianFieldPowerOverlays.cs" />
     <Compile Include="Patch_RitualMoteCleanupMp.cs" />
     <Compile Include="Patch_OrderedJobMultifactionContext.cs" />
     <Compile Include="Patch_AsyncTimeMapLoadSafety.cs" />

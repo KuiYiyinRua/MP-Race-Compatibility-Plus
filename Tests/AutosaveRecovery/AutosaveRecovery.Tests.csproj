@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion>
+    <GameRoot>$(MSBuildProjectDirectory)/../../../..</GameRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Source/AutosaveRecovery/AutosaveRecovery.csproj" />
+    <Reference Include="0Harmony"><HintPath>$(GameRoot)/Mods/2009463077/Current/Assemblies/0Harmony.dll</HintPath></Reference>
+    <Reference Include="Assembly-CSharp"><HintPath>$(GameRoot)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

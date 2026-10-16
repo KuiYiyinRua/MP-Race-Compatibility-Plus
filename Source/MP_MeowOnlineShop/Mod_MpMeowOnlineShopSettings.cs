@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -311,13 +311,13 @@ namespace MP_MeowOnlineShop
 
             return new List<FloatMenuOption>
             {
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetNone) + "：关闭 TPS/实验调度", () => apply(OptimizationPresetNone)),
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetLight) + "：保守策略、宽松间隔", () => apply(OptimizationPresetLight)),
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetMedium) + "：激进模式、中等间隔", () => apply(OptimizationPresetMedium)),
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetHigh) + "：与模组默认一致", () => apply(OptimizationPresetHigh)),
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetAggressive) + "：更短间隔（激进模式）", () => apply(OptimizationPresetAggressive)),
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetVeryAggressive) + "：事件驱动、更短间隔", () => apply(OptimizationPresetVeryAggressive)),
-                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetExtreme) + "：实验 Tick + 事件驱动 + 最短间隔", () => apply(OptimizationPresetExtreme)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetNone), () => apply(OptimizationPresetNone)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetLight), () => apply(OptimizationPresetLight)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetMedium), () => apply(OptimizationPresetMedium)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetHigh), () => apply(OptimizationPresetHigh)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetAggressive), () => apply(OptimizationPresetAggressive)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetVeryAggressive), () => apply(OptimizationPresetVeryAggressive)),
+                new FloatMenuOption(GetOptimizationPresetLabel(OptimizationPresetExtreme), () => apply(OptimizationPresetExtreme)),
             };
         }
 
@@ -397,7 +397,7 @@ namespace MP_MeowOnlineShop
                 ref _settings.blockGodHandsWhilePaused,
                 "勾选后，联机暂停时无法使用神之手及该模组的其他手功能；恢复运行后才可使用。");
             listing.Gap(8f);
-            listing.Label("一键优化预设（会覆盖下方调度模式与各间隔参数；无优化仍保留 UI 批处理与确定性 Rand 以降低失步风险）");
+            listing.Label("一键优化预设（保留界面批处理等独立优化；旧地图调度参数不再生效）");
             if (listing.ButtonText("选择并应用预设档位…"))
             {
                 Find.WindowStack.Add(new FloatMenu(MpMeowOnlineShopSettings.BuildOptimizationPresetMenu(_settings)));
@@ -409,84 +409,7 @@ namespace MP_MeowOnlineShop
                 ref _settings.tpsOptimizeEnabled,
                 "默认开启。联机时以主机设置为准，客户端会自动跟随主机状态。");
             listing.Gap(4f);
-            listing.CheckboxLabeled(
-                "启用实验性 Tick 调度（高风险，默认关闭）",
-                ref _settings.enableExperimentalTickScheduler,
-                "关闭时强制回退 vanilla MapPostTick。");
-            listing.Gap(8f);
-            listing.Label("调度策略模式");
-            _settings.schedulerMode = Mathf.Clamp(
-                (int)listing.Slider(_settings.schedulerMode, 0f, 2f),
-                MpMeowOnlineShopSettings.SchedulerModeConservative,
-                MpMeowOnlineShopSettings.SchedulerModeEventDriven);
-            string modeLabel = _settings.schedulerMode == MpMeowOnlineShopSettings.SchedulerModeConservative
-                ? "当前：保守（稳定优先）"
-                : _settings.schedulerMode == MpMeowOnlineShopSettings.SchedulerModeEventDriven
-                    ? "当前：事件驱动（省Tick优先）"
-                    : "当前：激进（性能优先）";
-            listing.Label(modeLabel);
-            listing.Label("Async 回退冷却 Tick（120-2400）");
-            _settings.asyncFallbackCooldownTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.asyncFallbackCooldownTicks, 120f, 2400f),
-                120,
-                2400);
-
-            listing.GapLine();
-            listing.Label("激进模式参数");
-            listing.Label($"战斗地图间隔（1-30）：{_settings.aggressiveCombatIntervalTicks}");
-            _settings.aggressiveCombatIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.aggressiveCombatIntervalTicks, 1f, 30f),
-                1,
-                30);
-            listing.Label($"警戒地图间隔（2-60）：{_settings.aggressiveWatchIntervalTicks}");
-            _settings.aggressiveWatchIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.aggressiveWatchIntervalTicks, 2f, 60f),
-                2,
-                60);
-            listing.Label($"唤醒地图间隔（2-90）：{_settings.aggressiveAwakeIntervalTicks}");
-            _settings.aggressiveAwakeIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.aggressiveAwakeIntervalTicks, 2f, 90f),
-                2,
-                90);
-            listing.Label($"空闲基础间隔（30-3600）：{_settings.aggressiveIdleBaseIntervalTicks}");
-            _settings.aggressiveIdleBaseIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.aggressiveIdleBaseIntervalTicks, 30f, 3600f),
-                30,
-                3600);
-            listing.Label($"空闲地图系数（1-200）：{_settings.aggressiveIdlePerMapFactorTicks}");
-            _settings.aggressiveIdlePerMapFactorTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.aggressiveIdlePerMapFactorTicks, 1f, 200f),
-                1,
-                200);
-
-            listing.GapLine();
-            listing.Label("事件驱动模式参数");
-            listing.Label($"战斗地图间隔（1-30）：{_settings.eventDrivenCombatIntervalTicks}");
-            _settings.eventDrivenCombatIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.eventDrivenCombatIntervalTicks, 1f, 30f),
-                1,
-                30);
-            listing.Label($"警戒地图间隔（2-90）：{_settings.eventDrivenWatchIntervalTicks}");
-            _settings.eventDrivenWatchIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.eventDrivenWatchIntervalTicks, 2f, 90f),
-                2,
-                90);
-            listing.Label($"唤醒地图间隔（2-120）：{_settings.eventDrivenAwakeIntervalTicks}");
-            _settings.eventDrivenAwakeIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.eventDrivenAwakeIntervalTicks, 2f, 120f),
-                2,
-                120);
-            listing.Label($"稀疏基础间隔（30-4800）：{_settings.eventDrivenSparseBaseIntervalTicks}");
-            _settings.eventDrivenSparseBaseIntervalTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.eventDrivenSparseBaseIntervalTicks, 30f, 4800f),
-                30,
-                4800);
-            listing.Label($"稀疏地图系数（1-240）：{_settings.eventDrivenSparsePerMapFactorTicks}");
-            _settings.eventDrivenSparsePerMapFactorTicks = Mathf.Clamp(
-                (int)listing.Slider(_settings.eventDrivenSparsePerMapFactorTicks, 1f, 240f),
-                1,
-                240);
-
+            listing.Label("实验地图调度已停用：所有地图保持正常更新，避免断电与模拟停滞。");
             listing.GapLine();
             listing.CheckboxLabeled(
                 "启用优化遥测日志（低频）",

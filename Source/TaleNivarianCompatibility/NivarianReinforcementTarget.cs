@@ -22,11 +22,22 @@ namespace Meow.TaleNivarianCompatibility
             drop = NivarianUpdateActions.RequiredMethod(workerType, "TryDropReinforcementsAt", typeof(Map), typeof(IntVec3), letterType);
             complete = NivarianUpdateActions.RequiredMethod(letterType, "CompleteAccept");
             dispatch = MP.RegisterSyncMethod(typeof(NivarianReinforcementTarget), nameof(Dispatch));
+            harmony.Patch(drop, prefix: new HarmonyMethod(typeof(NivarianReinforcementTarget), nameof(DropFromInterface)));
             harmony.Patch(NivarianUpdateActions.RequiredMethod(letterType, "ExecuteAccept"),
                 prefix: new HarmonyMethod(typeof(NivarianReinforcementTarget), nameof(Accept)) { priority = Priority.First + 2 });
             Log.Message("[TaleNivarianCompat] reinforcement targeting remains local; selected cell, planned roster and acceptance replay in map command.");
         }
         static bool Pending(Letter letter) => letter != null && letterType.IsInstanceOfType(letter) && Convert.ToInt32(status.GetValue(letter)) == 0;
+        static bool DropFromInterface(Map __0, IntVec3 __1, Letter __2, ref bool __result)
+        {
+            if (!MP.IsInMultiplayer || !MP.InInterface) return true;
+            // Also cover a native targeting callback opened through another caller.
+            // False keeps that callback from completing the letter on the local peer;
+            // Dispatch performs both generation and CompleteAccept on every peer.
+            if (__0 != null && Pending(__2)) dispatch.DoSync(null, __0, __2, __1);
+            __result = false;
+            return false;
+        }
         static bool Accept(Letter __instance)
         {
             if (!MP.IsInMultiplayer || !MP.InInterface) return true;
